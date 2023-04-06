@@ -1,4 +1,4 @@
-import Yop from "yop/Yop";
+import Yop from "../src/yop/Yop";
 
 export default Yop;
 
@@ -19,13 +19,13 @@ export {
     DefinedType,
     PreserveUndefinedAndNull,
     AnySchema
-} from 'yop/AnySchema';
+} from '../src/yop/AnySchema';
 
-export { ArraySchema } from 'yop/ArraySchema';
-export { BooleanSchema } from 'yop/BooleanSchema';
-export { DateSchema } from 'yop/DateSchema';
-export { FileSchema } from 'yop/FileSchema';
-export { IgnoredSchema } from 'yop/IgnoredSchema';
-export { NumberSchema } from 'yop/NumberSchema';
-export { ObjectSchema } from 'yop/ObjectSchema';
-export { StringSchema } from 'yop/StringSchema';
+export { ArraySchema } from '../src/yop/ArraySchema';
+export { BooleanSchema } from '../src/yop/BooleanSchema';
+export { DateSchema } from '../src/yop/DateSchema';
+export { FileSchema } from '../src/yop/FileSchema';
+export { IgnoredSchema } from '../src/yop/IgnoredSchema';
+export { NumberSchema } from '../src/yop/NumberSchema';
+export { ObjectSchema } from '../src/yop/ObjectSchema';
+export { StringSchema } from '../src/yop/StringSchema';

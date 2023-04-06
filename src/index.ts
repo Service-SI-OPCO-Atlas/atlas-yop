@@ -3,18 +3,22 @@ import Yop from "./yop/Yop";
 export default Yop;
 
 export {
-    AnySchema,
+    SchemaForType,
     ValidationContext,
     TestValidationContext,
-    Message,
     ValidationError,
+    Message,
     createValidationError,
     Condition,
     TestCondition,
     ConditionWithSchema,
     Reference,
     Constraint,
-    SchemaConstraints
+    SchemaConstraints,
+    RequiredType,
+    DefinedType,
+    PreserveUndefinedAndNull,
+    AnySchema
 } from './yop/AnySchema';
 
 export { ArraySchema } from './yop/ArraySchema';

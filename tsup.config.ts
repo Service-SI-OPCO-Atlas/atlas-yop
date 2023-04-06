@@ -7,4 +7,10 @@ export default defineConfig({
     clean: true,
     minify: true,
     target: "es6",
+    format: ['esm'],
+    outExtension() {
+        return {
+            js: '.js',
+        }
+    },
 })

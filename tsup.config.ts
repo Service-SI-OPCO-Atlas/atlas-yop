@@ -6,4 +6,5 @@ export default defineConfig({
     sourcemap: true,
     clean: true,
     minify: true,
+    target: "es6",
 })

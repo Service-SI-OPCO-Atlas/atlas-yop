@@ -2,7 +2,21 @@ import Yop from "./yop/Yop";
 
 export default Yop;
 
-export { AnySchema } from './yop/AnySchema';
+export {
+    AnySchema,
+    ValidationContext,
+    TestValidationContext,
+    Message,
+    ValidationError,
+    createValidationError,
+    Condition,
+    TestCondition,
+    ConditionWithSchema,
+    Reference,
+    Constraint,
+    SchemaConstraints
+} from './yop/AnySchema';
+
 export { ArraySchema } from './yop/ArraySchema';
 export { BooleanSchema } from './yop/BooleanSchema';
 export { DateSchema } from './yop/DateSchema';

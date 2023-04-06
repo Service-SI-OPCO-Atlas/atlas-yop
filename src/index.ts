@@ -1,6 +1,6 @@
 import Yop from "../src/yop/Yop";
 
-export default Yop;
+export { Yop }
 
 export {
     SchemaForType,
@@ -15,9 +15,12 @@ export {
     Reference,
     Constraint,
     SchemaConstraints,
+    validateMinConstraint,
+    validateMaxConstraint,
     RequiredType,
     DefinedType,
     PreserveUndefinedAndNull,
+    deepFreeze,
     AnySchema
 } from '../src/yop/AnySchema';
 

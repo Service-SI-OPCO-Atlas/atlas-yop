@@ -21,6 +21,7 @@
   "author": "Franck Wolff <franck.wolff@4riders.net>",
   "scripts": {
     "build": "tsup src/index.ts",
+    "build:release": "env NODE_ENV=release tsup src/index.ts",
     "start": "npm run build -- --watch",
     "test": "yarn jest"
   },

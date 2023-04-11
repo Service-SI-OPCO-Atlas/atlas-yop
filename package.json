@@ -1,5 +1,5 @@
 {
-  "name": "atlas-yop",
+  "name": "@dsid-opcoatlas/atlas-yop",
   "version": "1.0.0",
   "description": "Yet another validation library",
   "private": false,

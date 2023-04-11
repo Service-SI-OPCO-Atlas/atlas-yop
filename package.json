@@ -1,6 +1,6 @@
 {
   "name": "@dsid-opcoatlas/atlas-yop",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Yet another validation library",
   "private": false,
   "main": "dist/index.js",
@@ -23,6 +23,7 @@
   "scripts": {
     "build": "tsup src/index.ts",
     "build:release": "env NODE_ENV=release tsup src/index.ts",
+    "build:publish": "npm run build:release && npm publish",
     "start": "npm run build -- --watch",
     "test": "yarn jest"
   },

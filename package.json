@@ -7,6 +7,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "homepage": "https://github.com/Service-SI-OPCO-Atlas/atlas-yop#readme",
   "repository": {
     "type": "git",

@@ -29,7 +29,7 @@ export class StringSchema<T extends string | null | undefined> extends AnySchema
             [createValidationError(context, 'min', this.constraints.min!.message)] :
             !validateMaxConstraint(context) ?
             [createValidationError(context, 'max', this.constraints.max!.message)] :
-            (this.constraints.regex && !context.value!.match(this.constraints.regex.value)) ?
+            (this.constraints.regex?.value.test(context.value!) === false) ?
             [createValidationError(context, this.constraints.regex.value === StringSchema.emailRegex ? 'email' : 'matches', this.constraints.regex.message)] :
             (super.validateTestCondition(context) ?? [])
         )

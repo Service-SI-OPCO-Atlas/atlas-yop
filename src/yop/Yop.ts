@@ -9,7 +9,7 @@ import { FileSchema } from './FileSchema'
 import { ErrorMessages, en_US_errorMessages, fr_FR_errorMessages } from './localization'
 import { IgnoredSchema } from './IgnoredSchema'
 
-export default class Yop {
+export class Yop {
 
     private static locale = 'en-US'
     private static locales: Record<string, Record<string, ErrorMessages>> = {

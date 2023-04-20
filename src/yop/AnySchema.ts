@@ -6,7 +6,7 @@ import { ErrorMessages } from "./localization"
 import { NumberSchema } from "./NumberSchema"
 import { ObjectSchema } from "./ObjectSchema"
 import { StringSchema } from "./StringSchema"
-import Yop from "./Yop"
+import { Yop } from "./Yop"
 
 export type SchemaForType<T> =
     [T] extends [string | null | undefined] ? StringSchema<T> :

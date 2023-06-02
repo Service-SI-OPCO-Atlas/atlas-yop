@@ -1,5 +1,5 @@
 import { pick } from "lodash"
-import Yop from "./Yop"
+import { Yop } from "./Yop"
 
 describe('test.yop', () => {
 

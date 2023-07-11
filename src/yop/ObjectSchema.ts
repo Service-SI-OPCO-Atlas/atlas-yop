@@ -30,8 +30,8 @@ type KeyedSchemas = { [key: string]: AnySchema<any> }
 
 export class ObjectSchema<T extends object | null | undefined> extends AnySchema<T> {
 
-    protected propertiesSchemas: KeyedSchemas
-    protected validationPath: string | null
+    readonly propertiesSchemas: KeyedSchemas
+    readonly validationPath: string | null
 
     constructor(propertiesSchemas: ObjectPropertiesSchemas<T>, constraints?: SchemaConstraints, validationPath: string | null = null) {
         super('object', constraints)

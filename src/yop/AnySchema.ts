@@ -48,8 +48,10 @@ export const createValidationError = (context: ValidationContext<any>, code: key
         errorMessage = message(context)
     else {
         const typeName = (typeof context.schema.type === 'string') ? context.schema.type : context.schema.type.name
+        const variant = context.schema.variant ?? ''
         const template: string = (
             message ??
+            (errorMessages[typeName + '$' + variant] as any)?.[code] ??
             (errorMessages[typeName] as any)?.[code] ??
             (errorMessages['all'] as any)[code] ??
             'Unknown error'
@@ -88,11 +90,12 @@ export type Constraint<T> = {
     oneOfValues?: any[]
 }
 
+
 export class SchemaConstraints {
     nullable: Constraint<boolean> = { value: true }
     optional: Constraint<boolean> = { value: true }
-    min?: Constraint<number | Date | Reference<number> | Reference<Date>>
-    max?: Constraint<number | Date | Reference<number> | Reference<Date>>
+    min?: Constraint<any>
+    max?: Constraint<any>
     regex?: Constraint<RegExp>
 
     requiredCondition?: Constraint<Condition<any>>
@@ -103,10 +106,9 @@ export class SchemaConstraints {
     ignoredCondition?: Constraint<Condition<any>>
 }
 
-const validateMinMaxConstraint = (
-    context: ValidationContext<any | null | undefined>,
-    test: (constraintValue: number, value: number) => boolean,
-    constraint?: Constraint<number | Date | Reference<number> | Reference<Date>>) => {
+type AnyValidationContext = ValidationContext<any | null | undefined>
+
+const validateMinMaxConstraint = (context: AnyValidationContext, test: (constraintValue: number, value: number) => boolean, constraint?: Constraint<any>) => {
     if (constraint !== undefined) {
         let constraintValue = constraint.value
         if (typeof constraintValue === 'function') {
@@ -117,11 +119,13 @@ const validateMinMaxConstraint = (
         }
         if (constraintValue instanceof Date)
             constraintValue = constraintValue.getTime()
+        else if (typeof constraintValue === 'string')
+            constraintValue = context.schema.getBound(constraintValue)
         const value =
             context.value instanceof Date ? context.value.getTime() :
             context.value instanceof File ? context.value.size :
             Array.isArray(context.value) ? context.value.length :
-            typeof context.value === 'string' ? context.value.length :
+            typeof context.value === 'string' ? context.schema.getBound(context.value) :
             typeof context.value === 'number' ? context.value :
             undefined
         if (value !== undefined)
@@ -130,11 +134,11 @@ const validateMinMaxConstraint = (
     return true
 }
 
-export const validateMinConstraint = (context: ValidationContext<any | null | undefined>) => {
+export const validateMinConstraint = (context: AnyValidationContext) => {
     return validateMinMaxConstraint(context, (constraintValue, value) => value >= constraintValue, context.schema.constraints.min)
 }
 
-export const validateMaxConstraint = (context: ValidationContext<any | null | undefined>) => {
+export const validateMaxConstraint = (context: AnyValidationContext) => {
     return validateMinMaxConstraint(context, (constraintValue, value) => value <= constraintValue, context.schema.constraints.max)
 }
 
@@ -168,8 +172,8 @@ export function deepFreeze(o: any, stack = new Set<any>()) {
 
 export abstract class AnySchema<T> {
 
-    type: string | TypeTester
-    constraints: SchemaConstraints
+    readonly type: string | TypeTester
+    readonly constraints: SchemaConstraints
 
     getType() {
         return (typeof this.type === 'string') ? this.type : this.type.name

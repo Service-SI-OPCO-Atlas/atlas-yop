@@ -6,6 +6,7 @@ export type ErrorMessages = {
     oneOf?: string
     matches?: string
     email?: string
+    time?: string
     min?: string
     max?: string
 }
@@ -23,7 +24,12 @@ export const en_US_errorMessages: Record<string, ErrorMessages> = {
         min: "Minimum ${min} characters",
         max: "Maximum ${max} characters",
         matches: "Invalid format",
-        email: "Invalid email format"
+        email: "Invalid email format",
+        time: "Invalid time format",
+    },
+    string$time: {
+        min: "Time must not be before ${min}",
+        max: "Time must not be after ${max}",
     },
     number: {
         format: (value: number | null | undefined) => value != null ? new Intl.NumberFormat("en-US").format(value) : `${value}`,
@@ -57,7 +63,12 @@ export const fr_FR_errorMessages: Record<string, ErrorMessages> = {
         min: "Minimum ${min} caractères",
         max: "Maximum ${max} caractères",
         matches: "Format incorrect",
-        email: "Format d'email incorrect"
+        email: "Format d'email incorrect",
+        time: "Format d'heure incorrect",
+    },
+    string$time: {
+        min: "L'heure ne doit pas être avant ${min}",
+        max: "L'heure ne doit pas être après ${max}",
     },
     number: {
         format: (value: number | null | undefined) => value != null ? new Intl.NumberFormat("fr-FR").format(value) : `${value}`,

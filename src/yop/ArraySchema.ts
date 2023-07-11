@@ -2,7 +2,7 @@ import { AnySchema, createValidationError, deepFreeze, DefinedType, Message, Req
 
 export class ArraySchema<T extends any> extends AnySchema<T> {
 
-    elementsSchema: SchemaForType<T | null | undefined>
+    readonly elementsSchema: SchemaForType<T | null | undefined>
 
     constructor(elementType: SchemaForType<T | null | undefined>, constraints?: SchemaConstraints) {
         super({ name: 'array', test: (value: any) => Array.isArray(value) }, constraints)

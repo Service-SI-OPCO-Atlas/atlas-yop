@@ -1,5 +1,6 @@
 import { pick } from "lodash"
 import { Yop } from "./Yop"
+import { StringSchema } from "./StringSchema"
 
 describe('test.yop', () => {
 
@@ -162,6 +163,65 @@ describe('test.yop', () => {
                 "value": "3",
             }])
         })
+
+        it('string.time', () => {
+            const schema = Yop.string().time().min("01:00").max("14:30")
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([])
+            expect(schema.validate("")).toEqual([])
+            expect(schema.validate("1")).toEqual([{
+                "code": "time",
+                "message": "Format d'heure incorrect",
+                "path": undefined,
+                "value": "1",
+            }])
+            expect(schema.validate("24:68")).toEqual([{
+                "code": "time",
+                "message": "Format d'heure incorrect",
+                "path": undefined,
+                "value": "24:68",
+            }])
+            expect(schema.validate("01:34")).toEqual([])
+            expect(schema.validate("01:34:59")).toEqual([])
+            expect(schema.validate("01:00")).toEqual([])
+            expect(schema.validate("01:00:00")).toEqual([])
+            expect(schema.validate("14:30")).toEqual([])
+            expect(schema.validate("14:30:00")).toEqual([])
+            expect(schema.validate("00:34:59")).toEqual([{
+                "code": "min",
+                "message": "L'heure ne doit pas être avant 01:00",
+                "path": undefined,
+                "value": "00:34:59",
+            }])
+            expect(schema.validate("14:30:01")).toEqual([{
+                "code": "max",
+                "message": "L'heure ne doit pas être après 14:30",
+                "path": undefined,
+                "value": "14:30:01",
+            }])
+        })
+    })
+
+    it('string.time.ref', () => {
+        type Range = {
+            start: string | null
+            end: string | null
+        }
+        const schema = Yop.object<Range>({
+            start: Yop.string().defined().time().min("11:00"),
+            end: Yop.string().defined().time().min<Range>(context => context.parent!.start)
+        })
+        expect(schema.validate(null)).toEqual([])
+        expect(schema.validate(undefined)).toEqual([])
+        expect(schema.validate({ start: "12:00", end: "15:00" })).toEqual([])
+        expect(schema.validate({ start: "12:00", end: "12:00" })).toEqual([])
+        expect(schema.validate({ start: null, end: "15:00" })).toEqual([])
+        expect(schema.validate({ start: "12:00", end: "10:00" })).toEqual([{
+            "code": "min",
+            "message": "L'heure ne doit pas être avant 12:00",
+            "path": "end",
+            "value": "10:00",
+        }])
     })
 
     describe('test.number', () => {

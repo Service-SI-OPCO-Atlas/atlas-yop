@@ -1,6 +1,6 @@
 {
   "name": "@dsid-opcoatlas/yop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Yet another validation library",
   "private": false,
   "main": "dist/index.js",

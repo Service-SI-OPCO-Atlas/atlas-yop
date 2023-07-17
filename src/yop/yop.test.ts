@@ -1,6 +1,5 @@
 import { pick } from "lodash"
 import { Yop } from "./Yop"
-import { StringSchema } from "./StringSchema"
 
 describe('test.yop', () => {
 

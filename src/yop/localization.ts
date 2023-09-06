@@ -3,6 +3,7 @@ export type ErrorMessages = {
     required?: string
     type?: string
     test?: string
+    asyncTest?: string
     oneOf?: string
     matches?: string
     email?: string
@@ -17,6 +18,7 @@ export const en_US_errorMessages: Record<string, ErrorMessages> = {
     all: {
         type: "Wrong value type",
         test: "Invalid value",
+        asyncTest: "Invalid value",
         oneOf: "Must be one of: ${oneOfValues}",
         required: "Required field",
     },
@@ -56,6 +58,7 @@ export const fr_FR_errorMessages: Record<string, ErrorMessages> = {
     all: {
         type: "Valeur du mauvais type",
         test: "Valeur incorrecte",
+        asyncTest: "Valeur incorrecte",
         oneOf: "Doit être parmi : ${oneOfValues}",
         required: "Champ obligatoire",
     },

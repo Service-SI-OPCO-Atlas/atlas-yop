@@ -1,3 +1,4 @@
+import { get, toPath } from "lodash"
 import { ArraySchema } from "./ArraySchema"
 import { BooleanSchema } from "./BooleanSchema"
 import { DateSchema } from "./DateSchema"
@@ -28,7 +29,7 @@ export interface ValidationContext<T, P extends object = any, R extends object =
 }
 
 export interface TestValidationContext<T, P extends object = any, R extends object = any> extends ValidationContext<T, P, R> {
-    createError: (message: string, code?: keyof ErrorMessages, path?: string) => boolean
+    createError: (message: string, path?: string) => boolean
 }
 
 export type ValidationError = {
@@ -37,6 +38,22 @@ export type ValidationError = {
     code: string
     message: string
 }
+
+export type AsyncValidationStatus = "skipped" | "pending" | "valid" | "invalid" | "unavailable"
+
+export type AsyncValidationError = ValidationError & {
+    status: AsyncValidationStatus
+    reason?: any
+}
+
+export const AsyncValidationSkipped = (undefined as any)
+
+export const createAsyncValidationResult = (errors?: ValidationError[]) => { return {
+    errors: (errors ?? []) as ValidationError[],
+    promises: [] as Promise<AsyncValidationError[]>[]
+}}
+
+export type AsyncValidationResult = ReturnType<typeof createAsyncValidationResult>
 
 export type Message<T = any, P extends object = any, R extends object = any> = string | ((context: ValidationContext<T, P, R>) => string)
 
@@ -80,6 +97,7 @@ export const createValidationError = (context: ValidationContext<any>, code: key
 
 export type Condition<T, P extends object = any, R extends object = any> = (context: ValidationContext<T, P, R>) => boolean
 export type TestCondition<T, P extends object = any, R extends object = any> = (context: TestValidationContext<T, P, R>) => boolean
+export type AsyncTestCondition<T, P extends object = any, R extends object = any> = (context: TestValidationContext<T, P, R>) => Promise<boolean>
 export type ConditionWithSchema<T, P extends object = any, R extends object = any> = (context: ValidationContext<T, P, R>) => SchemaForType<T> | null | undefined
 export type Reference<T, P extends object = any, R extends object = any> = (context: ValidationContext<T, P, R>) => T | null | undefined
 
@@ -101,6 +119,7 @@ export class SchemaConstraints {
     requiredCondition?: Constraint<Condition<any>>
     whenCondition?: ConditionWithSchema<any>
     testCondition?: Constraint<TestCondition<any>>
+    asyncTestCondition?: Constraint<AsyncTestCondition<any>>
 
     ignored = false
     ignoredCondition?: Constraint<Condition<any>>
@@ -170,6 +189,25 @@ export function deepFreeze(o: any, stack = new Set<any>()) {
     }
 }
 
+export function parentPath(path: string | null | undefined) {
+    if (path == null)
+        return path
+
+    if (path.indexOf("'") !== -1 || path.indexOf('"') !== -1)
+        throw new Error(`Unsupported path with ' or " characters: ${ path }`)
+    
+    const lastDot = path.lastIndexOf('.')
+    const lastBracket = path.lastIndexOf('[')
+
+    const end = lastDot !== -1 ?
+        (lastBracket !== -1 ? Math.max(lastDot, lastBracket) : lastDot) :
+        (lastBracket !== -1 ? lastBracket : -1)
+    
+    if (end === -1)
+        return null
+    return path.substring(0, end)
+}
+
 export abstract class AnySchema<T> {
 
     readonly type: string | TypeTester
@@ -200,6 +238,16 @@ export abstract class AnySchema<T> {
     
     abstract validateInContext(context: ValidationContext<any>): ValidationError[]
 
+    validateAsyncInContext(context: ValidationContext<any>): AsyncValidationResult {
+        const result = createAsyncValidationResult(this.validateInContext(context))
+        if (result.errors.length === 0) {
+            const promise = this.validateAsyncTestCondition(context)
+            if (promise != null)
+                result.promises.push(promise)
+        }
+        return result
+    }
+
     static resolveConditions(context: ValidationContext<any>) {
         let schema = context.schema
         if (schema.constraints.requiredCondition?.value(context))
@@ -221,8 +269,53 @@ export abstract class AnySchema<T> {
         return schema
     }
 
+    schemaAt(path: string, value: object, userContext?: any): AnySchema<any> | null {
+        if (path === '')
+            return this as AnySchema<any>
+
+        const context: ValidationContext<any> = {
+            userContext: userContext,
+            root: value,
+            parent: value,
+            schema: this as any,
+            value: value
+        }
+
+        const pathSegments = toPath(path)
+        let pathSegment: string | undefined = undefined
+        
+        // eslint-disable-next-line no-cond-assign
+        while (pathSegment = pathSegments.shift()) {
+            switch (context.schema.getType()) {
+                case 'object':
+                    context.path = context.path != null ? `${context.path}.${pathSegment}` : pathSegment
+                    context.schema = (context.schema as unknown as ObjectSchema<any>).propertiesSchemas[pathSegment] as any
+                    break
+                case 'array':
+                    context.path = `${context.path ?? ''}[${pathSegment}]`
+                    context.schema = (context.schema as unknown as ArraySchema<any>).elementsSchema
+                    break
+                default:
+                    return null
+            }
+
+            if (context.schema == null)
+                break
+            
+            context.parent = context.value
+            context.value = get(context.value, pathSegment)
+            context.schema = AnySchema.resolveConditions(context)
+        }
+
+        return context.schema ?? null
+    }
+
     validate(value: any, userContext?: any): ValidationError[] {  
         return this.validateInContext({ userContext: userContext, schema: this as any, value })
+    }
+
+    validateAsync(value: any, userContext?: any): AsyncValidationResult {
+        return this.validateAsyncInContext({ userContext: userContext, schema: this as any, value })
     }
 
     ignored(value = true): this {
@@ -261,6 +354,12 @@ export abstract class AnySchema<T> {
         return this.clone({ ...this.constraints, testCondition: { value: condition, code: 'test', message } }) as this
     }
 
+    asyncTest<P extends object = any, R extends object = any>(condition: AsyncTestCondition<T, P, R>, message?: Message): this {
+        if (this.constraints.asyncTestCondition)
+            throw new Error("Yop doesn't allow multiple async test conditions!")
+        return this.clone({ ...this.constraints, asyncTestCondition: { value: condition, code: 'asyncTest', message } }) as this
+    }
+
     protected createOneOf<U extends T>(values: ReadonlyArray<U>, message?: Message): this {
         return this.clone({ ...this.constraints, testCondition: {
             value: context => values.includes(context.value as U),
@@ -270,24 +369,82 @@ export abstract class AnySchema<T> {
         }}) as this
     }
 
-    protected validateTestCondition(context: ValidationContext<T>) {
-        if (this.constraints.testCondition) {
-            let errors: ValidationError[] = []
+    protected validateTestCondition(context: ValidationContext<T>): ValidationError[] {
+        let errors: ValidationError[] = []
+        
+        if (this.constraints.testCondition != null) {
             const testContext: TestValidationContext<T> = {
                 ...context,
-                createError: (message: string, code: keyof ErrorMessages = 'test', path?: string) => {
-                    errors = [createValidationError(context, code, message, path)]
+                createError: (message: string, path?: string) => {
+                    errors = [createValidationError(context, "test", message, path)]
                     return false
                 }
             }
-            if (this.constraints.testCondition.value(testContext) === false && errors.length === 0)
+            
+            if (this.constraints.testCondition.value(testContext) === false && errors.length === 0) {
                 errors = [createValidationError(
                     context,
                     this.constraints.testCondition.code ?? 'test',
                     this.constraints.testCondition.message,
                 )]
-            return errors
+            }
         }
-        return undefined
+
+        return errors
+    }
+
+    protected validateAsyncTestCondition(context: ValidationContext<T>): Promise<AsyncValidationError[]> | undefined {
+        if (this.constraints.asyncTestCondition == null)
+            return undefined
+        
+        let error: AsyncValidationError | undefined = undefined
+
+        const testContext: TestValidationContext<T> = {
+            ...context,
+            createError: (message: string, path?: string) => {
+                error = { ...createValidationError(context, "asyncTest", message, path), status: "invalid" }
+                return false
+            }
+        }
+
+        const asyncTestCondition = this.constraints.asyncTestCondition
+        return new Promise(resolve => {
+            asyncTestCondition.value(testContext)
+                .then(success => {
+                    if (success)
+                        error = { ...createValidationError(context, 'asyncTest', 'Async test successful'), status: "valid" }
+                    else if (error == null)
+                        error = { ...createValidationError(context, 'asyncTest', asyncTestCondition.message), status: "invalid" }
+                    resolve([error])
+                })
+                .catch(reason => {
+                    if (reason == null)
+                        error = { ...createValidationError(context, 'asyncTest', "Async test skipped"), status: "skipped" }
+                    else {
+                        error = {
+                            ...createValidationError(context, 'asyncTest', reason.message ?? reason.toString?.()),
+                            status: "unavailable",
+                            reason: reason
+                        }
+                    }
+                    resolve([error])
+                })
+        })
+    }
+
+    protected baseValidateAt(async: boolean, path: string, value: object, userContext?: any): ValidationError[] | AsyncValidationResult | null {
+        if (path === '')
+            return this.validate(value, userContext)
+
+        const schemaAtPath = this.schemaAt(path, value, userContext)
+        if (!schemaAtPath)
+            return null
+        
+        const pathElements = toPath(path)
+        const parent = pathElements.length > 1 ? get(value, pathElements.slice(0, -1)) : value
+        const valueAtPath = get(parent, pathElements[pathElements.length - 1])
+
+        const context = { path, root: value, parent: parent, schema: schemaAtPath as any, value: valueAtPath }
+        return async ? schemaAtPath.validateAsyncInContext(context) : schemaAtPath.validateInContext(context)
     }
 }

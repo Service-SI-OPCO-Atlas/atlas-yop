@@ -1,6 +1,6 @@
 {
   "name": "@dsid-opcoatlas/yop",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Yet another validation library",
   "private": false,
   "main": "dist/index.js",
@@ -35,13 +35,13 @@
     "@swc/helpers": "^0.5.0",
     "@types/jest": "^29.5.0",
     "@types/lodash": "^4.14.192",
-    "@types/node": "^18.15.11",
+    "@types/node": "^20.5.9",
     "jest": "^29.5.0",
     "jest-environment-jsdom": "^29.5.0",
     "lodash": "^4.17.21",
     "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
-    "tsup": "^6.7.0",
+    "tsup": "^7.2.0",
     "typescript": "^5.0.2"
   }
 }

@@ -12,7 +12,7 @@ export class BooleanSchema<T extends boolean | null | undefined> extends AnySche
     }
 
     validateInContext(context: ValidationContext<T>): ValidationError[] {
-        return this.validateBasics(context) ?? (super.validateTestCondition(context) ?? [])
+        return this.validateBasics(context) ?? super.validateTestCondition(context)
     }
 
     required(message?: Message) {

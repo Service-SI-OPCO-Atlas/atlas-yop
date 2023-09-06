@@ -9,7 +9,7 @@ export default defineConfig({
     clean: false, /* cleaning output directory causes issues with yarn link and webpack dev server */
     minify: env === 'release',
     target: "es6",
-    format: [ 'esm' ],
+    format: [ 'esm', 'cjs' ],
     external: [ 'lodash' ],
     outExtension() {
         return {

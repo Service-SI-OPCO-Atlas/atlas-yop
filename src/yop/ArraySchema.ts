@@ -1,4 +1,4 @@
-import { AnySchema, createValidationError, deepFreeze, DefinedType, Message, RequiredType, SchemaConstraints, SchemaForType, validateMaxConstraint, validateMinConstraint, ValidationContext, ValidationError } from "./AnySchema"
+import { AnySchema, AsyncValidationError, AsyncValidationResult, createAsyncValidationResult, createValidationError, deepFreeze, DefinedType, Message, RequiredType, SchemaConstraints, SchemaForType, validateMaxConstraint, validateMinConstraint, ValidationContext, ValidationError } from "./AnySchema"
 
 export class ArraySchema<T extends any> extends AnySchema<T> {
 
@@ -37,17 +37,72 @@ export class ArraySchema<T extends any> extends AnySchema<T> {
                 value: undefined
             }
             
-            array!.forEach((element, index) => {
+            array?.forEach((element, index) => {
                 elementContext.path = `${context.path ?? ''}[${index}]`
                 elementContext.value = element
                 errors!.push(...this.elementsSchema.validateInContext(elementContext as any))
             })
 
             if (errors.length === 0)
-                errors = super.validateTestCondition(context) ?? []
+                errors = super.validateTestCondition(context)
         }
 
         return errors
+    }
+
+    validateAsyncInContext(context: ValidationContext<T>): AsyncValidationResult {
+        const result = createAsyncValidationResult()
+
+        let errors = this.validateBasics(context) ?? (
+            !validateMinConstraint(context) ?
+            [createValidationError(context, 'min', this.constraints.min!.message)] :
+            !validateMaxConstraint(context) ?
+            [createValidationError(context, 'max', this.constraints.max!.message)] :
+            undefined
+        )
+
+        if (errors != null) {
+            result.errors.push(...errors)
+            return result
+        }
+        
+        const array = context.value as any[]
+        const elementContext = {
+            userContext: context.userContext,
+            schema: this.elementsSchema,
+            root: context.root,
+            parent: array,
+            path: context.path,
+            value: undefined
+        }
+        
+        array.forEach((element, index) => {
+            elementContext.path = `${context.path ?? ''}[${index}]`
+            elementContext.value = element
+
+            const elementResult = this.elementsSchema.validateAsyncInContext(elementContext as ValidationContext<any>)
+            result.errors.push(...elementResult.errors)
+            result.promises.push(...elementResult.promises)
+        })
+
+        if (result.errors.length === 0 && result.promises.length === 0)
+            result.errors.push(...super.validateTestCondition(context))
+        
+        if (result.errors.length === 0 && result.promises.length === 0) {
+            const promise = super.validateAsyncTestCondition(context)
+            if (promise != null)
+                result.promises.push(promise)
+        }
+
+        return result
+    }
+
+    validateAt(path: string, value: object, userContext?: any): ValidationError[] | null {
+        return this.baseValidateAt(false, path, value, userContext) as (ValidationError[] | null)
+    }
+
+    validateAsyncAt(path: string, value: object, userContext?: any): AsyncValidationResult | null {
+        return this.baseValidateAt(true, path, value, userContext) as (AsyncValidationResult | null)
     }
 
     required(message?: Message) {

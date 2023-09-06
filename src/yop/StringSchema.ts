@@ -72,7 +72,7 @@ export class StringSchema<T extends string | null | undefined> extends AnySchema
             [createValidationError(context, 'min', this.constraints.min!.message)] :
             !validateMaxConstraint(context) ?
             [createValidationError(context, 'max', this.constraints.max!.message)] :
-            (super.validateTestCondition(context) ?? [])
+            super.validateTestCondition(context)
         )
     }
 

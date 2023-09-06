@@ -1,4 +1,4 @@
-import { AnySchema, deepFreeze, SchemaConstraints, ValidationContext, ValidationError } from "./AnySchema"
+import { AnySchema, AsyncValidationResult, createAsyncValidationResult, deepFreeze, SchemaConstraints, ValidationContext, ValidationError } from "./AnySchema"
 
 export class IgnoredSchema extends AnySchema<any | null | undefined> {
 
@@ -13,5 +13,9 @@ export class IgnoredSchema extends AnySchema<any | null | undefined> {
     
     validateInContext(_: ValidationContext<any>): ValidationError[] {
         return []
+    }
+    
+    validateAsyncInContext(_: ValidationContext<any>): AsyncValidationResult {
+        return createAsyncValidationResult()
     }
 }

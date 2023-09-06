@@ -1,5 +1,18 @@
 import { pick } from "lodash"
-import { Yop } from "./Yop"
+import { Yop } from "../src/yop/Yop"
+import { AsyncValidationResult } from "../src/yop/AnySchema"
+
+const errors = (result: AsyncValidationResult, promisesEmpty = true) => {
+    if (promisesEmpty && result.promises.length > 0)
+        throw new Error("promises should be empty")
+    return result.errors
+}
+
+const promises = (result: AsyncValidationResult, errorsEmpty = true) => {
+    if (errorsEmpty && result.errors.length > 0)
+        throw new Error("errors should be empty")
+    return Promise.all(result.promises).then(results => results.flat())
+}
 
 describe('test.yop', () => {
 
@@ -197,6 +210,85 @@ describe('test.yop', () => {
                 "message": "L'heure ne doit pas être après 14:30",
                 "path": undefined,
                 "value": "14:30:01",
+            }])
+        })
+        
+        it('string.async', async () => {
+            const schema = Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
+                if (context.value === '.')
+                    reject() // or throw undefined
+                else {
+                    if (context.value === '500')
+                        throw new Error("Error 500")
+                    setTimeout(() => {
+                        if (context.value === 'ok')
+                            resolve(true)
+                        else if (context.value === 'ko')
+                            resolve(false)
+                        else
+                            resolve(context.createError("Should be 'ok'"))
+                    }, 100)
+                }
+            }), "Custom error message")
+            expect(schema.validate(null)).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": undefined,
+                "value": null,
+            }])
+            expect(schema.validate(undefined)).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": undefined,
+                "value": undefined,
+            }])
+            expect(errors(schema.validateAsync(null))).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": undefined,
+                "value": null,
+            }])
+            expect(errors(schema.validateAsync(undefined))).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": undefined,
+                "value": undefined,
+            }])
+            expect(await promises(schema.validateAsync('.'))).toEqual([{
+                "code": "asyncTest",
+                "status": "skipped",
+                "message": "Async test skipped",
+                "path": undefined,
+                "value": ".",
+            }])
+            expect(await promises(schema.validateAsync("500"))).toEqual([{
+                "code": "asyncTest",
+                "status": "unavailable",
+                "message": "Error 500",
+                "reason": new Error("Error 500"),
+                "path": undefined,
+                "value": "500",
+            }])
+            expect(await promises(schema.validateAsync('ok'))).toEqual([{
+                "code": "asyncTest",
+                "status": "valid",
+                "message": "Async test successful",
+                "path": undefined,
+                "value": "ok",
+            }])
+            expect(await promises(schema.validateAsync('ko'))).toEqual([{
+                "code": "asyncTest",
+                "status": "invalid",
+                "message": "Custom error message",
+                "path": undefined,
+                "value": "ko",
+            }])
+            expect(await promises(schema.validateAsync('other'))).toEqual([{
+                "code": "asyncTest",
+                "status": "invalid",
+                "message": "Should be 'ok'",
+                "path": undefined,
+                "value": "other",
             }])
         })
     })
@@ -897,23 +989,6 @@ describe('test.yop', () => {
                 name: 'Jack'
             })).toEqual([])
             expect(schema.validate({
-                name: 'Joe'
-            })).toEqual([{
-                "code": "test",
-                "message": "Joe doit avoir 10 ans",
-                "path": "age",
-                "value": undefined
-            }])
-            expect(schema.validate({
-                name: 'Joe',
-                age: null
-            })).toEqual([{
-                "code": "test",
-                "message": "Joe doit avoir 10 ans",
-                "path": "age",
-                "value": null
-            }])
-            expect(schema.validate({
                 name: 'Joe',
                 age: 9
             })).toEqual([{
@@ -980,6 +1055,80 @@ describe('test.yop', () => {
                 name: 'Joe',
                 age: 4
             })).toEqual([])
+        })
+        
+        it('object.asyncTest', async () => {
+            const schema = Yop.object({
+                name: Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
+                    if (context.value === '.')
+                        reject() // or throw undefined
+                    else {
+                        if (context.value === "500")
+                            throw new Error("Error 500")
+                        setTimeout(() => {
+                            if (context.value === 'John')
+                                resolve(true)
+                            else
+                                resolve(context.createError("Should be 'John'"))
+                        }, 100)
+                    }
+                })),
+            })
+            expect(schema.validate({})).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "name",
+                "value": undefined,
+            }])
+            expect(errors(schema.validateAsync({}))).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "name",
+                "value": undefined,
+            }])
+            expect(await promises(schema.validateAsync({ name: '.' }))).toEqual([{
+                "code": "asyncTest",
+                "status": "skipped",
+                "message": "Async test skipped",
+                "path": "name",
+                "value": ".",
+            }])
+            expect(await promises(schema.validateAsync({ name: 'Jack' }))).toEqual([{
+                "code": "asyncTest",
+                "message": "Should be 'John'",
+                "path": "name",
+                "status": "invalid",
+                "value": "Jack"}
+            ])
+            expect(await promises(schema.validateAsync({ name: 'John' }))).toEqual([{
+                "code": "asyncTest",
+                "status": "valid",
+                "message": "Async test successful",
+                "path": "name",
+                "value": "John",
+            }])
+            expect(await promises(schema.validateAsyncAt("name", { name: "500" })!)).toEqual([{
+                "code": "asyncTest",
+                "status": "unavailable",
+                "message": "Error 500",
+                "reason": new Error("Error 500"),
+                "path": "name",
+                "value": "500",
+            }])
+            expect(await promises(schema.validateAsyncAt("name", { name: "Jack"})!)).toEqual([{
+                "code": "asyncTest",
+                "status": "invalid",
+                "message": "Should be 'John'",
+                "path": "name",
+                "value": "Jack",
+            }])
+            expect(await promises(schema.validateAsyncAt("name", { name: "John"})!)).toEqual([{
+                "code": "asyncTest",
+                "status": "valid",
+                "message": "Async test successful",
+                "path": "name",
+                "value": "John",
+            }])
         })
        
         it('object.ignoredIf', () => {
@@ -1316,6 +1465,99 @@ describe('test.yop', () => {
                 "value": [2, 1],
             }])
         })
+        
+        it('array.asyncTest', async () => {
+            const schema = Yop.array(Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
+                if (context.value === '.')
+                    reject() // or throw undefined
+                else {
+                    if (context.value === "500")
+                        throw new Error("Error 500")
+                    setTimeout(() => {
+                        if (context.value === 'John')
+                            resolve(true)
+                        else
+                            resolve(context.createError("Should be 'John'"))
+                    }, 100)
+                }
+            })))
+            expect(schema.validate([null])).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "[0]",
+                "value": null,
+            }])
+            expect(errors(schema.validateAsync([null]))).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "[0]",
+                "value": null,
+            }])
+            expect(await promises(schema.validateAsync(['.']))).toEqual([{
+                "code": "asyncTest",
+                "message": "Async test skipped",
+                "path": "[0]",
+                "status": "skipped",
+                "value": "."
+            }])
+            expect(await promises(schema.validateAsync(['500']))).toEqual([{
+                "code": "asyncTest",
+                "message": "Error 500",
+                "reason": new Error("Error 500"),
+                "path": "[0]",
+                "status": "unavailable",
+                "value": "500"
+            }])
+            expect(await promises(schema.validateAsync(['Jack']))).toEqual([{
+                "code": "asyncTest",
+                "status": "invalid",
+                "message": "Should be 'John'",
+                "path": "[0]",
+                "value": "Jack",
+            }])
+            expect(await promises(schema.validateAsync(['John']))).toEqual([{
+                "code": "asyncTest",
+                "status": "valid",
+                "message": "Async test successful",
+                "path": "[0]",
+                "value": "John",
+            }])
+            expect(errors(schema.validateAsyncAt("[0]", [null])!)).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "[0]",
+                "value": null,
+            }])
+            expect(await promises(schema.validateAsyncAt("[0]", ["."])!)).toEqual([{
+                "code": "asyncTest",
+                "message": "Async test skipped",
+                "path": "[0]",
+                "status": "skipped",
+                "value": "."
+            }])
+            expect(await promises(schema.validateAsyncAt("[0]", ['500'])!)).toEqual([{
+                "code": "asyncTest",
+                "message": "Error 500",
+                "reason": new Error("Error 500"),
+                "path": "[0]",
+                "status": "unavailable",
+                "value": "500"
+            }])
+            expect(await promises(schema.validateAsyncAt("[0]", ["Jack"])!)).toEqual([{
+                "code": "asyncTest",
+                "status": "invalid",
+                "message": "Should be 'John'",
+                "path": "[0]",
+                "value": "Jack",
+            }])
+            expect(await promises(schema.validateAsyncAt("[0]", ["John"])!)).toEqual([{
+                "code": "asyncTest",
+                "status": "valid",
+                "message": "Async test successful",
+                "path": "[0]",
+                "value": "John",
+            }])
+        })
 
         interface Child {
             name: string
@@ -1347,6 +1589,9 @@ describe('test.yop', () => {
             expect(() =>
                 Yop.string().test(context => true).test(context => false)
             ).toThrowError("Yop doesn't allow multiple test conditions!")
+            expect(() =>
+                Yop.string().asyncTest(context => Promise.resolve(true)).asyncTest(context => Promise.resolve(false))
+            ).toThrowError("Yop doesn't allow multiple async test conditions!")
             expect(() =>
                 Yop.string().ignoredIf(context => true).ignoredIf(context => false)
             ).toThrowError("Yop doesn't allow multiple ignoredIf conditions!")

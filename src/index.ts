@@ -5,10 +5,15 @@ export {
     ValidationContext,
     TestValidationContext,
     ValidationError,
+    AsyncValidationStatus,
+    AsyncValidationError,
+    AsyncValidationResult,
+    AsyncValidationSkipped,
     Message,
     createValidationError,
     Condition,
     TestCondition,
+    AsyncTestCondition,
     ConditionWithSchema,
     Reference,
     Constraint,
@@ -19,7 +24,8 @@ export {
     DefinedType,
     PreserveUndefinedAndNull,
     deepFreeze,
-    AnySchema
+    parentPath,
+    AnySchema,
 } from './yop/AnySchema';
 
 export { ArraySchema } from './yop/ArraySchema';

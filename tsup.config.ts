@@ -11,9 +11,4 @@ export default defineConfig({
     target: "es6",
     format: [ 'esm', 'cjs' ],
     external: [ 'lodash' ],
-    outExtension() {
-        return {
-            js: '.js',
-        }
-    },
 })

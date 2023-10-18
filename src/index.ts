@@ -24,7 +24,7 @@ export {
     DefinedType,
     PreserveUndefinedAndNull,
     deepFreeze,
-    parentPath,
+    getParentPath,
     AnySchema,
 } from './yop/AnySchema';
 

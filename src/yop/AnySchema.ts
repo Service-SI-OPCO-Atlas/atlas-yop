@@ -189,7 +189,7 @@ export function deepFreeze(o: any, stack = new Set<any>()) {
     }
 }
 
-export function parentPath(path: string | null | undefined) {
+export function getParentPath(path: string | null | undefined) {
     if (path == null)
         return path
 

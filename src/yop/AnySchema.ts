@@ -376,7 +376,7 @@ export abstract class AnySchema<T> {
             const testContext: TestValidationContext<T> = {
                 ...context,
                 createError: (message: string, path?: string) => {
-                    errors = [createValidationError(context, "test", message, path)]
+                    errors.push(createValidationError(context, "test", message, path))
                     return false
                 }
             }

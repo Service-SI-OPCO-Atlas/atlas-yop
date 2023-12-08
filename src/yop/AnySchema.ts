@@ -444,7 +444,7 @@ export abstract class AnySchema<T> {
         const parent = pathElements.length > 1 ? get(value, pathElements.slice(0, -1)) : value
         const valueAtPath = get(parent, pathElements[pathElements.length - 1])
 
-        const context = { path, root: value, parent: parent, schema: schemaAtPath as any, value: valueAtPath }
+        const context = { path, root: value, parent: parent, schema: schemaAtPath as any, value: valueAtPath, userContext }
         return async ? schemaAtPath.validateAsyncInContext(context) : schemaAtPath.validateInContext(context)
     }
 }

@@ -137,6 +137,12 @@ export class ObjectSchema<T extends object | null | undefined> extends AnySchema
         return super.validate(value, userContext)
     }
 
+    validateAsync(value: any, userContext?: any): AsyncValidationResult {
+        if (this.validationPath)
+            return this.validateAsyncAt(this.validationPath, value, userContext) ?? createAsyncValidationResult()
+        return super.validateAsync(value, userContext)
+    }
+
     validateAt(path: string, value: object, userContext?: any): ValidationError[] | null {
         return this.baseValidateAt(false, path, value, userContext) as (ValidationError[] | null)
     }

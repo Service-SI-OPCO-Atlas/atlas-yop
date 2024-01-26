@@ -1130,6 +1130,138 @@ describe('test.yop', () => {
                 "value": "John",
             }])
         })
+
+        it('object.asyncTestFocusOn', async () => {
+            const schema = Yop.object({
+                name: Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
+                    if (context.value === '.')
+                        reject() // or throw undefined
+                    else {
+                        if (context.value === "500")
+                            throw new Error("Error 500")
+                        setTimeout(() => {
+                            if (context.value === 'John')
+                                resolve(true)
+                            else
+                                resolve(context.createError("Should be 'John'"))
+                        }, 100)
+                    }
+                })),
+                age: Yop.number().required()
+            })
+            expect(schema.validate({})).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "name",
+                "value": undefined,
+            }, {
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "age",
+                "value": undefined,
+            }])
+            expect(schema.validateAsync({})).toEqual({
+                "errors": [{
+                    "code": "required",
+                    "message": "Champ obligatoire",
+                    "path": "name",
+                    "value": undefined,
+                }, {
+                    "code": "required",
+                    "message": "Champ obligatoire",
+                    "path": "age",
+                    "value": undefined,
+                }],
+                "promises": []
+            })
+            expect(schema.focusOn("age").validateAsync({})).toEqual({
+                "errors": [{
+                    "code": "required",
+                    "message": "Champ obligatoire",
+                    "path": "age",
+                    "value": undefined,
+                }],
+                "promises": []
+            })
+            expect(schema.validateAsyncAt("age", {})).toEqual({
+                "errors": [{
+                    "code": "required",
+                    "message": "Champ obligatoire",
+                    "path": "age",
+                    "value": undefined,
+                }],
+                "promises": []
+            })
+            expect(schema.focusOn("name").validateAsync({})).toEqual({
+                "errors": [{
+                    "code": "required",
+                    "message": "Champ obligatoire",
+                    "path": "name",
+                    "value": undefined,
+                }],
+                "promises": []
+            })
+            expect(schema.validateAsyncAt("name", {})).toEqual({
+                "errors": [{
+                    "code": "required",
+                    "message": "Champ obligatoire",
+                    "path": "name",
+                    "value": undefined,
+                }],
+                "promises": []
+            })
+            expect(schema.focusOn("age").validateAsync({ age: 0 })).toEqual({
+                "errors": [],
+                "promises": []
+            })
+            expect(schema.validateAsyncAt("age", { age: 0 })).toEqual({
+                "errors": [],
+                "promises": []
+            })
+            expect(await promises(schema.focusOn("name").validateAsync({ name: '.' }))).toEqual([{
+                "code": "asyncTest",
+                "status": "skipped",
+                "message": "Async test skipped",
+                "path": "name",
+                "value": ".",
+            }])
+            expect(await promises(schema.focusOn("name").validateAsync({ name: 'Jack' }))).toEqual([{
+                "code": "asyncTest",
+                "message": "Should be 'John'",
+                "path": "name",
+                "status": "invalid",
+                "value": "Jack"}
+            ])
+            expect(await promises(schema.focusOn("name").validateAsync({ name: 'John' }))).toEqual([{
+                "code": "asyncTest",
+                "status": "valid",
+                "message": "Async test successful",
+                "path": "name",
+                "value": "John",
+            }])
+            expect(await promises(schema.validateAsyncAt("name", { name: "500" })!)).toEqual([{
+                "code": "asyncTest",
+                "status": "unavailable",
+                "message": "Error 500",
+                "reason": new Error("Error 500"),
+                "path": "name",
+                "value": "500",
+            }])
+            expect(await promises(schema.validateAsyncAt("name", { name: "Jack"})!)).toEqual([{
+                "code": "asyncTest",
+                "status": "invalid",
+                "message": "Should be 'John'",
+                "path": "name",
+                "value": "Jack",
+            }])
+            expect(await promises(schema.validateAsyncAt("name", { name: "John"})!)).toEqual([{
+                "code": "asyncTest",
+                "status": "valid",
+                "message": "Async test successful",
+                "path": "name",
+                "value": "John",
+            }])
+        })
        
         it('object.ignoredIf', () => {
             const schema = Yop.object({
@@ -1296,6 +1428,17 @@ describe('test.yop', () => {
                 "path": "children[0]",
                 "value": 0,
             }])
+            expect(schema.validateAsync({
+                children: [0, 1, 2]
+            })).toEqual({
+                "errors": [{
+                    "code": "min",
+                    "message": "Doit être supérieur ou égal à 1",
+                    "path": "children[0]",
+                    "value": 0,
+                }],
+                "promises": []
+            })
             expect(schema.focusOn("children[0]").validate({
                 children: [0, 1, 2]
             })).toEqual([{
@@ -1304,9 +1447,23 @@ describe('test.yop', () => {
                 "path": "children[0]",
                 "value": 0,
             }])
+            expect(schema.focusOn("children[0]").validateAsync({
+                children: [0, 1, 2]
+            })).toEqual({
+                "errors": [{
+                    "code": "min",
+                    "message": "Doit être supérieur ou égal à 1",
+                    "path": "children[0]",
+                    "value": 0,
+                }],
+                "promises": []
+            })
             expect(schema.focusOn("children[1]").validate({
                 children: [0, 1, 2]
             })).toEqual([])
+            expect(schema.focusOn("children[1]").validateAsync({
+                children: [0, 1, 2]
+            })).toEqual({ "errors": [], "promises": [] })
 
             expect(schema.focusOn("children[2]").validate({
                 children: [0, 1, 2]

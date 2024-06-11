@@ -1,6 +1,7 @@
-import { pick } from "lodash"
+import { pick } from "lodash-es"
 import { Yop } from "../src/yop/Yop"
 import { AsyncValidationResult } from "../src/yop/AnySchema"
+import { describe, it, expect } from 'vitest'
 
 const errors = (result: AsyncValidationResult, promisesEmpty = true) => {
     if (promisesEmpty && result.promises.length > 0)

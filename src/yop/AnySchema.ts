@@ -1,4 +1,4 @@
-import { get, toPath } from "lodash"
+import { get, toPath } from "lodash-es"
 import { ArraySchema } from "./ArraySchema"
 import { BooleanSchema } from "./BooleanSchema"
 import { DateSchema } from "./DateSchema"

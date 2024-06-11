@@ -1,5 +1,4 @@
-import { get, toPath } from "lodash"
-import { AnySchema, AsyncValidationError, AsyncValidationResult, createAsyncValidationResult, createValidationError, deepFreeze, DefinedType, Message, RequiredType, SchemaConstraints, ValidationContext, ValidationError } from "./AnySchema"
+import { AnySchema, AsyncValidationResult, createAsyncValidationResult, deepFreeze, DefinedType, Message, RequiredType, SchemaConstraints, ValidationContext, ValidationError } from "./AnySchema"
 import { ArraySchema } from "./ArraySchema"
 import { BooleanSchema } from "./BooleanSchema"
 import { DateSchema } from "./DateSchema"

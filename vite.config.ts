@@ -13,11 +13,6 @@ export default defineConfig({
         },
         rollupOptions: {
             external: ["lodash-es"],
-            output: {
-                globals: {
-                    lodash: "lodash-es",
-                },
-            },
         },
         sourcemap: true,
         emptyOutDir: true,

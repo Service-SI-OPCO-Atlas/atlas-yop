@@ -1,6 +1,6 @@
 {
   "name": "@dsid-opcoatlas/yop",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Yet another validation library",
   "private": false,
   "type": "module",
@@ -45,11 +45,11 @@
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
-    "@types/node": "^20.14.9",
+    "@types/node": "^20.14.11",
     "lodash-es": "^4.17.21",
-    "typescript": "^5.5.2",
-    "vite": "^5.3.2",
+    "typescript": "^5.5.4",
+    "vite": "^5.3.4",
     "vite-plugin-dts": "^3.9.1",
-    "vitest": "^1.6.0"
+    "vitest": "^2.0.4"
   }
 }

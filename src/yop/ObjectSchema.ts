@@ -1,4 +1,4 @@
-import { AnySchema, AsyncValidationResult, createAsyncValidationResult, deepFreeze, DefinedType, Message, RequiredType, SchemaConstraints, ValidationContext, ValidationError } from "./AnySchema"
+import { AnySchema, AsyncValidationResult, createAsyncValidationResult, deepFreeze, DefinedType, Message, RequiredType, SchemaConstraints, SchemaForType, ValidationContext, ValidationError } from "./AnySchema"
 import { ArraySchema } from "./ArraySchema"
 import { BooleanSchema } from "./BooleanSchema"
 import { DateSchema } from "./DateSchema"
@@ -25,16 +25,18 @@ export type SchemaType<Schema> = Schema extends AnySchema<infer PropertyType> ?
 
 export type ObjectPropertiesSchemas<T> = { [P in keyof T]: SchemaType<AnySchema<T[P]>> }
 
-type KeyedSchemas = { [key: string]: AnySchema<any> }
+type KeyedSchemas<T> = {
+    [P in keyof T]: SchemaForType<T[P]>;
+}
 
 export class ObjectSchema<T extends object | null | undefined> extends AnySchema<T> {
 
-    readonly propertiesSchemas: KeyedSchemas
+    readonly propertiesSchemas: KeyedSchemas<NonNullable<T>>
     readonly validationPath: string | null
 
     constructor(propertiesSchemas: ObjectPropertiesSchemas<T>, constraints?: SchemaConstraints, validationPath: string | null = null) {
         super('object', constraints)
-        this.propertiesSchemas = propertiesSchemas as KeyedSchemas
+        this.propertiesSchemas = propertiesSchemas as KeyedSchemas<NonNullable<T>>
         this.validationPath = validationPath
         deepFreeze(this)
     }

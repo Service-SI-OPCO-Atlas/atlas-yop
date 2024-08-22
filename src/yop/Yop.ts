@@ -72,6 +72,6 @@ export class Yop {
     }
 
     static array<T extends any>(elementType: AnySchema<T | null | undefined>) {
-        return new ArraySchema<T | null | undefined>(elementType as any) as ArraySchema<T[] | null | undefined>
+        return new ArraySchema<T[] | null | undefined>(elementType as any)
     }
 }

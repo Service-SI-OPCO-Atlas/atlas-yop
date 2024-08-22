@@ -1,20 +1,22 @@
 import { AnySchema, AsyncValidationResult, createAsyncValidationResult, createValidationError, deepFreeze, DefinedType, Message, RequiredType, SchemaConstraints, SchemaForType, validateMaxConstraint, validateMinConstraint, ValidationContext, ValidationError } from "./AnySchema"
 
-export class ArraySchema<T extends any> extends AnySchema<T> {
+type ArrayItemType<ArrayType> = ArrayType extends Array<infer ItemType> ? ItemType : never
 
-    readonly elementsSchema: SchemaForType<T | null | undefined>
+export class ArraySchema<A extends any[] | null | undefined> extends AnySchema<A> {
 
-    constructor(elementType: SchemaForType<T | null | undefined>, constraints?: SchemaConstraints) {
+    readonly elementsSchema: SchemaForType<ArrayItemType<A> | null | undefined>
+
+    constructor(elementType: SchemaForType<ArrayItemType<A> | null | undefined>, constraints?: SchemaConstraints) {
         super({ name: 'array', test: (value: any) => Array.isArray(value) }, constraints)
         this.elementsSchema = elementType
         deepFreeze(this)
     }
 
     protected clone(constraints?: SchemaConstraints) {
-        return new ArraySchema<T>(this.elementsSchema, constraints)
+        return new ArraySchema<A>(this.elementsSchema, constraints)
     }
 
-    validateInContext(context: ValidationContext<T>): ValidationError[] {
+    validateInContext(context: ValidationContext<A>): ValidationError[] {
         const array = (context.value as any[] | null | undefined)
 
         let errors = this.validateBasics(context) ?? (
@@ -40,7 +42,7 @@ export class ArraySchema<T extends any> extends AnySchema<T> {
             array?.forEach((element, index) => {
                 elementContext.path = `${context.path ?? ''}[${index}]`
                 elementContext.value = element
-                errors!.push(...this.elementsSchema.validateInContext(elementContext as any))
+                errors!.push(...this.elementsSchema.validateInContext(elementContext))
             })
 
             if (errors.length === 0)
@@ -50,7 +52,7 @@ export class ArraySchema<T extends any> extends AnySchema<T> {
         return errors
     }
 
-    validateAsyncInContext(context: ValidationContext<T>): AsyncValidationResult {
+    validateAsyncInContext(context: ValidationContext<A>): AsyncValidationResult {
         const result = createAsyncValidationResult()
 
         let errors = this.validateBasics(context) ?? (
@@ -80,7 +82,7 @@ export class ArraySchema<T extends any> extends AnySchema<T> {
             elementContext.path = `${context.path ?? ''}[${index}]`
             elementContext.value = element
 
-            const elementResult = this.elementsSchema.validateAsyncInContext(elementContext as ValidationContext<any>)
+            const elementResult = this.elementsSchema.validateAsyncInContext(elementContext)
             result.errors.push(...elementResult.errors)
             result.promises.push(...elementResult.promises)
         })
@@ -106,11 +108,11 @@ export class ArraySchema<T extends any> extends AnySchema<T> {
     }
 
     required(message?: Message) {
-        return super.required(message) as unknown as ArraySchema<RequiredType<T>>
+        return super.required(message) as unknown as ArraySchema<RequiredType<A>>
     }
 
     defined(message?: Message) {
-        return super.defined(message) as unknown as ArraySchema<DefinedType<T>>
+        return super.defined(message) as unknown as ArraySchema<DefinedType<A>>
     }
 
     min(value: number, message?: Message) {

@@ -224,7 +224,7 @@ export abstract class AnySchema<T> {
 
     protected abstract clone(constraints?: SchemaConstraints): any
 
-    protected validateBasics(context: ValidationContext<any>): ValidationError[] | undefined {
+    protected validateBasics(context: ValidationContext<T>): ValidationError[] | undefined {
         if (this.constraints.ignored || this.constraints.ignoredCondition?.value(context) === true)
             return []
         if (context.value === null)
@@ -236,9 +236,9 @@ export abstract class AnySchema<T> {
         return undefined
     }
     
-    abstract validateInContext(context: ValidationContext<any>): ValidationError[]
+    abstract validateInContext(context: ValidationContext<T>): ValidationError[]
 
-    validateAsyncInContext(context: ValidationContext<any>): AsyncValidationResult {
+    validateAsyncInContext(context: ValidationContext<T>): AsyncValidationResult {
         const result = createAsyncValidationResult(this.validateInContext(context))
         if (result.errors.length === 0) {
             const promise = this.validateAsyncTestCondition(context)

@@ -76,11 +76,11 @@ export class StringSchema<T extends string | null | undefined> extends AnySchema
         )
     }
 
-    required(message?: Message) {
+    override required(message?: Message) {
         return super.required(message) as unknown as StringSchema<RequiredType<T>>
     }
 
-    defined(message?: Message) {
+    override defined(message?: Message) {
         return super.defined(message) as unknown as StringSchema<DefinedType<T>>
     }
 

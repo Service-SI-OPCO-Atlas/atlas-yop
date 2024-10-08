@@ -78,7 +78,7 @@ export class ObjectSchema<T extends object | null | undefined> extends AnySchema
         return errors
     }
 
-    validateAsyncInContext(context: ValidationContext<T>): AsyncValidationResult {
+    override validateAsyncInContext(context: ValidationContext<T>): AsyncValidationResult {
         const result = createAsyncValidationResult()
         
         const errors = this.validateBasics(context)
@@ -120,11 +120,11 @@ export class ObjectSchema<T extends object | null | undefined> extends AnySchema
         return result
     }
 
-    required(message?: Message) {
+    override required(message?: Message) {
         return super.required(message) as unknown as ObjectSchema<RequiredType<T>>
     }
 
-    defined(message?: Message) {
+    override defined(message?: Message) {
         return super.defined(message) as unknown as ObjectSchema<DefinedType<T>>
     }
 
@@ -132,13 +132,13 @@ export class ObjectSchema<T extends object | null | undefined> extends AnySchema
         return this.clone(this.constraints, validationPath)
     }
 
-    validate(value: any, userContext?: any): ValidationError[] {
+    override validate(value: any, userContext?: any): ValidationError[] {
         if (this.validationPath)
             return this.validateAt(this.validationPath, value, userContext) ?? []
         return super.validate(value, userContext)
     }
 
-    validateAsync(value: any, userContext?: any): AsyncValidationResult {
+    override validateAsync(value: any, userContext?: any): AsyncValidationResult {
         if (this.validationPath)
             return this.validateAsyncAt(this.validationPath, value, userContext) ?? createAsyncValidationResult()
         return super.validateAsync(value, userContext)

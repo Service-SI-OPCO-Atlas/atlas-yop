@@ -52,7 +52,7 @@ export class ArraySchema<A extends any[] | null | undefined> extends AnySchema<A
         return errors
     }
 
-    validateAsyncInContext(context: ValidationContext<A>): AsyncValidationResult {
+    override validateAsyncInContext(context: ValidationContext<A>): AsyncValidationResult {
         const result = createAsyncValidationResult()
 
         let errors = this.validateBasics(context) ?? (
@@ -107,11 +107,11 @@ export class ArraySchema<A extends any[] | null | undefined> extends AnySchema<A
         return this.baseValidateAt(true, path, value, userContext) as (AsyncValidationResult | null)
     }
 
-    required(message?: Message) {
+    override required(message?: Message) {
         return super.required(message) as unknown as ArraySchema<RequiredType<A>>
     }
 
-    defined(message?: Message) {
+    override defined(message?: Message) {
         return super.defined(message) as unknown as ArraySchema<DefinedType<A>>
     }
 

@@ -15,11 +15,11 @@ export class BooleanSchema<T extends boolean | null | undefined> extends AnySche
         return this.validateBasics(context) ?? super.validateTestCondition(context)
     }
 
-    required(message?: Message) {
+    override required(message?: Message) {
         return super.required(message) as unknown as BooleanSchema<RequiredType<T>>
     }
 
-    defined(message?: Message) {
+    override defined(message?: Message) {
         return super.defined(message) as unknown as BooleanSchema<DefinedType<T>>
     }
 

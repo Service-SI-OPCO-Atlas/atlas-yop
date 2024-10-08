@@ -15,7 +15,7 @@ export class IgnoredSchema extends AnySchema<any | null | undefined> {
         return []
     }
     
-    validateAsyncInContext(_: ValidationContext<any>): AsyncValidationResult {
+    override validateAsyncInContext(_: ValidationContext<any>): AsyncValidationResult {
         return createAsyncValidationResult()
     }
 }

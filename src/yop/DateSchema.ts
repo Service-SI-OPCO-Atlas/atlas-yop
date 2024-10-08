@@ -21,11 +21,11 @@ export class DateSchema<T extends Date | null | undefined> extends AnySchema<T> 
         )
     }
 
-    required(message?: Message) {
+    override required(message?: Message) {
         return super.required(message) as unknown as DateSchema<RequiredType<T>>
     }
 
-    defined(message?: Message) {
+    override defined(message?: Message) {
         return super.defined(message) as unknown as DateSchema<DefinedType<T>>
     }
 

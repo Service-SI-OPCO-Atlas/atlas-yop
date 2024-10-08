@@ -21,11 +21,11 @@ export class FileSchema<T extends File | null | undefined> extends AnySchema<T> 
         )
     }
 
-    required(message?: Message) {
+    override required(message?: Message) {
         return super.required(message) as unknown as FileSchema<RequiredType<T>>
     }
 
-    defined(message?: Message) {
+    override defined(message?: Message) {
         return super.defined(message) as unknown as FileSchema<DefinedType<T>>
     }
 

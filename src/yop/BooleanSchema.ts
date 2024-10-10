@@ -1,29 +1,17 @@
-import { AnySchema, deepFreeze, DefinedType, Message, PreserveUndefinedAndNull, RequiredType, SchemaConstraints, ValidationContext, ValidationError } from "./AnySchema"
+import { AnySchema, ConstraintsExecutor, ConstraintValue, deepFreeze, Message, OneOfConstraint } from "./AnySchema"
 
 export class BooleanSchema<T extends boolean | null | undefined> extends AnySchema<T> {
 
-    constructor(constraints?: SchemaConstraints) {
-        super('boolean', constraints)
+    constructor(constraints?: ConstraintsExecutor<T>) {
+        super('boolean', undefined, constraints ?? new ConstraintsExecutor<T>())
         deepFreeze(this)
     }
 
-    protected clone(constraints?: SchemaConstraints) {
-        return new BooleanSchema<T>(constraints)
+    protected clone(constraints: ConstraintsExecutor<T>) {
+        return new BooleanSchema<T>(constraints) as this
     }
 
-    validateInContext(context: ValidationContext<T>): ValidationError[] {
-        return this.validateBasics(context) ?? super.validateTestCondition(context)
-    }
-
-    override required(message?: Message) {
-        return super.required(message) as unknown as BooleanSchema<RequiredType<T>>
-    }
-
-    override defined(message?: Message) {
-        return super.defined(message) as unknown as BooleanSchema<DefinedType<T>>
-    }
-
-    oneOf<U extends T>(values: ReadonlyArray<U>, message?: Message) {
-        return super.createOneOf(values, message) as unknown as BooleanSchema<PreserveUndefinedAndNull<T, U>>
+    oneOf<U extends T>(values: ConstraintValue<T, readonly U[]>, message?: Message) {
+        return this.addConstraints(new OneOfConstraint<T>(values, message))
     }
 }

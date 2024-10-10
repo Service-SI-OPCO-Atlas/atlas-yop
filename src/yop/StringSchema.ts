@@ -1,6 +1,58 @@
-import { AnySchema, createValidationError, deepFreeze, DefinedType, Message, PreserveUndefinedAndNull, Reference, RequiredType, SchemaConstraints, validateMaxConstraint, validateMinConstraint, ValidationContext, ValidationError } from "./AnySchema";
+import { AbstractConstraint, AnySchema, ConstraintsExecutor, ConstraintValue, createValidationError, deepFreeze, DefinedType, MaxConstraint, Message, MinConstraint, OneOfConstraint, PreserveUndefinedAndNull, Reference, RequiredConstraint, RequiredType, resolveConstraintValue, SchemaConstraints, TestConstraint, validateMaxConstraint, validateMinConstraint, ValidationContext, ValidationError } from "./AnySchema";
 
 type StringVariant = 'email' | 'time'
+
+class RequiredStringConstraint extends RequiredConstraint<string | null | undefined> {
+
+    constructor(value: ConstraintValue<string | null | undefined, boolean> = true, message?: Message<string | null | undefined>) {
+        super(value, message)
+    }
+
+    override validate(context: ValidationContext<string | null | undefined>) {
+        return !context.value && resolveConstraintValue(this.value, context) === true
+            ? [createValidationError(context, 'required', this.message, undefined, this.getErrorParams(context))]
+            : undefined
+    }
+}
+
+class MinStringConstraint extends MinConstraint<string | null | undefined, number> {
+    
+    override formatBound(value: number, context: ValidationContext<string | null | undefined>) {
+        return context.schema.variant === 'time' ? StringSchema.formatTime(value) : value
+    }
+    
+    override accept(value: string, constraintValue: number, context: ValidationContext<string | null | undefined>) {
+        const bound = context.schema.variant === 'time' ? StringSchema.parseTime(value) : value.length
+        return bound === 0 || bound >= constraintValue
+    }
+}
+
+class MaxStringConstraint extends MaxConstraint<string | null | undefined, number> {
+    
+    override formatBound(value: number, context: ValidationContext<string | null | undefined>) {
+        return context.schema.variant === 'time' ? StringSchema.formatTime(value) : value
+    }
+    
+    override accept(value: string, constraintValue: number, context: ValidationContext<string | null | undefined>) {
+        const bound = context.schema.variant === 'time' ? StringSchema.parseTime(value) : value.length
+        return bound === 0 || bound <= constraintValue
+    }
+}
+
+class RegExpConstraint extends AbstractConstraint<string | null | undefined> {
+
+    constructor(readonly value: ConstraintValue<string | null | undefined, RegExp>, readonly message?: Message<string | null | undefined>) {
+        super(9, false)
+    }
+
+    override validate(context: ValidationContext<string | null | undefined>) {
+        const regexp = resolveConstraintValue(this.value, context)
+        return !regexp.test(context.value!)
+            ? [createValidationError(context, context.schema.variant ?? "matches", this.message, undefined, this.getErrorParams(context))]
+            : undefined
+    }
+}
+
 
 export class StringSchema<T extends string | null | undefined> extends AnySchema<T> {
 
@@ -26,7 +78,7 @@ export class StringSchema<T extends string | null | undefined> extends AnySchema
         return (hours * 3600) + (minutes * 60) + seconds
     }
 
-    static formatTime(time: number | null | undefined, modulo24h: true): string {
+    static formatTime(time: number | null | undefined, modulo24h = true): string {
         function formatNumber(value: number) {
             return value.toLocaleString(undefined, { minimumIntegerDigits: 2, useGrouping: false })
         }
@@ -45,73 +97,49 @@ export class StringSchema<T extends string | null | undefined> extends AnySchema
 
     readonly variant?: StringVariant
   
-    constructor(constraints?: SchemaConstraints, variant?: StringVariant) {
-        super('string', constraints)
+    constructor(constraints?: ConstraintsExecutor<T>, variant?: StringVariant) {
+        super('string', undefined, constraints ?? new ConstraintsExecutor<T>(value => !value))
         this.variant = variant
         deepFreeze(this)
     }
 
-    protected clone(constraints?: SchemaConstraints, variant?: StringVariant) {
-        return new StringSchema<T>(constraints, variant ?? this.variant)
+    protected clone(constraints: ConstraintsExecutor<T>, variant?: StringVariant) {
+        return new StringSchema<T>(constraints, variant ?? this.variant) as this
+    }
+    
+    override required(value: ConstraintValue<T, boolean> = true, message?: Message) {
+        return this.addConstraints(new RequiredStringConstraint(value, message))
     }
 
-    protected validateEmptyString(context: ValidationContext<T>): ValidationError[] | undefined {
-        if (context.value!.length === 0) {
-            if (!this.constraints.nullable.value && !this.constraints.optional.value)
-                return [createValidationError(context, 'required', this.constraints.nullable.message ?? this.constraints.optional.message)]
-            return []
-        }
-        return undefined
+    min(value: ConstraintValue<T, number>, message?: Message) {
+        return this.addConstraints(new MinStringConstraint(value as any, message))
     }
 
-    validateInContext(context: ValidationContext<T>): ValidationError[] {
-        return this.validateBasics(context) ?? this.validateEmptyString(context) ?? (
-            (this.constraints.regex?.value.test(context.value!) === false) ?
-            [createValidationError(context, this.variant ?? 'matches', this.constraints.regex.message)] :
-            !validateMinConstraint(context) ?
-            [createValidationError(context, 'min', this.constraints.min!.message)] :
-            !validateMaxConstraint(context) ?
-            [createValidationError(context, 'max', this.constraints.max!.message)] :
-            super.validateTestCondition(context)
-        )
+    max(value: ConstraintValue<T, number>, message?: Message) {
+        return this.addConstraints(new MaxStringConstraint(value as any, message))
     }
 
-    override required(message?: Message) {
-        return super.required(message) as unknown as StringSchema<RequiredType<T>>
-    }
-
-    override defined(message?: Message) {
-        return super.defined(message) as unknown as StringSchema<DefinedType<T>>
-    }
-
-    min<P extends object = any, R extends object = any>(value: number | string | Reference<number | string, P, R>, message?: Message): this {
-        return this.clone({ ...this.constraints, min: { value, message } }) as this
-    }
-
-    max<P extends object = any, R extends object = any>(value: number | string | Reference<number | string, P, R>, message?: Message): this {
-        return this.clone({ ...this.constraints, max: { value, message } }) as this
-    }
-
-    length<P extends object = any, R extends object = any>(value: number | Reference<number, P, R>, message?: Message): this {
-        return this.clone({ ...this.constraints, min: { value, message }, max: { value, message } }) as this
+    length<P extends object = any, R extends object = any>(value: number | Reference<number, P, R>, message?: Message) {
+        return this.addConstraints(new MinStringConstraint(value as any, message), new MaxStringConstraint(value as any, message))
     }
 
     matches(value: RegExp, message?: Message) {
-        return this.clone({ ...this.constraints, regex: { value, message } })
+        return this.addConstraints(new RegExpConstraint(value, message))
     }
 
     email(message?: Message) {
-        return this.clone({ ...this.constraints, regex: { value: StringSchema.emailRegex, message } }, 'email')
+        return this.clone(this.constraintsExecutor.clone().add(new RegExpConstraint(StringSchema.emailRegex, message)), "email")
     }
 
     time(message?: Message) {
-        return this.clone({ ...this.constraints, regex: { value: StringSchema.timeRegex, message } }, 'time')
+        return this.clone(this.constraintsExecutor.clone().add(new RegExpConstraint(StringSchema.timeRegex, message)), "time")
     }
 
-    oneOf<U extends T>(values: ReadonlyArray<U>, message?: Message) {
-        return super.createOneOf(values, message) as unknown as StringSchema<PreserveUndefinedAndNull<T, U>>
+    oneOf<U extends T>(values: ConstraintValue<T, readonly U[]>, message?: Message) {
+        return this.addConstraints(new OneOfConstraint<T>(values, message))
     }
 
+    // TODO: remove
     getBound(value: string) {
         return this.variant === 'time' ? StringSchema.parseTime(value) : value.length
     }

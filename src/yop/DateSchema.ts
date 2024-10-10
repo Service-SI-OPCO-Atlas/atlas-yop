@@ -1,39 +1,35 @@
-import { AnySchema, createValidationError, deepFreeze, DefinedType, Message, Reference, RequiredType, SchemaConstraints, validateMaxConstraint, validateMinConstraint, ValidationContext, ValidationError } from "./AnySchema"
+import { AnySchema, ConstraintsExecutor, ConstraintValue, deepFreeze, MaxConstraint, Message, MinConstraint } from "./AnySchema"
+
+class MinDateConstraint extends MinConstraint<Date | null | undefined, Date> {
+    
+    override accept(value: Date, constraintValue: Date) {
+        return value.getTime() >= constraintValue.getTime()
+    }
+}
+
+class MaxDateConstraint extends MaxConstraint<Date | null | undefined, Date> {
+    
+    override accept(value: Date, constraintValue: Date) {
+        return value.getTime() <= constraintValue.getTime()
+    }
+}
 
 export class DateSchema<T extends Date | null | undefined> extends AnySchema<T> {
 
-    constructor(constraints?: SchemaConstraints) {
-        super({ name: 'date', test: (value: any) => value instanceof Date }, constraints)
+    constructor(constraints?: ConstraintsExecutor<T>) {
+        super({ name: 'date', test: (value: any) => value instanceof Date }, undefined, constraints ?? new ConstraintsExecutor<T>())
         deepFreeze(this)
     }
 
-    protected clone(constraints?: SchemaConstraints) {
-        return new DateSchema<T>(constraints)
+    protected clone(constraints: ConstraintsExecutor<T>) {
+        return new DateSchema<T>(constraints) as this
     }
 
-    validateInContext(context: ValidationContext<T>): ValidationError[] {
-        return this.validateBasics(context) ?? (
-            !validateMinConstraint(context) ?
-            [createValidationError(context, 'min', this.constraints.min!.message)] :
-            !validateMaxConstraint(context) ?
-            [createValidationError(context, 'max', this.constraints.max!.message)] :
-            super.validateTestCondition(context)
-        )
+    min(value: ConstraintValue<T, Date>, message?: Message) {
+        return this.addConstraints(new MinDateConstraint(value as any, message))
     }
 
-    override required(message?: Message) {
-        return super.required(message) as unknown as DateSchema<RequiredType<T>>
-    }
-
-    override defined(message?: Message) {
-        return super.defined(message) as unknown as DateSchema<DefinedType<T>>
-    }
-
-    min<P extends object = any, R extends object = any>(value: Date | Reference<Date, P, R>, message?: Message): this {
-        return this.clone({ ...this.constraints, min: { value, message } }) as this
-    }
-
-    max<P extends object = any, R extends object = any>(value: Date | Reference<Date, P, R>, message?: Message): this {
-        return this.clone({ ...this.constraints, max: { value, message } }) as this
+    max(value: ConstraintValue<T, Date>, message?: Message) {
+        return this.addConstraints(new MaxDateConstraint(value as any, message))
     }
 }

@@ -1,44 +1,39 @@
-import { AnySchema, createValidationError, deepFreeze, DefinedType, Message, PreserveUndefinedAndNull, Reference, RequiredType, SchemaConstraints, validateMaxConstraint, validateMinConstraint, ValidationContext, ValidationError } from "./AnySchema"
+import { AnySchema, ConstraintsExecutor, ConstraintValue, deepFreeze, MaxConstraint, Message, MinConstraint, OneOfConstraint } from "./AnySchema"
+class MinNumberConstraint extends MinConstraint<number | null | undefined, number> {
+    
+    override accept(value: number, constraintValue: number) {
+        return value >= constraintValue
+    }
+}
+
+class MaxNumberConstraint extends MaxConstraint<number | null | undefined, number> {
+    
+    override accept(value: number, constraintValue: number) {
+        return value <= constraintValue
+    }
+}
 
 export class NumberSchema<T extends number | null | undefined> extends AnySchema<T> {
 
-    constructor(constraints?: SchemaConstraints) {
-        super('number', constraints)
+    constructor(constraints?: ConstraintsExecutor<T>) {
+        super('number', undefined, constraints ?? new ConstraintsExecutor<T>())
         deepFreeze(this)
     }
 
-    protected clone(constraints?: SchemaConstraints) {
-        return new NumberSchema<T>(constraints)
+    protected clone(constraints: ConstraintsExecutor<T>) {
+        return new NumberSchema<T>(constraints) as this
     }
 
-    validateInContext(context: ValidationContext<T>): ValidationError[] {
-        return this.validateBasics(context) ?? (
-            !validateMinConstraint(context) ?
-            [createValidationError(context, 'min', this.constraints.min!.message)] :
-            !validateMaxConstraint(context) ?
-            [createValidationError(context, 'max', this.constraints.max!.message)] :
-            super.validateTestCondition(context)
-        )
+    min(value: ConstraintValue<T, number>, message?: Message) {
+        return this.addConstraints(new MinNumberConstraint(value as any, message))
     }
 
-    override required(message?: Message) {
-        return super.required(message) as unknown as NumberSchema<RequiredType<T>>
+    max(value: ConstraintValue<T, number>, message?: Message) {
+        return this.addConstraints(new MaxNumberConstraint(value as any, message))
     }
 
-    override defined(message?: Message) {
-        return super.defined(message) as unknown as NumberSchema<DefinedType<T>>
-    }
-
-    min<P extends object = any, R extends object = any>(value: number | Reference<number, P, R>, message?: Message): this {
-        return this.clone({ ...this.constraints, min: { value, message } }) as this
-    }
-
-    max<P extends object = any, R extends object = any>(value: number | Reference<number, P, R>, message?: Message): this {
-        return this.clone({ ...this.constraints, max: { value, message } }) as this
-    }
-
-    oneOf<U extends T>(values: ReadonlyArray<U>, message?: Message) {
-        return super.createOneOf(values, message) as unknown as NumberSchema<PreserveUndefinedAndNull<T, U>>
+    oneOf<U extends T>(values: ConstraintValue<T, readonly U[]>, message?: Message) {
+        return this.addConstraints(new OneOfConstraint<T>(values, message))
     }
 }
 

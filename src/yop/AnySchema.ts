@@ -57,7 +57,7 @@ export type AsyncValidationResult = ReturnType<typeof createAsyncValidationResul
 
 export type Message<T = any, P extends object = any, R extends object = any> = string | ((context: ValidationContext<T, P, R>) => string)
 
-export const createValidationError = (context: ValidationContext<any>, code: keyof ErrorMessages, message?: Message, path?: string): ValidationError => {
+export const createValidationError = (context: ValidationContext<any>, code: keyof ErrorMessages, message?: Message, path?: string, params?: Record<string, any>): ValidationError => {
     const errorMessages = Yop.getErrorMessages()
 
     let errorMessage: string
@@ -73,16 +73,16 @@ export const createValidationError = (context: ValidationContext<any>, code: key
             (errorMessages['all'] as any)[code] ??
             'Unknown error'
         )
-        const params: Record<string, any> = {
-            min: context.schema.constraints.min?.value,
-            max: context.schema.constraints.max?.value,
-            nullable: context.schema.constraints.nullable?.value,
-            optional: context.schema.constraints.optional?.value,
-            value: context.value,
-            oneOfValues: context.schema.constraints.testCondition?.oneOfValues
-        }
+        // const params: Record<string, any> = {
+        //     min: context.schema.constraints.min?.value,
+        //     max: context.schema.constraints.max?.value,
+        //     nullable: context.schema.constraints.nullable?.value,
+        //     optional: context.schema.constraints.optional?.value,
+        //     value: context.value,
+        //     oneOfValues: context.schema.constraints.testCondition?.oneOfValues
+        // }
         errorMessage = template.replace(/\$\{\s*(\w+)\s*\}/g, (_, key) => {
-            let value = params[key]
+            let value = params?.[key]
             if (['min', 'max', 'value', 'oneOfValues'].includes(key) && errorMessages[typeName]?.format) {
                 const format = errorMessages[typeName].format!
                 value = Array.isArray(value) ? value.map(element => format(element)) : format(value)
@@ -100,6 +100,161 @@ export type TestCondition<T, P extends object = any, R extends object = any> = (
 export type AsyncTestCondition<T, P extends object = any, R extends object = any> = (context: TestValidationContext<T, P, R>) => Promise<boolean>
 export type ConditionWithSchema<T, P extends object = any, R extends object = any> = (context: ValidationContext<T, P, R>) => SchemaForType<T> | null | undefined
 export type Reference<T, P extends object = any, R extends object = any> = (context: ValidationContext<T, P, R>) => T | null | undefined
+
+
+export type ConstraintValue<FieldType, ValueType> =  ValueType | ((context: ValidationContext<FieldType>) => ValueType)
+export function resolveConstraintValue<FieldType, ValueType>(value: ConstraintValue<FieldType, ValueType>, context: ValidationContext<FieldType>) {
+    if (typeof value === 'function')
+        return (value as ((context: ValidationContext<FieldType>) => ValueType))(context)
+    return value as ValueType
+}
+
+export abstract class AbstractConstraint<FieldType> {
+
+    constructor(
+        readonly priority: number,
+        readonly multiple: boolean,
+        readonly acceptNull = false
+    ) {}
+
+    abstract validate(context: ValidationContext<FieldType>): ValidationError[] | undefined
+
+    /*
+        const params: Record<string, any> = {
+            min: context.schema.constraints.min?.value,
+            max: context.schema.constraints.max?.value,
+            nullable: context.schema.constraints.nullable?.value,
+            optional: context.schema.constraints.optional?.value,
+            value: context.value,
+            oneOfValues: context.schema.constraints.testCondition?.oneOfValues
+        }
+    */
+    getErrorParams(context: ValidationContext<FieldType>): Record<string, any> {
+        return {
+            value: context.value
+        }
+    }
+}
+
+export class IgnoredConstraint extends AbstractConstraint<any> {
+
+    constructor(readonly value: ConstraintValue<any, boolean> = true) {
+        super(0, false, true)
+    }
+
+    validate(context: ValidationContext<any>) {
+        return resolveConstraintValue(this.value, context) === true
+            ? []
+            : undefined
+    }
+}
+
+
+export class DefinedConstraint<FieldType> extends AbstractConstraint<FieldType> {
+
+    constructor(readonly value: ConstraintValue<FieldType, boolean> = true, readonly message?: Message<FieldType>) {
+        super(1, false, true)
+    }
+
+    validate(context: ValidationContext<FieldType>) {
+        return context.value === undefined && resolveConstraintValue(this.value, context) === true
+            ? [createValidationError(context, 'required', this.message, undefined, this.getErrorParams(context))]
+            : undefined
+    }
+}
+
+export class RequiredConstraint<FieldType> extends AbstractConstraint<FieldType> {
+
+    constructor(readonly value: ConstraintValue<FieldType, boolean> = true, readonly message?: Message<FieldType>) {
+        super(2, false, true)
+    }
+
+    validate(context: ValidationContext<FieldType>) {
+        return context.value == null && resolveConstraintValue(this.value, context) === true
+            ? [createValidationError(context, 'required', this.message, undefined, this.getErrorParams(context))]
+            : undefined
+    }
+}
+
+export class TypeConstraint extends AbstractConstraint<any> {
+
+    constructor() {
+        super(3, false, true)
+    }
+
+    validate(context: ValidationContext<any>) {
+        if (context.value != null && (typeof context.schema.type === 'string' ? typeof context.value !== context.schema.type : !context.schema.type.test(context.value)))
+            return [createValidationError(context, 'type')]
+        return undefined
+    }
+}
+
+abstract class BoundConstraint<FieldType, BoundType> extends AbstractConstraint<FieldType> {
+
+    constructor(
+        priority: number,
+        readonly code: keyof ErrorMessages,
+        readonly value: ConstraintValue<FieldType, BoundType>,
+        readonly message?: Message<FieldType>
+    ) {
+        super(priority, false)
+    }
+
+    formatBound(value: BoundType, _: ValidationContext<FieldType>): any {
+        return value
+    }
+
+    abstract accept(value: NonNullable<FieldType>, constraintValue: BoundType, context: ValidationContext<FieldType>): boolean
+
+    validate(context: ValidationContext<FieldType>) {
+        const constraintValue = resolveConstraintValue(this.value, context)
+        return !this.accept(context.value!, constraintValue, context)
+            ? [createValidationError(context, this.code, this.message, undefined, { ...this.getErrorParams(context), [this.code]: this.formatBound(constraintValue, context) })]
+            : undefined
+    }
+}
+
+export abstract class MinConstraint<FieldType, MinType> extends BoundConstraint<FieldType, MinType> {
+    
+    constructor(value: ConstraintValue<FieldType, MinType>, message?: Message<FieldType>) {
+        super(10, "min", value, message)
+    }
+}
+
+export abstract class MaxConstraint<FieldType, MinType> extends BoundConstraint<FieldType, MinType> {
+    
+    constructor(value: ConstraintValue<FieldType, MinType>, message?: Message<FieldType>) {
+        super(11, "max", value, message)
+    }
+}
+
+export class OneOfConstraint<FieldType> extends AbstractConstraint<NonNullable<FieldType>> {
+
+    constructor(readonly values: ConstraintValue<FieldType, readonly FieldType[]>, readonly message?: Message<FieldType>) {
+        super(12, true)
+    }
+
+    validate(context: ValidationContext<NonNullable<FieldType>>) {
+        const values = resolveConstraintValue(this.values, context)
+        return !values.includes(context.value as NonNullable<FieldType>)
+            ? [createValidationError(context, 'oneOf', this.message, undefined, { ...this.getErrorParams(context), oneOfValues: values })]
+            : undefined
+    }
+}
+
+export class TestConstraint<FieldType> extends AbstractConstraint<NonNullable<FieldType>> {
+
+    constructor(readonly value: ((context: ValidationContext<NonNullable<FieldType>>) => boolean), readonly message?: Message<FieldType>) {
+        super(100, true)
+    }
+
+    validate(context: ValidationContext<NonNullable<FieldType>>) {
+        return !this.value(context)
+            ? [createValidationError(context, 'test', this.message, undefined, this.getErrorParams(context))]
+            : undefined
+    }
+}
+
 
 export type Constraint<T> = {
     value: T
@@ -208,21 +363,87 @@ export function getParentPath(path: string | null | undefined) {
     return path.substring(0, end)
 }
 
+
+export class ConstraintsExecutor<FieldType> {
+
+    private constraints = new Array<AbstractConstraint<FieldType>>(new TypeConstraint())
+
+    add(constraint: AbstractConstraint<FieldType>, clear = false) {
+        if (clear && constraint.multiple)
+            this.constraints = this.constraints.filter(c => c instanceof constraint.constructor === false)
+        
+        if (constraint.multiple)
+            this.constraints.push(constraint)
+        else {
+            const index = this.constraints.findIndex(c => c instanceof constraint.constructor)
+            if (index >= 0)
+                this.constraints[index] = constraint
+            else
+                this.constraints.push(constraint)
+        }
+        
+        this.constraints.sort((a, b) => a.priority - b.priority)
+        
+        return this
+    }
+
+    removeAll(constraintClass: new (...args: any[]) => AbstractConstraint<FieldType>) {
+        this.constraints = this.constraints.filter(c => !(c instanceof constraintClass))
+        
+        return this
+    }
+
+    validate(context: ValidationContext<FieldType>): ValidationError[] {
+        const nullishValue = this.isNull != null ? this.isNull(context.value) : context.value == null
+
+        for (const constraint of this.constraints) {
+            if (constraint.acceptNull === false && nullishValue)
+                continue
+            const errors = constraint.validate(context)
+            if (errors != null)
+                return errors
+        }
+
+        return []
+    }
+
+    clone() {
+        const clone = new ConstraintsExecutor<FieldType>(this.isNull)
+        clone.constraints = this.constraints.concat()
+        return clone
+    }
+
+    constructor(
+        readonly isNull?: (value: any) => boolean
+    ) {}
+}
+
+
 export abstract class AnySchema<T> {
 
     readonly type: string | TypeTester
     readonly constraints: SchemaConstraints
 
+    protected constraintsExecutor: ConstraintsExecutor<T>
+
     getType() {
         return (typeof this.type === 'string') ? this.type : this.type.name
     }
 
-    protected constructor(type: string | TypeTester, constraints?: SchemaConstraints) {
+    protected constructor(type: string | TypeTester, constraints?: SchemaConstraints, constraintsExecutor?: ConstraintsExecutor<T>) {
         this.constraints = constraints ?? new SchemaConstraints()
+        this.constraintsExecutor = constraintsExecutor ?? new ConstraintsExecutor<T>()
         this.type = type
     }
 
-    protected abstract clone(constraints?: SchemaConstraints): any
+    protected abstract clone(constraints?: SchemaConstraints | ConstraintsExecutor<T>): this
+
+    protected addConstraints(...constraints: AbstractConstraint<T>[]) {
+        const constraintsExecutor = this.constraintsExecutor.clone()
+        for (const constraint of constraints)
+            constraintsExecutor.add(constraint)
+        return this.clone(constraintsExecutor)
+    }
 
     protected validateBasics(context: ValidationContext<T>): ValidationError[] | undefined {
         if (this.constraints.ignored || this.constraints.ignoredCondition?.value(context) === true)
@@ -236,7 +457,9 @@ export abstract class AnySchema<T> {
         return undefined
     }
     
-    abstract validateInContext(context: ValidationContext<T>): ValidationError[]
+    validateInContext(context: ValidationContext<T>): ValidationError[] {
+        return this.constraintsExecutor.validate(context)
+    }
 
     validateAsyncInContext(context: ValidationContext<T>): AsyncValidationResult {
         const result = createAsyncValidationResult(this.validateInContext(context))
@@ -250,22 +473,22 @@ export abstract class AnySchema<T> {
 
     static resolveConditions(context: ValidationContext<any>) {
         let schema = context.schema
-        if (schema.constraints.requiredCondition?.value(context))
-            schema = schema.required(schema.constraints.requiredCondition.message)
-        if ((context.value === null && !schema.constraints.nullable.value) || (context.value === undefined && !schema.constraints.optional.value))
-            return schema
-        if (schema.constraints.whenCondition)
-            schema = schema.constraints.whenCondition(context) ?? schema
-        if (typeof schema.constraints.min?.value === 'function') {
-            const value = schema.constraints.min.value(context as any)
-            if (value !== null && value !== undefined)
-                schema = (schema as any).clone({ ...schema.constraints, min: { value, message: schema.constraints.min.message } })
-        }
-        if (typeof schema.constraints.max?.value === 'function') {
-            const value = schema.constraints.max.value(context as any)
-            if (value !== null && value !== undefined)
-                schema = (schema as any).clone({ ...schema.constraints, max: { value, message: schema.constraints.max.message } })
-        }
+        // if (schema.constraints.requiredCondition?.value(context))
+        //     schema = schema.required(schema.constraints.requiredCondition.message)
+        // if ((context.value === null && !schema.constraints.nullable.value) || (context.value === undefined && !schema.constraints.optional.value))
+        //     return schema
+        // if (schema.constraints.whenCondition)
+        //     schema = schema.constraints.whenCondition(context) ?? schema
+        // if (typeof schema.constraints.min?.value === 'function') {
+        //     const value = schema.constraints.min.value(context as any)
+        //     if (value !== null && value !== undefined)
+        //         schema = (schema as any).clone({ ...schema.constraints, min: { value, message: schema.constraints.min.message } })
+        // }
+        // if (typeof schema.constraints.max?.value === 'function') {
+        //     const value = schema.constraints.max.value(context as any)
+        //     if (value !== null && value !== undefined)
+        //         schema = (schema as any).clone({ ...schema.constraints, max: { value, message: schema.constraints.max.message } })
+        // }
         return schema
     }
 
@@ -311,35 +534,23 @@ export abstract class AnySchema<T> {
     }
 
     validate(value: any, userContext?: any): ValidationError[] {  
-        return this.validateInContext({ userContext: userContext, schema: this as any, value })
+        return this.constraintsExecutor.validate({ userContext: userContext, schema: this as any, value })
     }
 
     validateAsync(value: any, userContext?: any): AsyncValidationResult {
         return this.validateAsyncInContext({ userContext: userContext, schema: this as any, value })
     }
 
-    ignored(value = true): this {
-        return this.clone({ ...this.constraints, ignored: value }) as this
+    ignored(value: ConstraintValue<T, boolean> = true) {
+        return this.addConstraints(new IgnoredConstraint(value))
     }
     
-    ignoredIf<P extends object = any, R extends object = any>(condition: Condition<T, P, R>): this {
-        if (this.constraints.ignoredCondition)
-            throw new Error("Yop doesn't allow multiple ignoredIf conditions!")
-        return this.clone({ ...this.constraints, ignoredCondition: { value: condition } }) as this
+    required(value: ConstraintValue<T, boolean> = true, message?: Message) {
+        return this.clone(this.constraintsExecutor.clone().add(new RequiredConstraint(value, message)))
     }
     
-    required(message?: Message) {
-        return this.clone({ ...this.constraints, nullable: { value: false, message }, optional: { value: false, message } })
-    }
-    
-    requiredIf<P extends object = any, R extends object = any>(condition: Condition<T, P, R>, message?: Message<T, P, R>): this {
-        if (this.constraints.requiredCondition)
-            throw new Error("Yop doesn't allow multiple requiredIf conditions!")
-        return this.clone({ ...this.constraints, requiredCondition: { value: condition, message } }) as this
-    }
-    
-    defined(message?: Message) {
-        return this.clone({ ...this.constraints, optional: { value: false, message } })
+    defined(value: ConstraintValue<T, boolean> = true, message?: Message) {
+        return this.clone(this.constraintsExecutor.clone().add(new DefinedConstraint(value, message)))
     }
 
     when<P extends object = any, R extends object = any>(condition: ConditionWithSchema<T, P, R>): this {

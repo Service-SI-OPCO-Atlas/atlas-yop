@@ -1,39 +1,35 @@
-import { AnySchema, createValidationError, deepFreeze, DefinedType, Message, Reference, RequiredType, SchemaConstraints, validateMaxConstraint, validateMinConstraint, ValidationContext, ValidationError } from "./AnySchema"
+import { AnySchema, ConstraintsExecutor, ConstraintValue, deepFreeze, MaxConstraint, Message, MinConstraint, SchemaConstraints } from "./AnySchema"
+
+class MinFileConstraint extends MinConstraint<File | null | undefined, File | number> {
+    
+    override accept(value: File, constraintValue: File | number) {
+        return value.size >= (typeof constraintValue === "number" ? constraintValue : constraintValue.size)
+    }
+}
+
+class MaxFileConstraint extends MaxConstraint<File | null | undefined, File | number> {
+    
+    override accept(value: File, constraintValue: File | number) {
+        return value.size >= (typeof constraintValue === "number" ? constraintValue : constraintValue.size)
+    }
+}
 
 export class FileSchema<T extends File | null | undefined> extends AnySchema<T> {
 
-    constructor(constraints?: SchemaConstraints) {
-        super({ name: 'file', test: (value: any) => value instanceof File }, constraints)
+    constructor(constraints?: ConstraintsExecutor<T>) {
+        super({ name: 'file', test: (value: any) => value instanceof File }, undefined, constraints ?? new ConstraintsExecutor<T>())
         deepFreeze(this)
     }
 
-    protected clone(constraints?: SchemaConstraints) {
-        return new FileSchema<T>(constraints)
+    protected clone(constraints: ConstraintsExecutor<T>) {
+        return new FileSchema<T>(constraints) as this
     }
 
-    validateInContext(context: ValidationContext<T>): ValidationError[] {
-        return this.validateBasics(context) ?? (
-            !validateMinConstraint(context) ?
-            [createValidationError(context, 'min', this.constraints.min!.message)] :
-            !validateMaxConstraint(context) ?
-            [createValidationError(context, 'max', this.constraints.max!.message)] :
-            super.validateTestCondition(context)
-        )
+    min(value: ConstraintValue<T, File | number>, message?: Message) {
+        return this.addConstraints(new MinFileConstraint(value as any, message))
     }
 
-    override required(message?: Message) {
-        return super.required(message) as unknown as FileSchema<RequiredType<T>>
-    }
-
-    override defined(message?: Message) {
-        return super.defined(message) as unknown as FileSchema<DefinedType<T>>
-    }
-
-    min<P extends object = any, R extends object = any>(value: number | Reference<number, P, R>, message?: Message): this {
-        return this.clone({ ...this.constraints, min: { value, message } }) as this
-    }
-
-    max<P extends object = any, R extends object = any>(value: number | Reference<number, P, R>, message?: Message): this {
-        return this.clone({ ...this.constraints, max: { value, message } }) as this
+    max(value: ConstraintValue<T, File | number>, message?: Message) {
+        return this.addConstraints(new MaxFileConstraint(value as any, message))
     }
 }

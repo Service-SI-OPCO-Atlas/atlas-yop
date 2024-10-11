@@ -108,7 +108,7 @@ export class StringSchema<T extends string | null | undefined> extends AnySchema
     }
     
     override required(value: ConstraintValue<T, boolean> = true, message?: Message) {
-        return this.addConstraints(new RequiredStringConstraint(value, message))
+        return this.addConstraints(new RequiredStringConstraint(value as any, message))
     }
 
     min(value: ConstraintValue<T, number>, message?: Message) {

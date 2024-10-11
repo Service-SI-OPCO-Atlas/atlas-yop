@@ -1399,212 +1399,212 @@ describe('test.yop', () => {
             expect(schema.schemaAt('parent.child')?.toString()).toEqual("StringSchema [RequiredStringConstraint, TypeConstraint, MinStringConstraint]")
         })
 
-        // it('object.focusOn', () => {
-        //     const schema = Yop.object({
-        //         children: Yop.array(Yop.number().min(1))
-        //     }).required()
-        //     expect(schema.validate({
-        //         children: [0, 1, 2]
-        //     })).toEqual([{
-        //         "code": "min",
-        //         "message": "Doit être supérieur ou égal à 1",
-        //         "path": "children[0]",
-        //         "value": 0,
-        //     }])
-        //     expect(schema.validateAsync({
-        //         children: [0, 1, 2]
-        //     })).toEqual({
-        //         "errors": [{
-        //             "code": "min",
-        //             "message": "Doit être supérieur ou égal à 1",
-        //             "path": "children[0]",
-        //             "value": 0,
-        //         }],
-        //         "promises": []
-        //     })
-        //     expect(schema.focusOn("children[0]").validate({
-        //         children: [0, 1, 2]
-        //     })).toEqual([{
-        //         "code": "min",
-        //         "message": "Doit être supérieur ou égal à 1",
-        //         "path": "children[0]",
-        //         "value": 0,
-        //     }])
-        //     expect(schema.focusOn("children[0]").validateAsync({
-        //         children: [0, 1, 2]
-        //     })).toEqual({
-        //         "errors": [{
-        //             "code": "min",
-        //             "message": "Doit être supérieur ou égal à 1",
-        //             "path": "children[0]",
-        //             "value": 0,
-        //         }],
-        //         "promises": []
-        //     })
-        //     expect(schema.focusOn("children[1]").validate({
-        //         children: [0, 1, 2]
-        //     })).toEqual([])
-        //     expect(schema.focusOn("children[1]").validateAsync({
-        //         children: [0, 1, 2]
-        //     })).toEqual({ "errors": [], "promises": [] })
+        it('object.focusOn', () => {
+            const schema = Yop.object({
+                children: Yop.array(Yop.number().min(1))
+            }).required()
+            expect(schema.validate({
+                children: [0, 1, 2]
+            })).toEqual([{
+                "code": "min",
+                "message": "Doit être supérieur ou égal à 1",
+                "path": "children[0]",
+                "value": 0,
+            }])
+            // expect(schema.validateAsync({
+            //     children: [0, 1, 2]
+            // })).toEqual({
+            //     "errors": [{
+            //         "code": "min",
+            //         "message": "Doit être supérieur ou égal à 1",
+            //         "path": "children[0]",
+            //         "value": 0,
+            //     }],
+            //     "promises": []
+            // })
+            expect(schema.focusOn("children[0]").validate({
+                children: [0, 1, 2]
+            })).toEqual([{
+                "code": "min",
+                "message": "Doit être supérieur ou égal à 1",
+                "path": "children[0]",
+                "value": 0,
+            }])
+            // expect(schema.focusOn("children[0]").validateAsync({
+            //     children: [0, 1, 2]
+            // })).toEqual({
+            //     "errors": [{
+            //         "code": "min",
+            //         "message": "Doit être supérieur ou égal à 1",
+            //         "path": "children[0]",
+            //         "value": 0,
+            //     }],
+            //     "promises": []
+            // })
+            expect(schema.focusOn("children[1]").validate({
+                children: [0, 1, 2]
+            })).toEqual([])
+            // expect(schema.focusOn("children[1]").validateAsync({
+            //     children: [0, 1, 2]
+            // })).toEqual({ "errors": [], "promises": [] })
 
-        //     expect(schema.focusOn("children[2]").validate({
-        //         children: [0, 1, 2]
-        //     })).toEqual([])
-        // })
+            expect(schema.focusOn("children[2]").validate({
+                children: [0, 1, 2]
+            })).toEqual([])
+        })
     })
 
-    // describe('test.array', () => {
+    describe('test.array', () => {
 
-    //     it('array', () => {
-    //         const schema = Yop.array(Yop.number())
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate(undefined)).toEqual([])
-    //         expect(schema.validate([])).toEqual([])
-    //         expect(schema.validate([1, 2, 3])).toEqual([])
-    //         expect(schema.validate(["1", "2"])).toEqual([{
-    //             "code": "type",
-    //             "message": "Valeur du mauvais type",
-    //             "path": "[0]",
-    //             "value": "1",
-    //         }, {
-    //             "code": "type",
-    //             "message": "Valeur du mauvais type",
-    //             "path": "[1]",
-    //             "value": "2",
-    //         }])
-    //     })
+        it('array', () => {
+            const schema = Yop.array(Yop.number())
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([])
+            expect(schema.validate([])).toEqual([])
+            expect(schema.validate([1, 2, 3])).toEqual([])
+            expect(schema.validate(["1", "2"])).toEqual([{
+                "code": "type",
+                "message": "Valeur du mauvais type",
+                "path": "[0]",
+                "value": "1",
+            }, {
+                "code": "type",
+                "message": "Valeur du mauvais type",
+                "path": "[1]",
+                "value": "2",
+            }])
+        })
         
-    //     it('array.defined', () => {
-    //         const schema = Yop.array(Yop.string()).defined()
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate(undefined)).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": undefined,
-    //             "value": undefined,
-    //         }])
-    //         expect(schema.validate([""])).toEqual([])
-    //         expect(schema.validate(["", null, undefined])).toEqual([])
+        it('array.defined', () => {
+            const schema = Yop.array(Yop.string()).defined()
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": undefined,
+                "value": undefined,
+            }])
+            expect(schema.validate([""])).toEqual([])
+            expect(schema.validate(["", null, undefined])).toEqual([])
 
-    //         expect(schema.defined(true, "Pas d'${value} !").validate(undefined)).toEqual([{
-    //             "code": "required",
-    //             "message": "Pas d'undefined !",
-    //             "path": undefined,
-    //             "value": undefined,
-    //         }])
-    //     })
+            expect(schema.defined(true, "Pas d'${value} !").validate(undefined)).toEqual([{
+                "code": "required",
+                "message": "Pas d'undefined !",
+                "path": undefined,
+                "value": undefined,
+            }])
+        })
         
-    //     it('array.required', () => {
-    //         const schema = Yop.array(Yop.string()).required()
-    //         expect(schema.validate(null)).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": undefined,
-    //             "value": null,
-    //         }])
-    //         expect(schema.validate(undefined)).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": undefined,
-    //             "value": undefined,
-    //         }])
-    //         expect(schema.validate([""])).toEqual([])
-    //         expect(schema.validate(["", null, undefined])).toEqual([])
+        it('array.required', () => {
+            const schema = Yop.array(Yop.string()).required()
+            expect(schema.validate(null)).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": undefined,
+                "value": null,
+            }])
+            expect(schema.validate(undefined)).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": undefined,
+                "value": undefined,
+            }])
+            expect(schema.validate([""])).toEqual([])
+            expect(schema.validate(["", null, undefined])).toEqual([])
 
-    //         expect(schema.required(true, "Pas de ${value} !").validate(null)).toEqual([{
-    //             "code": "required",
-    //             "message": "Pas de null !",
-    //             "path": undefined,
-    //             "value": null,
-    //         }])
-    //     })
+            expect(schema.required(true, "Pas de ${value} !").validate(null)).toEqual([{
+                "code": "required",
+                "message": "Pas de null !",
+                "path": undefined,
+                "value": null,
+            }])
+        })
 
-    //     it('array.ignored', () => {
-    //         const schema = Yop.array(Yop.string()).required().ignored()
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate(undefined)).toEqual([])
-    //         expect(schema.validate(1)).toEqual([])
-    //         expect(schema.validate("abc")).toEqual([])
-    //         expect(schema.validate(true)).toEqual([])
-    //         expect(schema.validate({})).toEqual([])
-    //     })
+        it('array.ignored', () => {
+            const schema = Yop.array(Yop.string()).required().ignored()
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([])
+            expect(schema.validate(1)).toEqual([])
+            expect(schema.validate("abc")).toEqual([])
+            expect(schema.validate(true)).toEqual([])
+            expect(schema.validate({})).toEqual([])
+        })
 
-    //     it('array.min', () => {
-    //         const schema = Yop.array(Yop.number()).min(5)
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate(undefined)).toEqual([])
-    //         expect(schema.validate([])).toEqual([{
-    //             "code": "min",
-    //             "message": "Au moins 5 éléments",
-    //             "path": undefined,
-    //             "value": [],
-    //         }])
-    //         expect(schema.validate([1, 2, 3, 4])).toEqual([{
-    //             "code": "min",
-    //             "message": "Au moins 5 éléments",
-    //             "path": undefined,
-    //             "value": [1, 2, 3, 4],
-    //         }])
-    //         expect(schema.validate([1, 2, 3, 4, 5])).toEqual([])
-    //         expect(schema.validate([1, 2, 3, 4, 5, 6])).toEqual([])
+        it('array.min', () => {
+            const schema = Yop.array(Yop.number()).min(5)
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([])
+            expect(schema.validate([])).toEqual([{
+                "code": "min",
+                "message": "Au moins 5 éléments",
+                "path": undefined,
+                "value": [],
+            }])
+            expect(schema.validate([1, 2, 3, 4])).toEqual([{
+                "code": "min",
+                "message": "Au moins 5 éléments",
+                "path": undefined,
+                "value": [1, 2, 3, 4],
+            }])
+            expect(schema.validate([1, 2, 3, 4, 5])).toEqual([])
+            expect(schema.validate([1, 2, 3, 4, 5, 6])).toEqual([])
 
-    //         expect(schema.min(5, "Pas assez de nombres (min ${min}) !").validate([1])).toEqual([{
-    //             "code": "min",
-    //             "message": "Pas assez de nombres (min 5) !",
-    //             "path": undefined,
-    //             "value": [1],
-    //         }])
-    //     })
+            expect(schema.min(5, "Pas assez de nombres (min ${min}) !").validate([1])).toEqual([{
+                "code": "min",
+                "message": "Pas assez de nombres (min 5) !",
+                "path": undefined,
+                "value": [1],
+            }])
+        })
         
-    //     it('array.max', () => {
-    //         const schema = Yop.array(Yop.number()).max(5)
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate(undefined)).toEqual([])
-    //         expect(schema.validate([])).toEqual([])
-    //         expect(schema.validate([1, 2, 3, 4])).toEqual([])
-    //         expect(schema.validate([1, 2, 3, 4, 5])).toEqual([])
-    //         expect(schema.validate([1, 2, 3, 4, 5, 6])).toEqual([{
-    //             "code": "max",
-    //             "message": "Au plus 5 éléments",
-    //             "path": undefined,
-    //             "value": [1, 2, 3, 4, 5, 6],
-    //         }])
+        it('array.max', () => {
+            const schema = Yop.array(Yop.number()).max(5)
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([])
+            expect(schema.validate([])).toEqual([])
+            expect(schema.validate([1, 2, 3, 4])).toEqual([])
+            expect(schema.validate([1, 2, 3, 4, 5])).toEqual([])
+            expect(schema.validate([1, 2, 3, 4, 5, 6])).toEqual([{
+                "code": "max",
+                "message": "Au plus 5 éléments",
+                "path": undefined,
+                "value": [1, 2, 3, 4, 5, 6],
+            }])
 
-    //         expect(schema.max(5, "Trop de nombres (max ${max}) !").validate([1, 2, 3, 4, 5, 6, 7])).toEqual([{
-    //             "code": "max",
-    //             "message": "Trop de nombres (max 5) !",
-    //             "path": undefined,
-    //             "value": [1, 2, 3, 4, 5, 6, 7],
-    //         }])
-    //     })
+            expect(schema.max(5, "Trop de nombres (max ${max}) !").validate([1, 2, 3, 4, 5, 6, 7])).toEqual([{
+                "code": "max",
+                "message": "Trop de nombres (max 5) !",
+                "path": undefined,
+                "value": [1, 2, 3, 4, 5, 6, 7],
+            }])
+        })
 
                 
-    //     it('array.test', () => {
-    //         const schema = Yop.array(Yop.number().required()).test(context => context.value![0] === 1 && context.value![1] === 2, "Doit contenir 1 puis 2")
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate(undefined)).toEqual([])
-    //         expect(schema.validate([])).toEqual([{
-    //             "code": "test",
-    //             "message": "Doit contenir 1 puis 2",
-    //             "path": undefined,
-    //             "value": [],
-    //         }])
-    //         expect(schema.validate([null, 2])).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "[0]",
-    //             "value": null
-    //         }])
-    //         expect(schema.validate([1, 2])).toEqual([])
-    //         expect(schema.validate([1, 2, 3])).toEqual([])
-    //         expect(schema.validate([2, 1])).toEqual([{
-    //             "code": "test",
-    //             "message": "Doit contenir 1 puis 2",
-    //             "path": undefined,
-    //             "value": [2, 1],
-    //         }])
-    //     })
+        it('array.test', () => {
+            const schema = Yop.array(Yop.number().required()).test(context => context.value![0] === 1 && context.value![1] === 2, "Doit contenir 1 puis 2")
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([])
+            expect(schema.validate([])).toEqual([{
+                "code": "test",
+                "message": "Doit contenir 1 puis 2",
+                "path": undefined,
+                "value": [],
+            }])
+            expect(schema.validate([null, 2])).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "[0]",
+                "value": null
+            }])
+            expect(schema.validate([1, 2])).toEqual([])
+            expect(schema.validate([1, 2, 3])).toEqual([])
+            expect(schema.validate([2, 1])).toEqual([{
+                "code": "test",
+                "message": "Doit contenir 1 puis 2",
+                "path": undefined,
+                "value": [2, 1],
+            }])
+        })
         
     //     it('array.asyncTest', async () => {
     //         const schema = Yop.array(Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
@@ -1699,29 +1699,29 @@ describe('test.yop', () => {
     //         }])
     //     })
 
-    //     interface Child {
-    //         name: string
-    //     }
+        interface Child {
+            name: string
+        }
 
-    //     interface Parent {
-    //         children: Child[]
-    //     }
+        interface Parent {
+            children: Child[]
+        }
 
-    //     it('array.typed', () => {
-    //         const schema = Yop.object<Parent>({
-    //             children: Yop.array(Yop.object({
-    //                 name: Yop.string().required()
-    //             })).required()
-    //         })
-    //         expect(schema.validate({
-    //             children: [{
-    //                 name: 'Joe'
-    //             },{
-    //                 name: 'Jack'
-    //             },]
-    //         })).toEqual([])
-    //     })
-    // })
+        it('array.typed', () => {
+            const schema = Yop.object<Parent>({
+                children: Yop.array(Yop.object({
+                    name: Yop.string().required()
+                })).required()
+            })
+            expect(schema.validate({
+                children: [{
+                    name: 'Joe'
+                },{
+                    name: 'Jack'
+                },]
+            })).toEqual([])
+        })
+    })
 
     // describe('test.errors', () => {
 
@@ -1745,5 +1745,4 @@ describe('test.yop', () => {
     //             Yop.string().constraints.ignored = true
     //         ).toThrowError("Cannot assign to read only property 'ignored' of object '#<SchemaConstraints>'")
     //     })
-    // })
 })

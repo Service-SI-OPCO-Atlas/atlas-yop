@@ -437,7 +437,7 @@ export abstract class AnySchema<T> {
             if (type === 'object')
                 schema = (schema as ObjectSchema<any>).propertiesSchemas[pathSegment]
             else if (type === 'array')
-                schema = (schema as ArraySchema<any>).elementsSchema
+                schema = (schema as ArraySchema<any>).elementSchema
             else
                 return undefined
             

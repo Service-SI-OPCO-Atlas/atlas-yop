@@ -1,4 +1,4 @@
-import { AnySchema, AsyncValidationResult, createAsyncValidationResult, deepFreeze, IgnoredConstraint, ValidationContext } from "./AnySchema"
+import { AnySchema, deepFreeze, IgnoredConstraint } from "./AnySchema"
 
 export class IgnoredSchema extends AnySchema<any | null | undefined> {
 
@@ -10,9 +10,5 @@ export class IgnoredSchema extends AnySchema<any | null | undefined> {
 
     protected clone(): this {
         throw new Error("IgnoredSchema isn't mutable!")
-    }
-    
-    override validateAsyncInContext(_: ValidationContext<any>): AsyncValidationResult {
-        return createAsyncValidationResult()
     }
 }

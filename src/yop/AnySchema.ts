@@ -129,6 +129,8 @@ export abstract class AbstractConstraint<FieldType> {
     }
 }
 
+export type ConstraintContructor = new (...args: any) => AbstractConstraint<any>
+
 export class IgnoredConstraint extends AbstractConstraint<any> {
 
     constructor(readonly value: ConstraintValue<any, boolean> = true) {
@@ -290,6 +292,10 @@ export function getParentPath(path: string | null | undefined) {
     return path.substring(0, end)
 }
 
+export type ValidationSubset = {
+    type: "include" | "exclude"
+    constraints: ConstraintContructor | ConstraintContructor[],
+}
 
 export class ConstraintsExecutor<FieldType> {
 
@@ -320,10 +326,20 @@ export class ConstraintsExecutor<FieldType> {
         return this
     }
 
-    validate(context: ValidationContext<FieldType>): ValidationError[] {
+    validate(context: ValidationContext<FieldType>, subset?: ValidationSubset) {
         const nullishValue = this.isNull != null ? this.isNull(context.value) : context.value == null
 
-        for (const constraint of this.constraints) {
+        let constraints = this.constraints
+        if (subset != null) {
+            const subsetConstraints: Function[] = Array.isArray(subset.constraints) ? subset.constraints : [subset.constraints]
+            constraints = constraints.filter(
+                contraint => subsetConstraints.includes(contraint.constructor) ?
+                subset.type === 'include' :
+                subset.type === 'exclude'
+            )
+        }
+        
+        for (const constraint of constraints) {
             if (constraint.acceptNull === false && nullishValue)
                 continue
             const errors = constraint.validate(context)
@@ -331,13 +347,17 @@ export class ConstraintsExecutor<FieldType> {
                 return errors
         }
 
-        return []
+        return subset != null ? undefined : []
     }
 
     clone() {
         const clone = new ConstraintsExecutor<FieldType>(this.isNull)
         clone.constraints = this.constraints.concat()
         return clone
+    }
+
+    toString() {
+        return this.constraints.map(constraint => constraint.constructor.name).join(', ')
     }
 
     constructor(
@@ -349,7 +369,7 @@ export class ConstraintsExecutor<FieldType> {
 export abstract class AnySchema<T> {
 
     readonly type: string | TypeTester
-    protected readonly constraints: ConstraintsExecutor<T>
+    readonly constraints: ConstraintsExecutor<T>
 
     getType() {
         return (typeof this.type === 'string') ? this.type : this.type.name
@@ -369,8 +389,8 @@ export abstract class AnySchema<T> {
         return this.clone(constraintsExecutor)
     }
     
-    validateInContext(context: ValidationContext<T>): ValidationError[] {
-        return this.constraints.validate(context)
+    validateInContext(context: ValidationContext<T>, options?: ValidationSubset) {
+        return this.constraints.validate(context, options)
     }
 
     validateAsyncInContext(context: ValidationContext<T>): AsyncValidationResult {
@@ -404,49 +424,32 @@ export abstract class AnySchema<T> {
         return schema
     }
 
-    schemaAt(path: string, value: object, userContext?: any): AnySchema<any> | null {
+    schemaAt(path: string): AnySchema<any> | undefined {
         if (path === '')
             return this as AnySchema<any>
 
-        const context: ValidationContext<any> = {
-            userContext: userContext,
-            root: value,
-            parent: value,
-            schema: this as any,
-            value: value
-        }
+        let schema: AnySchema<any> = this
 
         const pathSegments = toPath(path)
-        let pathSegment: string | undefined = undefined
-        
-        // eslint-disable-next-line no-cond-assign
-        while (pathSegment = pathSegments.shift()) {
-            switch (context.schema.getType()) {
-                case 'object':
-                    context.path = context.path != null ? `${context.path}.${pathSegment}` : pathSegment
-                    context.schema = (context.schema as unknown as ObjectSchema<any>).propertiesSchemas[pathSegment] as any
-                    break
-                case 'array':
-                    context.path = `${context.path ?? ''}[${pathSegment}]`
-                    context.schema = (context.schema as unknown as ArraySchema<any>).elementsSchema
-                    break
-                default:
-                    return null
-            }
-
-            if (context.schema == null)
-                break
+        for (const pathSegment of pathSegments) {
+            const type = schema.getType()
             
-            context.parent = context.value
-            context.value = get(context.value, pathSegment)
-            context.schema = AnySchema.resolveConditions(context)
+            if (type === 'object')
+                schema = (schema as ObjectSchema<any>).propertiesSchemas[pathSegment]
+            else if (type === 'array')
+                schema = (schema as ArraySchema<any>).elementsSchema
+            else
+                return undefined
+            
+            if (schema == null)
+                return undefined
         }
 
-        return context.schema ?? null
+        return schema
     }
 
-    validate(value: any, userContext?: any): ValidationError[] {  
-        return this.constraints.validate({ userContext: userContext, schema: this as any, value })
+    validate(value: any, userContext?: any) {  
+        return this.validateInContext({ userContext: userContext, schema: this as any, value })
     }
 
     validateAsync(value: any, userContext?: any): AsyncValidationResult {
@@ -458,18 +461,16 @@ export abstract class AnySchema<T> {
     }
     
     required(value: ConstraintValue<T, boolean> = true, message?: Message) {
-        return this.clone(this.constraints.clone().add(new RequiredConstraint(value, message)))
+        return this.addConstraints(new RequiredConstraint(value, message))
     }
     
     defined(value: ConstraintValue<T, boolean> = true, message?: Message) {
-        return this.clone(this.constraints.clone().add(new DefinedConstraint(value, message)))
+        return this.addConstraints(new DefinedConstraint(value, message))
     }
 
-    // test<P extends object = any, R extends object = any>(condition: TestCondition<T, P, R>, message?: Message): this {
-    //     if (this.constraints.testCondition)
-    //         throw new Error("Yop doesn't allow multiple test conditions!")
-    //     return this.clone({ ...this.constraints, testCondition: { value: condition, code: 'test', message } }) as this
-    // }
+    test(condition: (context: ValidationContext<T>) => boolean, message?: Message): this {
+        return this.addConstraints(new TestConstraint(condition, message))
+    }
 
     // asyncTest<P extends object = any, R extends object = any>(condition: AsyncTestCondition<T, P, R>, message?: Message): this {
     //     if (this.constraints.asyncTestCondition)
@@ -555,4 +556,8 @@ export abstract class AnySchema<T> {
     //     const context = { path, root: value, parent: parent, schema: schemaAtPath as any, value: valueAtPath, userContext }
     //     return async ? schemaAtPath.validateAsyncInContext(context) : schemaAtPath.validateInContext(context)
     // }
+
+    toString() {
+        return this.constructor.name + " [" + this.constraints.toString() + "]"
+    }
 }

@@ -949,529 +949,510 @@ describe('test.yop', () => {
         })
     })
 
-    // describe('test.object', () => {
+    describe('test.object', () => {
 
-    //     it('object', () => {
-    //         const schema = Yop.object({})
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate(undefined)).toEqual([])
-    //         expect(schema.validate({})).toEqual([])
-    //     })
+        it('object', () => {
+            const schema = Yop.object({})
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([])
+            expect(schema.validate({})).toEqual([])
+        })
        
-    //     it('object.requiredIf', () => {
-    //         const schema = Yop.object({
-    //             name: Yop.string(),
-    //             age: Yop.number().required(context => context.parent.name === 'Joe')
-    //         })
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate({
-    //             name: 'Jack'
-    //         })).toEqual([])
-    //         expect(schema.validate({
-    //             name: 'Joe'
-    //         })).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "age",
-    //             "value": undefined
-    //         }])
-    //         expect(schema.validate({
-    //             name: 'Joe',
-    //             age: 23
-    //         })).toEqual([])
-    //     })
+        it('object.requiredIf', () => {
+            const schema = Yop.object({
+                name: Yop.string(),
+                age: Yop.number().required(context => context.parent.name === 'Joe')
+            })
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate({
+                name: 'Jack'
+            })).toEqual([])
+            expect(schema.validate({
+                name: 'Joe'
+            })).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "age",
+                "value": undefined
+            }])
+            expect(schema.validate({
+                name: 'Joe',
+                age: 23
+            })).toEqual([])
+        })
        
-    //     it('object.test.child', () => {
-    //         const schema = Yop.object({
-    //             name: Yop.string(),
-    //             age: Yop.number().test(context => (context.parent.name !== 'Joe' || context.value === 10), "Joe doit avoir 10 ans")
-    //         })
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate({
-    //             name: 'Jack'
-    //         })).toEqual([])
-    //         expect(schema.validate({
-    //             name: 'Joe',
-    //             age: 9
-    //         })).toEqual([{
-    //             "code": "test",
-    //             "message": "Joe doit avoir 10 ans",
-    //             "path": "age",
-    //             "value": 9
-    //         }])
-    //         expect(schema.validate({
-    //             name: 'Joe',
-    //             age: 10
-    //         })).toEqual([])
-    //     })
+        it('object.test.child', () => {
+            const schema = Yop.object({
+                name: Yop.string(),
+                age: Yop.number().test(context => (context.parent.name !== 'Joe' || context.value === 10), "Joe doit avoir 10 ans")
+            })
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate({
+                name: 'Jack'
+            })).toEqual([])
+            expect(schema.validate({
+                name: 'Joe',
+                age: 9
+            })).toEqual([{
+                "code": "test",
+                "message": "Joe doit avoir 10 ans",
+                "path": "age",
+                "value": 9
+            }])
+            expect(schema.validate({
+                name: 'Joe',
+                age: 10
+            })).toEqual([])
+        })
         
-    //     it('object.test.reference', () => {
-    //         const schema = Yop.object({
-    //             name: Yop.string(),
-    //             age: Yop.number().min(context => context.parent.name.length)
-    //         })
-    //         expect(schema.validate({
-    //             name: 'Joe',
-    //             age: 2
-    //         })).toEqual([{
-    //             "code": "min",
-    //             "message": "Doit être supérieur ou égal à 3",
-    //             "path": "age",
-    //             "value": 2
-    //         }])
-    //         expect(schema.validate({
-    //             name: 'Joe',
-    //             age: 3
-    //         })).toEqual([])
-    //     })
+        it('object.test.reference', () => {
+            const schema = Yop.object({
+                name: Yop.string(),
+                age: Yop.number().min(context => context.parent.name.length)
+            })
+            expect(schema.validate({
+                name: 'Joe',
+                age: 2
+            })).toEqual([{
+                "code": "min",
+                "message": "Doit être supérieur ou égal à 3",
+                "path": "age",
+                "value": 2
+            }])
+            expect(schema.validate({
+                name: 'Joe',
+                age: 3
+            })).toEqual([])
+        })
         
-    //     it('object.test', () => {
-    //         const schema = Yop.object({
-    //             name: Yop.string().required(),
-    //             age: Yop.number().required()
-    //         }).test(
-    //             context => context.value!.age > context.value!.name.length,
-    //             "L'âge doit être supérieur à la longueur du nom"
-    //         )
-    //         expect(schema.validate({
-    //             name: 'Joe'
-    //         })).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "age",
-    //             "value": undefined,
-    //         }])
-    //         expect(schema.validate({
-    //             name: 'Joe',
-    //             age: 2
-    //         })).toEqual([{
-    //             "code": "test",
-    //             "message": "L'âge doit être supérieur à la longueur du nom",
-    //             "path": undefined,
-    //             "value": {
-    //                 name: 'Joe',
-    //                 age: 2
-    //             }
-    //         }])
-    //         expect(schema.validate({
-    //             name: 'Joe',
-    //             age: 4
-    //         })).toEqual([])
-    //     })
+        it('object.test', () => {
+            const schema = Yop.object({
+                name: Yop.string().required(),
+                age: Yop.number().required()
+            }).test(
+                context => context.value!.age! > context.value!.name!.length,
+                "L'âge doit être supérieur à la longueur du nom"
+            )
+            expect(schema.validate({
+                name: 'Joe'
+            })).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "age",
+                "value": undefined,
+            }])
+            expect(schema.validate({
+                name: 'Joe',
+                age: 2
+            })).toEqual([{
+                "code": "test",
+                "message": "L'âge doit être supérieur à la longueur du nom",
+                "path": undefined,
+                "value": {
+                    name: 'Joe',
+                    age: 2
+                }
+            }])
+            expect(schema.validate({
+                name: 'Joe',
+                age: 4
+            })).toEqual([])
+        })
         
-    //     it('object.asyncTest', async () => {
-    //         const schema = Yop.object({
-    //             name: Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
-    //                 if (context.value === '.')
-    //                     reject() // or throw undefined
-    //                 else {
-    //                     if (context.value === "500")
-    //                         throw new Error("Error 500")
-    //                     setTimeout(() => {
-    //                         if (context.value === 'John')
-    //                             resolve(true)
-    //                         else
-    //                             resolve(context.createError("Should be 'John'"))
-    //                     }, 100)
-    //                 }
-    //             })),
-    //         })
-    //         expect(schema.validate({})).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "name",
-    //             "value": undefined,
-    //         }])
-    //         expect(errors(schema.validateAsync({}))).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "name",
-    //             "value": undefined,
-    //         }])
-    //         expect(await promises(schema.validateAsync({ name: '.' }))).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "skipped",
-    //             "message": "Async test skipped",
-    //             "path": "name",
-    //             "value": ".",
-    //         }])
-    //         expect(await promises(schema.validateAsync({ name: 'Jack' }))).toEqual([{
-    //             "code": "asyncTest",
-    //             "message": "Should be 'John'",
-    //             "path": "name",
-    //             "status": "invalid",
-    //             "value": "Jack"}
-    //         ])
-    //         expect(await promises(schema.validateAsync({ name: 'John' }))).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "valid",
-    //             "message": "Async test successful",
-    //             "path": "name",
-    //             "value": "John",
-    //         }])
-    //         expect(await promises(schema.validateAsyncAt("name", { name: "500" })!)).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "unavailable",
-    //             "message": "Error 500",
-    //             "reason": new Error("Error 500"),
-    //             "path": "name",
-    //             "value": "500",
-    //         }])
-    //         expect(await promises(schema.validateAsyncAt("name", { name: "Jack"})!)).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "invalid",
-    //             "message": "Should be 'John'",
-    //             "path": "name",
-    //             "value": "Jack",
-    //         }])
-    //         expect(await promises(schema.validateAsyncAt("name", { name: "John"})!)).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "valid",
-    //             "message": "Async test successful",
-    //             "path": "name",
-    //             "value": "John",
-    //         }])
-    //     })
+        // it('object.asyncTest', async () => {
+        //     const schema = Yop.object({
+        //         name: Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
+        //             if (context.value === '.')
+        //                 reject() // or throw undefined
+        //             else {
+        //                 if (context.value === "500")
+        //                     throw new Error("Error 500")
+        //                 setTimeout(() => {
+        //                     if (context.value === 'John')
+        //                         resolve(true)
+        //                     else
+        //                         resolve(context.createError("Should be 'John'"))
+        //                 }, 100)
+        //             }
+        //         })),
+        //     })
+        //     expect(schema.validate({})).toEqual([{
+        //         "code": "required",
+        //         "message": "Champ obligatoire",
+        //         "path": "name",
+        //         "value": undefined,
+        //     }])
+        //     expect(errors(schema.validateAsync({}))).toEqual([{
+        //         "code": "required",
+        //         "message": "Champ obligatoire",
+        //         "path": "name",
+        //         "value": undefined,
+        //     }])
+        //     expect(await promises(schema.validateAsync({ name: '.' }))).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "skipped",
+        //         "message": "Async test skipped",
+        //         "path": "name",
+        //         "value": ".",
+        //     }])
+        //     expect(await promises(schema.validateAsync({ name: 'Jack' }))).toEqual([{
+        //         "code": "asyncTest",
+        //         "message": "Should be 'John'",
+        //         "path": "name",
+        //         "status": "invalid",
+        //         "value": "Jack"}
+        //     ])
+        //     expect(await promises(schema.validateAsync({ name: 'John' }))).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "valid",
+        //         "message": "Async test successful",
+        //         "path": "name",
+        //         "value": "John",
+        //     }])
+        //     expect(await promises(schema.validateAsyncAt("name", { name: "500" })!)).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "unavailable",
+        //         "message": "Error 500",
+        //         "reason": new Error("Error 500"),
+        //         "path": "name",
+        //         "value": "500",
+        //     }])
+        //     expect(await promises(schema.validateAsyncAt("name", { name: "Jack"})!)).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "invalid",
+        //         "message": "Should be 'John'",
+        //         "path": "name",
+        //         "value": "Jack",
+        //     }])
+        //     expect(await promises(schema.validateAsyncAt("name", { name: "John"})!)).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "valid",
+        //         "message": "Async test successful",
+        //         "path": "name",
+        //         "value": "John",
+        //     }])
+        // })
 
-    //     it('object.asyncTestFocusOn', async () => {
-    //         const schema = Yop.object({
-    //             name: Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
-    //                 if (context.value === '.')
-    //                     reject() // or throw undefined
-    //                 else {
-    //                     if (context.value === "500")
-    //                         throw new Error("Error 500")
-    //                     setTimeout(() => {
-    //                         if (context.value === 'John')
-    //                             resolve(true)
-    //                         else
-    //                             resolve(context.createError("Should be 'John'"))
-    //                     }, 100)
-    //                 }
-    //             })),
-    //             age: Yop.number().required()
-    //         })
-    //         expect(schema.validate({})).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "name",
-    //             "value": undefined,
-    //         }, {
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "age",
-    //             "value": undefined,
-    //         }])
-    //         expect(schema.validateAsync({})).toEqual({
-    //             "errors": [{
-    //                 "code": "required",
-    //                 "message": "Champ obligatoire",
-    //                 "path": "name",
-    //                 "value": undefined,
-    //             }, {
-    //                 "code": "required",
-    //                 "message": "Champ obligatoire",
-    //                 "path": "age",
-    //                 "value": undefined,
-    //             }],
-    //             "promises": []
-    //         })
-    //         expect(schema.focusOn("age").validateAsync({})).toEqual({
-    //             "errors": [{
-    //                 "code": "required",
-    //                 "message": "Champ obligatoire",
-    //                 "path": "age",
-    //                 "value": undefined,
-    //             }],
-    //             "promises": []
-    //         })
-    //         expect(schema.validateAsyncAt("age", {})).toEqual({
-    //             "errors": [{
-    //                 "code": "required",
-    //                 "message": "Champ obligatoire",
-    //                 "path": "age",
-    //                 "value": undefined,
-    //             }],
-    //             "promises": []
-    //         })
-    //         expect(schema.focusOn("name").validateAsync({})).toEqual({
-    //             "errors": [{
-    //                 "code": "required",
-    //                 "message": "Champ obligatoire",
-    //                 "path": "name",
-    //                 "value": undefined,
-    //             }],
-    //             "promises": []
-    //         })
-    //         expect(schema.validateAsyncAt("name", {})).toEqual({
-    //             "errors": [{
-    //                 "code": "required",
-    //                 "message": "Champ obligatoire",
-    //                 "path": "name",
-    //                 "value": undefined,
-    //             }],
-    //             "promises": []
-    //         })
-    //         expect(schema.focusOn("age").validateAsync({ age: 0 })).toEqual({
-    //             "errors": [],
-    //             "promises": []
-    //         })
-    //         expect(schema.validateAsyncAt("age", { age: 0 })).toEqual({
-    //             "errors": [],
-    //             "promises": []
-    //         })
-    //         expect(await promises(schema.focusOn("name").validateAsync({ name: '.' }))).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "skipped",
-    //             "message": "Async test skipped",
-    //             "path": "name",
-    //             "value": ".",
-    //         }])
-    //         expect(await promises(schema.focusOn("name").validateAsync({ name: 'Jack' }))).toEqual([{
-    //             "code": "asyncTest",
-    //             "message": "Should be 'John'",
-    //             "path": "name",
-    //             "status": "invalid",
-    //             "value": "Jack"}
-    //         ])
-    //         expect(await promises(schema.focusOn("name").validateAsync({ name: 'John' }))).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "valid",
-    //             "message": "Async test successful",
-    //             "path": "name",
-    //             "value": "John",
-    //         }])
-    //         expect(await promises(schema.validateAsyncAt("name", { name: "500" })!)).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "unavailable",
-    //             "message": "Error 500",
-    //             "reason": new Error("Error 500"),
-    //             "path": "name",
-    //             "value": "500",
-    //         }])
-    //         expect(await promises(schema.validateAsyncAt("name", { name: "Jack"})!)).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "invalid",
-    //             "message": "Should be 'John'",
-    //             "path": "name",
-    //             "value": "Jack",
-    //         }])
-    //         expect(await promises(schema.validateAsyncAt("name", { name: "John"})!)).toEqual([{
-    //             "code": "asyncTest",
-    //             "status": "valid",
-    //             "message": "Async test successful",
-    //             "path": "name",
-    //             "value": "John",
-    //         }])
-    //     })
+        // it('object.asyncTestFocusOn', async () => {
+        //     const schema = Yop.object({
+        //         name: Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
+        //             if (context.value === '.')
+        //                 reject() // or throw undefined
+        //             else {
+        //                 if (context.value === "500")
+        //                     throw new Error("Error 500")
+        //                 setTimeout(() => {
+        //                     if (context.value === 'John')
+        //                         resolve(true)
+        //                     else
+        //                         resolve(context.createError("Should be 'John'"))
+        //                 }, 100)
+        //             }
+        //         })),
+        //         age: Yop.number().required()
+        //     })
+        //     expect(schema.validate({})).toEqual([{
+        //         "code": "required",
+        //         "message": "Champ obligatoire",
+        //         "path": "name",
+        //         "value": undefined,
+        //     }, {
+        //         "code": "required",
+        //         "message": "Champ obligatoire",
+        //         "path": "age",
+        //         "value": undefined,
+        //     }])
+        //     expect(schema.validateAsync({})).toEqual({
+        //         "errors": [{
+        //             "code": "required",
+        //             "message": "Champ obligatoire",
+        //             "path": "name",
+        //             "value": undefined,
+        //         }, {
+        //             "code": "required",
+        //             "message": "Champ obligatoire",
+        //             "path": "age",
+        //             "value": undefined,
+        //         }],
+        //         "promises": []
+        //     })
+        //     expect(schema.focusOn("age").validateAsync({})).toEqual({
+        //         "errors": [{
+        //             "code": "required",
+        //             "message": "Champ obligatoire",
+        //             "path": "age",
+        //             "value": undefined,
+        //         }],
+        //         "promises": []
+        //     })
+        //     expect(schema.validateAsyncAt("age", {})).toEqual({
+        //         "errors": [{
+        //             "code": "required",
+        //             "message": "Champ obligatoire",
+        //             "path": "age",
+        //             "value": undefined,
+        //         }],
+        //         "promises": []
+        //     })
+        //     expect(schema.focusOn("name").validateAsync({})).toEqual({
+        //         "errors": [{
+        //             "code": "required",
+        //             "message": "Champ obligatoire",
+        //             "path": "name",
+        //             "value": undefined,
+        //         }],
+        //         "promises": []
+        //     })
+        //     expect(schema.validateAsyncAt("name", {})).toEqual({
+        //         "errors": [{
+        //             "code": "required",
+        //             "message": "Champ obligatoire",
+        //             "path": "name",
+        //             "value": undefined,
+        //         }],
+        //         "promises": []
+        //     })
+        //     expect(schema.focusOn("age").validateAsync({ age: 0 })).toEqual({
+        //         "errors": [],
+        //         "promises": []
+        //     })
+        //     expect(schema.validateAsyncAt("age", { age: 0 })).toEqual({
+        //         "errors": [],
+        //         "promises": []
+        //     })
+        //     expect(await promises(schema.focusOn("name").validateAsync({ name: '.' }))).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "skipped",
+        //         "message": "Async test skipped",
+        //         "path": "name",
+        //         "value": ".",
+        //     }])
+        //     expect(await promises(schema.focusOn("name").validateAsync({ name: 'Jack' }))).toEqual([{
+        //         "code": "asyncTest",
+        //         "message": "Should be 'John'",
+        //         "path": "name",
+        //         "status": "invalid",
+        //         "value": "Jack"}
+        //     ])
+        //     expect(await promises(schema.focusOn("name").validateAsync({ name: 'John' }))).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "valid",
+        //         "message": "Async test successful",
+        //         "path": "name",
+        //         "value": "John",
+        //     }])
+        //     expect(await promises(schema.validateAsyncAt("name", { name: "500" })!)).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "unavailable",
+        //         "message": "Error 500",
+        //         "reason": new Error("Error 500"),
+        //         "path": "name",
+        //         "value": "500",
+        //     }])
+        //     expect(await promises(schema.validateAsyncAt("name", { name: "Jack"})!)).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "invalid",
+        //         "message": "Should be 'John'",
+        //         "path": "name",
+        //         "value": "Jack",
+        //     }])
+        //     expect(await promises(schema.validateAsyncAt("name", { name: "John"})!)).toEqual([{
+        //         "code": "asyncTest",
+        //         "status": "valid",
+        //         "message": "Async test successful",
+        //         "path": "name",
+        //         "value": "John",
+        //     }])
+        // })
        
-    //     it('object.ignoredIf', () => {
-    //         const schema = Yop.object({
-    //             name: Yop.string(),
-    //             age: Yop.number().required().min(5).ignoredIf(context => context.parent.name === 'Joe')
-    //         })
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate({
-    //             name: 'Joe'
-    //         })).toEqual([])
-    //         expect(schema.validate({
-    //             name: 'Joe',
-    //             age: 6
-    //         })).toEqual([])
-    //         expect(schema.validate({
-    //             name: 'Jack'
-    //         })).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "age",
-    //             "value": undefined
-    //         }])
-    //         expect(schema.validate({
-    //             name: 'Jack',
-    //             age: 1
-    //         })).toEqual([{
-    //             "code": "min",
-    //             "message": "Doit être supérieur ou égal à 5",
-    //             "path": "age",
-    //             "value": 1
-    //         }])
-    //         expect(schema.validate({
-    //             name: 'Jack',
-    //             age: 5
-    //         })).toEqual([])
-    //     })
+        it('object.ignoredIf', () => {
+            const schema = Yop.object({
+                name: Yop.string(),
+                age: Yop.number().required().min(5).ignored(context => context.parent.name === 'Joe')
+            })
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate({
+                name: 'Joe'
+            })).toEqual([])
+            expect(schema.validate({
+                name: 'Joe',
+                age: 6
+            })).toEqual([])
+            expect(schema.validate({
+                name: 'Jack'
+            })).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "age",
+                "value": undefined
+            }])
+            expect(schema.validate({
+                name: 'Jack',
+                age: 1
+            })).toEqual([{
+                "code": "min",
+                "message": "Doit être supérieur ou égal à 5",
+                "path": "age",
+                "value": 1
+            }])
+            expect(schema.validate({
+                name: 'Jack',
+                age: 5
+            })).toEqual([])
+        })
 
-    //     it('object.ignored', () => {
-    //         const schema = Yop.object({ name: Yop.string() }).required().ignored()
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate(undefined)).toEqual([])
-    //         expect(schema.validate(1)).toEqual([])
-    //         expect(schema.validate("abc")).toEqual([])
-    //         expect(schema.validate(true)).toEqual([])
-    //         expect(schema.validate({})).toEqual([])
-    //     })
+        it('object.ignored', () => {
+            const schema = Yop.object({ name: Yop.string() }).required().ignored()
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([])
+            expect(schema.validate(1)).toEqual([])
+            expect(schema.validate("abc")).toEqual([])
+            expect(schema.validate(true)).toEqual([])
+            expect(schema.validate({})).toEqual([])
+        })
 
-    //     interface A {
-    //         name: string
-    //     }
+        interface A {
+            name: string
+        }
 
-    //     it('object.ignoredSchema', () => {
-    //         const schema = Yop.object<A>({ name: Yop.ignored() })
-    //         expect(schema.validate(null)).toEqual([])
-    //         expect(schema.validate(undefined)).toEqual([])
-    //         expect(schema.validate({})).toEqual([])
-    //         expect(schema.validate({ name: null })).toEqual([])
-    //         expect(schema.validate({ name: undefined })).toEqual([])
-    //         expect(schema.validate({ name: "abc" })).toEqual([])
-    //     })
+        it('object.ignoredSchema', () => {
+            const schema = Yop.object<A>({ name: Yop.ignored() })
+            expect(schema.validate(null)).toEqual([])
+            expect(schema.validate(undefined)).toEqual([])
+            expect(schema.validate({})).toEqual([])
+            expect(schema.validate({ name: null })).toEqual([])
+            expect(schema.validate({ name: undefined })).toEqual([])
+            expect(schema.validate({ name: "abc" })).toEqual([])
+        })
 
-    //     it('object.validateAt', () => {
-    //         const schema = Yop.object({
-    //             parent: Yop.object({
-    //                 child: Yop.string().required().min(5)
-    //             }).required()
-    //         })
-    //         expect(schema.validateAt('parent.child', {
-    //             parent: {
-    //                 child: "12345"
-    //             }
-    //         })).toEqual([])
-    //         expect(schema.validateAt('parent.child', {
-    //             parent: {
-    //             }
-    //         })).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "parent.child",
-    //             "value": undefined,
-    //         }])
-    //         expect(schema.validateAt('parent.child', {
-    //             parent: {
-    //                 child: "123"
-    //             }
-    //         })).toEqual([{
-    //             "code": "min",
-    //             "message": "Minimum 5 caractères",
-    //             "path": "parent.child",
-    //             "value": "123",
-    //         }])
-    //         expect(schema.validateAt('', {
-    //             parent: {
-    //                 child: "123"
-    //             }
-    //         })).toEqual([{
-    //             "code": "min",
-    //             "message": "Minimum 5 caractères",
-    //             "path": "parent.child",
-    //             "value": "123",
-    //         }])
-    //         expect(schema.validateAt('parent', {
-    //             parent: {
-    //                 child: "123"
-    //             }
-    //         })).toEqual([{
-    //             "code": "min",
-    //             "message": "Minimum 5 caractères",
-    //             "path": "parent.child",
-    //             "value": "123",
-    //         }])
-    //         expect(schema.validateAt('parent', {
-    //         })).toEqual([{
-    //             "code": "required",
-    //             "message": "Champ obligatoire",
-    //             "path": "parent",
-    //             "value": undefined,
-    //         }])
-    //         expect(schema.validateAt('parent.children', {
-    //             parent: {
-    //                 child: "123"
-    //             }
-    //         })).toBeNull()
-    //     })
+        it('object.validateAt', () => {
+            const schema = Yop.object({
+                parent: Yop.object({
+                    child: Yop.string().required().min(5)
+                }).required()
+            })
+            expect(schema.validateAt('parent.child', {
+                parent: {
+                    child: "12345"
+                }
+            })).toEqual([])
+            expect(schema.validateAt('parent.child', {
+                parent: {
+                }
+            })).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "parent.child",
+                "value": undefined,
+            }])
+            expect(schema.validateAt('parent.child', {
+                parent: {
+                    child: "123"
+                }
+            })).toEqual([{
+                "code": "min",
+                "message": "Minimum 5 caractères",
+                "path": "parent.child",
+                "value": "123",
+            }])
+            expect(schema.validateAt('', {
+                parent: {
+                    child: "123"
+                }
+            })).toEqual([{
+                "code": "min",
+                "message": "Minimum 5 caractères",
+                "path": "parent.child",
+                "value": "123",
+            }])
+            expect(schema.validateAt('parent', {
+                parent: {
+                    child: "123"
+                }
+            })).toEqual([{
+                "code": "min",
+                "message": "Minimum 5 caractères",
+                "path": "parent.child",
+                "value": "123",
+            }])
+            expect(schema.validateAt('parent', {
+            })).toEqual([{
+                "code": "required",
+                "message": "Champ obligatoire",
+                "path": "parent",
+                "value": undefined,
+            }])
+            expect(schema.validateAt('parent.children', {
+                parent: {
+                    child: "123"
+                }
+            })).toBeUndefined()
+        })
 
-    //     it('object.schemaAt', () => {
-    //         const schema = Yop.object({
-    //             age: Yop.number(),
-    //             parent: Yop.object({
-    //                 child: Yop.string().required().min(5).when(context => context.root.age === 5 ? context.schema.max(9) : null)
-    //             }).required()
-    //         })
-    //         expect(pick(schema.schemaAt('parent.child', {
-    //             parent: {
-    //                 child: "12345"
-    //             }
-    //         })?.constraints, ['nullable', 'optional', 'min', 'max', 'regex'])).toEqual({
-    //             "min": {"message": undefined, "value": 5},
-    //             "nullable": {"message": undefined, "value": false},
-    //             "optional": {"message": undefined, "value": false},
-    //         })
-    //         expect(pick(schema.schemaAt('parent.child', {
-    //             age: 5,
-    //             parent: {
-    //                 child: "12345"
-    //             }
-    //         })?.constraints, ['nullable', 'optional', 'min', 'max', 'regex'])).toEqual({
-    //             "min": {"message": undefined, "value": 5},
-    //             "max": {"message": undefined, "value": 9},
-    //             "nullable": {"message": undefined, "value": false},
-    //             "optional": {"message": undefined, "value": false},
-    //         })
-    //     })
+        it('object.schemaAt', () => {
+            const schema = Yop.object({
+                age: Yop.number(),
+                parent: Yop.object({
+                    child: Yop.string().required().min(context => context.root.age === 5 ? 9 : 5)
+                }).required()
+            })
+            expect(schema.schemaAt('parent.child')?.toString()).toEqual("StringSchema [RequiredStringConstraint, TypeConstraint, MinStringConstraint]")
+        })
 
-    //     it('object.focusOn', () => {
-    //         const schema = Yop.object({
-    //             children: Yop.array(Yop.number().min(1))
-    //         }).required()
-    //         expect(schema.validate({
-    //             children: [0, 1, 2]
-    //         })).toEqual([{
-    //             "code": "min",
-    //             "message": "Doit être supérieur ou égal à 1",
-    //             "path": "children[0]",
-    //             "value": 0,
-    //         }])
-    //         expect(schema.validateAsync({
-    //             children: [0, 1, 2]
-    //         })).toEqual({
-    //             "errors": [{
-    //                 "code": "min",
-    //                 "message": "Doit être supérieur ou égal à 1",
-    //                 "path": "children[0]",
-    //                 "value": 0,
-    //             }],
-    //             "promises": []
-    //         })
-    //         expect(schema.focusOn("children[0]").validate({
-    //             children: [0, 1, 2]
-    //         })).toEqual([{
-    //             "code": "min",
-    //             "message": "Doit être supérieur ou égal à 1",
-    //             "path": "children[0]",
-    //             "value": 0,
-    //         }])
-    //         expect(schema.focusOn("children[0]").validateAsync({
-    //             children: [0, 1, 2]
-    //         })).toEqual({
-    //             "errors": [{
-    //                 "code": "min",
-    //                 "message": "Doit être supérieur ou égal à 1",
-    //                 "path": "children[0]",
-    //                 "value": 0,
-    //             }],
-    //             "promises": []
-    //         })
-    //         expect(schema.focusOn("children[1]").validate({
-    //             children: [0, 1, 2]
-    //         })).toEqual([])
-    //         expect(schema.focusOn("children[1]").validateAsync({
-    //             children: [0, 1, 2]
-    //         })).toEqual({ "errors": [], "promises": [] })
+        // it('object.focusOn', () => {
+        //     const schema = Yop.object({
+        //         children: Yop.array(Yop.number().min(1))
+        //     }).required()
+        //     expect(schema.validate({
+        //         children: [0, 1, 2]
+        //     })).toEqual([{
+        //         "code": "min",
+        //         "message": "Doit être supérieur ou égal à 1",
+        //         "path": "children[0]",
+        //         "value": 0,
+        //     }])
+        //     expect(schema.validateAsync({
+        //         children: [0, 1, 2]
+        //     })).toEqual({
+        //         "errors": [{
+        //             "code": "min",
+        //             "message": "Doit être supérieur ou égal à 1",
+        //             "path": "children[0]",
+        //             "value": 0,
+        //         }],
+        //         "promises": []
+        //     })
+        //     expect(schema.focusOn("children[0]").validate({
+        //         children: [0, 1, 2]
+        //     })).toEqual([{
+        //         "code": "min",
+        //         "message": "Doit être supérieur ou égal à 1",
+        //         "path": "children[0]",
+        //         "value": 0,
+        //     }])
+        //     expect(schema.focusOn("children[0]").validateAsync({
+        //         children: [0, 1, 2]
+        //     })).toEqual({
+        //         "errors": [{
+        //             "code": "min",
+        //             "message": "Doit être supérieur ou égal à 1",
+        //             "path": "children[0]",
+        //             "value": 0,
+        //         }],
+        //         "promises": []
+        //     })
+        //     expect(schema.focusOn("children[1]").validate({
+        //         children: [0, 1, 2]
+        //     })).toEqual([])
+        //     expect(schema.focusOn("children[1]").validateAsync({
+        //         children: [0, 1, 2]
+        //     })).toEqual({ "errors": [], "promises": [] })
 
-    //         expect(schema.focusOn("children[2]").validate({
-    //             children: [0, 1, 2]
-    //         })).toEqual([])
-    //     })
-    // })
+        //     expect(schema.focusOn("children[2]").validate({
+        //         children: [0, 1, 2]
+        //     })).toEqual([])
+        // })
+    })
 
     // describe('test.array', () => {
 

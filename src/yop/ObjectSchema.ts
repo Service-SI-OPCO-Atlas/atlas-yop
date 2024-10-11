@@ -1,52 +1,50 @@
-import { AnySchema, AsyncValidationResult, ConstraintsExecutor, createAsyncValidationResult, deepFreeze, SchemaForType, ValidationContext, ValidationError } from "./AnySchema"
+import { get } from "lodash-es"
+import { AnySchema, AsyncValidationResult, ConstraintsExecutor, createAsyncValidationResult, deepFreeze, SchemaForType, TestConstraint, ValidationContext, ValidationError } from "./AnySchema"
 
 export type ObjectPropertiesSchemas<T extends object | null | undefined> = { [P in keyof T]: SchemaForType<T[P]> }
 
 export class ObjectSchema<T extends object | null | undefined> extends AnySchema<T> {
 
-    readonly propertiesSchemas: ObjectPropertiesSchemas<T>
-    readonly validationPath: string | null
-
-    constructor(propertiesSchemas: ObjectPropertiesSchemas<T>, constraints?: ConstraintsExecutor<T>, validationPath: string | null = null) {
+    constructor(
+        readonly propertiesSchemas: ObjectPropertiesSchemas<T>,
+        constraints?: ConstraintsExecutor<T>,
+        readonly validationPath?: string
+    ) {
         super('object', constraints)
-        this.propertiesSchemas = propertiesSchemas
-        this.validationPath = validationPath
         deepFreeze(this)
     }
 
-    protected clone(constraints?: ConstraintsExecutor<T>, validationPath: string | null = null) {
+    protected clone(constraints?: ConstraintsExecutor<T>, validationPath?: string) {
         return new ObjectSchema<T>(this.propertiesSchemas, constraints, validationPath) as this
     }
 
-    override validateInContext(context: ValidationContext<T>): ValidationError[] {
-        let errors = this.validateBasics(context)
+    override validateInContext(context: ValidationContext<T>) {
+        let errors = super.validateInContext(context, { type: "exclude", constraints: TestConstraint })
         
-        if (errors === undefined) {
+        if (errors == null) {
             errors = []
             
             const value = context.value as any
-            for (const [propertyName, schema] of Object.entries(this.propertiesSchemas)) {
-                let propertySchema = (schema as AnySchema<any>)
-                const propertyValue = value[propertyName]
-                const propertyContext = {
-                    userContext: context.userContext,
-                    schema: propertySchema,
-                    root: context.root ?? value,
-                    parent: value,
-                    path: context.path ? `${context.path}.${propertyName}` : propertyName,
-                    value: propertyValue
+            if (value != null) {
+                for (const [propertyName, schema] of Object.entries(this.propertiesSchemas)) {
+                    const propertySchema = (schema as AnySchema<any>)
+                    const propertyValue = value[propertyName]
+                    const propertyContext = {
+                        userContext: context.userContext,
+                        schema: propertySchema,
+                        root: context.root ?? value,
+                        parent: value,
+                        path: context.path ? `${context.path}.${propertyName}` : propertyName,
+                        value: propertyValue
+                    }
+                    const propertyErrors = propertySchema.validateInContext(propertyContext as ValidationContext<any>) ?? []
+                    errors.push(...propertyErrors)
                 }
-
-                propertySchema = AnySchema.resolveConditions(propertyContext as ValidationContext<any>)
-                propertyContext.schema = propertySchema
-
-                const propertyErrors = propertySchema.validateInContext(propertyContext as ValidationContext<any>)
-                errors.push(...propertyErrors)
             }
-
-            if (errors.length === 0)
-                errors = super.validateTestCondition(context) ?? []
         }
+
+        if (errors.length === 0)
+            errors = super.validateInContext(context, { type: "include", constraints: TestConstraint }) ?? []
         
         return errors
     }
@@ -97,23 +95,29 @@ export class ObjectSchema<T extends object | null | undefined> extends AnySchema
         return this.clone(this.constraints, validationPath)
     }
 
-    override validate(value: any, userContext?: any): ValidationError[] {
+    override validate(value: any, userContext?: any) {
         if (this.validationPath)
             return this.validateAt(this.validationPath, value, userContext) ?? []
-        return super.validate(value, userContext)
+        return super.validate(value, userContext) ?? []
     }
 
-    override validateAsync(value: any, userContext?: any): AsyncValidationResult {
-        if (this.validationPath)
-            return this.validateAsyncAt(this.validationPath, value, userContext) ?? createAsyncValidationResult()
-        return super.validateAsync(value, userContext)
+    validateAt(path: string, value: object, userContext?: any): ValidationError[] | undefined {
+        if (path === "")
+            return super.validate(value, userContext) ?? []
+        
+        const schemaAtPath = this.schemaAt(path)
+        if (schemaAtPath == null)
+            return undefined
+        return schemaAtPath.validateInContext({ schema: schemaAtPath as any, value: get(value, path), userContext, path })
     }
 
-    validateAt(path: string, value: object, userContext?: any): ValidationError[] | null {
-        return this.baseValidateAt(false, path, value, userContext) as (ValidationError[] | null)
-    }
+    // override validateAsync(value: any, userContext?: any): AsyncValidationResult {
+    //     if (this.validationPath)
+    //         return this.validateAsyncAt(this.validationPath, value, userContext) ?? createAsyncValidationResult()
+    //     return super.validateAsync(value, userContext)
+    // }
 
-    validateAsyncAt(path: string, value: object, userContext?: any): AsyncValidationResult | null {
-        return this.baseValidateAt(true, path, value, userContext) as (AsyncValidationResult | null)
-    }
+    // validateAsyncAt(path: string, value: object, userContext?: any): AsyncValidationResult | null {
+    //     return this.baseValidateAt(true, path, value, userContext) as (AsyncValidationResult | null)
+    // }
 }

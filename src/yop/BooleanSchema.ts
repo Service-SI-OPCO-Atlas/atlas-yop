@@ -3,7 +3,7 @@ import { AnySchema, ConstraintsExecutor, ConstraintValue, deepFreeze, Message, O
 export class BooleanSchema<T extends boolean | null | undefined> extends AnySchema<T> {
 
     constructor(constraints?: ConstraintsExecutor<T>) {
-        super('boolean', undefined, constraints ?? new ConstraintsExecutor<T>())
+        super('boolean', constraints ?? new ConstraintsExecutor<T>())
         deepFreeze(this)
     }
 

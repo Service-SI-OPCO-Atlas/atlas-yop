@@ -95,13 +95,6 @@ export const createValidationError = (context: ValidationContext<any>, code: key
     return { path: path ?? context.path, value: context.value, code, message: errorMessage }
 }
 
-export type Condition<T, P extends object = any, R extends object = any> = (context: ValidationContext<T, P, R>) => boolean
-export type TestCondition<T, P extends object = any, R extends object = any> = (context: TestValidationContext<T, P, R>) => boolean
-export type AsyncTestCondition<T, P extends object = any, R extends object = any> = (context: TestValidationContext<T, P, R>) => Promise<boolean>
-export type ConditionWithSchema<T, P extends object = any, R extends object = any> = (context: ValidationContext<T, P, R>) => SchemaForType<T> | null | undefined
-export type Reference<T, P extends object = any, R extends object = any> = (context: ValidationContext<T, P, R>) => T | null | undefined
-
-
 export type ConstraintValue<FieldType, ValueType> =  ValueType | ((context: ValidationContext<FieldType>) => ValueType)
 export function resolveConstraintValue<FieldType, ValueType>(value: ConstraintValue<FieldType, ValueType>, context: ValidationContext<FieldType>) {
     if (typeof value === 'function')
@@ -255,78 +248,12 @@ export class TestConstraint<FieldType> extends AbstractConstraint<NonNullable<Fi
     }
 }
 
-
 export type Constraint<T> = {
     value: T
     code?: keyof ErrorMessages
     message?: Message
     oneOfValues?: any[]
 }
-
-
-export class SchemaConstraints {
-    nullable: Constraint<boolean> = { value: true }
-    optional: Constraint<boolean> = { value: true }
-    min?: Constraint<any>
-    max?: Constraint<any>
-    regex?: Constraint<RegExp>
-
-    requiredCondition?: Constraint<Condition<any>>
-    whenCondition?: ConditionWithSchema<any>
-    testCondition?: Constraint<TestCondition<any>>
-    asyncTestCondition?: Constraint<AsyncTestCondition<any>>
-
-    ignored = false
-    ignoredCondition?: Constraint<Condition<any>>
-}
-
-type AnyValidationContext = ValidationContext<any | null | undefined>
-
-const validateMinMaxConstraint = (context: AnyValidationContext, test: (constraintValue: number, value: number) => boolean, constraint?: Constraint<any>) => {
-    if (constraint !== undefined) {
-        let constraintValue = constraint.value
-        if (typeof constraintValue === 'function') {
-            const result = constraintValue(context as any)
-            if (result === null || result === undefined)
-                return true
-            constraintValue = result
-        }
-        if (constraintValue instanceof Date)
-            constraintValue = constraintValue.getTime()
-        else if (typeof constraintValue === 'string')
-            constraintValue = context.schema.getBound(constraintValue)
-        const value =
-            context.value instanceof Date ? context.value.getTime() :
-            context.value instanceof File ? context.value.size :
-            Array.isArray(context.value) ? context.value.length :
-            typeof context.value === 'string' ? context.schema.getBound(context.value) :
-            typeof context.value === 'number' ? context.value :
-            undefined
-        if (value !== undefined)
-            return test(constraintValue, value)
-    }
-    return true
-}
-
-export const validateMinConstraint = (context: AnyValidationContext) => {
-    return validateMinMaxConstraint(context, (constraintValue, value) => value >= constraintValue, context.schema.constraints.min)
-}
-
-export const validateMaxConstraint = (context: AnyValidationContext) => {
-    return validateMinMaxConstraint(context, (constraintValue, value) => value <= constraintValue, context.schema.constraints.max)
-}
-
-
-export type RequiredType<T> = Exclude<T, null | undefined>
-export type DefinedType<T> = Exclude<T, undefined>
-export type PreserveUndefinedAndNull<T, U> =
-    T extends [undefined | null] ?
-        U | undefined | null :
-    T extends undefined ?
-        U | undefined :
-    T extends null ?
-        U | null :
-    U
 
 type TypeTester = {
     name: string
@@ -422,52 +349,37 @@ export class ConstraintsExecutor<FieldType> {
 export abstract class AnySchema<T> {
 
     readonly type: string | TypeTester
-    readonly constraints: SchemaConstraints
-
-    protected constraintsExecutor: ConstraintsExecutor<T>
+    protected readonly constraints: ConstraintsExecutor<T>
 
     getType() {
         return (typeof this.type === 'string') ? this.type : this.type.name
     }
 
-    protected constructor(type: string | TypeTester, constraints?: SchemaConstraints, constraintsExecutor?: ConstraintsExecutor<T>) {
-        this.constraints = constraints ?? new SchemaConstraints()
-        this.constraintsExecutor = constraintsExecutor ?? new ConstraintsExecutor<T>()
+    protected constructor(type: string | TypeTester, constraintsExecutor?: ConstraintsExecutor<T>) {
         this.type = type
+        this.constraints = constraintsExecutor ?? new ConstraintsExecutor<T>()
     }
 
-    protected abstract clone(constraints?: SchemaConstraints | ConstraintsExecutor<T>): this
+    protected abstract clone(constraints?: ConstraintsExecutor<T>): this
 
     protected addConstraints(...constraints: AbstractConstraint<T>[]) {
-        const constraintsExecutor = this.constraintsExecutor.clone()
+        const constraintsExecutor = this.constraints.clone()
         for (const constraint of constraints)
             constraintsExecutor.add(constraint)
         return this.clone(constraintsExecutor)
     }
-
-    protected validateBasics(context: ValidationContext<T>): ValidationError[] | undefined {
-        if (this.constraints.ignored || this.constraints.ignoredCondition?.value(context) === true)
-            return []
-        if (context.value === null)
-            return this.constraints.nullable.value ? [] : [createValidationError(context, 'required', this.constraints.nullable.message)]
-        if (context.value === undefined)
-            return this.constraints.optional.value ? [] : [createValidationError(context, 'required', this.constraints.optional.message)]
-        if ((typeof this.type === 'string') ? (typeof context.value !== this.type) : !this.type.test(context.value))
-            return [createValidationError(context, 'type')]
-        return undefined
-    }
     
     validateInContext(context: ValidationContext<T>): ValidationError[] {
-        return this.constraintsExecutor.validate(context)
+        return this.constraints.validate(context)
     }
 
     validateAsyncInContext(context: ValidationContext<T>): AsyncValidationResult {
         const result = createAsyncValidationResult(this.validateInContext(context))
-        if (result.errors.length === 0) {
-            const promise = this.validateAsyncTestCondition(context)
-            if (promise != null)
-                result.promises.push(promise)
-        }
+        // if (result.errors.length === 0) {
+        //     const promise = this.validateAsyncTestCondition(context)
+        //     if (promise != null)
+        //         result.promises.push(promise)
+        // }
         return result
     }
 
@@ -534,7 +446,7 @@ export abstract class AnySchema<T> {
     }
 
     validate(value: any, userContext?: any): ValidationError[] {  
-        return this.constraintsExecutor.validate({ userContext: userContext, schema: this as any, value })
+        return this.constraints.validate({ userContext: userContext, schema: this as any, value })
     }
 
     validateAsync(value: any, userContext?: any): AsyncValidationResult {
@@ -546,116 +458,101 @@ export abstract class AnySchema<T> {
     }
     
     required(value: ConstraintValue<T, boolean> = true, message?: Message) {
-        return this.clone(this.constraintsExecutor.clone().add(new RequiredConstraint(value, message)))
+        return this.clone(this.constraints.clone().add(new RequiredConstraint(value, message)))
     }
     
     defined(value: ConstraintValue<T, boolean> = true, message?: Message) {
-        return this.clone(this.constraintsExecutor.clone().add(new DefinedConstraint(value, message)))
+        return this.clone(this.constraints.clone().add(new DefinedConstraint(value, message)))
     }
 
-    when<P extends object = any, R extends object = any>(condition: ConditionWithSchema<T, P, R>): this {
-        if (this.constraints.whenCondition)
-            throw new Error("Yop doesn't allow multiple when conditions!")
-        return this.clone({ ...this.constraints, whenCondition: condition }) as this
-    }
+    // test<P extends object = any, R extends object = any>(condition: TestCondition<T, P, R>, message?: Message): this {
+    //     if (this.constraints.testCondition)
+    //         throw new Error("Yop doesn't allow multiple test conditions!")
+    //     return this.clone({ ...this.constraints, testCondition: { value: condition, code: 'test', message } }) as this
+    // }
 
-    test<P extends object = any, R extends object = any>(condition: TestCondition<T, P, R>, message?: Message): this {
-        if (this.constraints.testCondition)
-            throw new Error("Yop doesn't allow multiple test conditions!")
-        return this.clone({ ...this.constraints, testCondition: { value: condition, code: 'test', message } }) as this
-    }
+    // asyncTest<P extends object = any, R extends object = any>(condition: AsyncTestCondition<T, P, R>, message?: Message): this {
+    //     if (this.constraints.asyncTestCondition)
+    //         throw new Error("Yop doesn't allow multiple async test conditions!")
+    //     return this.clone({ ...this.constraints, asyncTestCondition: { value: condition, code: 'asyncTest', message } }) as this
+    // }
 
-    asyncTest<P extends object = any, R extends object = any>(condition: AsyncTestCondition<T, P, R>, message?: Message): this {
-        if (this.constraints.asyncTestCondition)
-            throw new Error("Yop doesn't allow multiple async test conditions!")
-        return this.clone({ ...this.constraints, asyncTestCondition: { value: condition, code: 'asyncTest', message } }) as this
-    }
-
-    protected createOneOf<U extends T>(values: ReadonlyArray<U>, message?: Message): this {
-        return this.clone({ ...this.constraints, testCondition: {
-            value: context => values.includes(context.value as U),
-            code: 'oneOf',
-            message,
-            oneOfValues: [ ...values ]
-        }}) as this
-    }
-
-    protected validateTestCondition(context: ValidationContext<T>): ValidationError[] {
-        let errors: ValidationError[] = []
+    // protected validateTestCondition(context: ValidationContext<T>): ValidationError[] {
+    //     let errors: ValidationError[] = []
         
-        if (this.constraints.testCondition != null) {
-            const testContext: TestValidationContext<T> = {
-                ...context,
-                createError: (message: string, path?: string) => {
-                    errors.push(createValidationError(context, "test", message, path))
-                    return false
-                }
-            }
+    //     if (this.constraints.testCondition != null) {
+    //         const testContext: TestValidationContext<T> = {
+    //             ...context,
+    //             createError: (message: string, path?: string) => {
+    //                 errors.push(createValidationError(context, "test", message, path))
+    //                 return false
+    //             }
+    //         }
             
-            if (this.constraints.testCondition.value(testContext) === false && errors.length === 0) {
-                errors = [createValidationError(
-                    context,
-                    this.constraints.testCondition.code ?? 'test',
-                    this.constraints.testCondition.message,
-                )]
-            }
-        }
+    //         if (this.constraints.testCondition.value(testContext) === false && errors.length === 0) {
+    //             errors = [createValidationError(
+    //                 context,
+    //                 this.constraints.testCondition.code ?? 'test',
+    //                 this.constraints.testCondition.message,
+    //             )]
+    //         }
+    //     }
 
-        return errors
-    }
+    //     return errors
+    // }
 
-    protected validateAsyncTestCondition(context: ValidationContext<T>): Promise<AsyncValidationError[]> | undefined {
-        if (this.constraints.asyncTestCondition == null)
-            return undefined
+    // protected validateAsyncTestCondition(context: ValidationContext<T>): Promise<AsyncValidationError[]> | undefined {
+    //     if (this.constraints.asyncTestCondition == null)
+    //         return undefined
         
-        let error: AsyncValidationError | undefined = undefined
+    //     let error: AsyncValidationError | undefined = undefined
 
-        const testContext: TestValidationContext<T> = {
-            ...context,
-            createError: (message: string, path?: string) => {
-                error = { ...createValidationError(context, "asyncTest", message, path), status: "invalid" }
-                return false
-            }
-        }
+    //     const testContext: TestValidationContext<T> = {
+    //         ...context,
+    //         createError: (message: string, path?: string) => {
+    //             error = { ...createValidationError(context, "asyncTest", message, path), status: "invalid" }
+    //             return false
+    //         }
+    //     }
 
-        const asyncTestCondition = this.constraints.asyncTestCondition
-        return new Promise(resolve => {
-            asyncTestCondition.value(testContext)
-                .then(success => {
-                    if (success)
-                        error = { ...createValidationError(context, 'asyncTest', 'Async test successful'), status: "valid" }
-                    else if (error == null)
-                        error = { ...createValidationError(context, 'asyncTest', asyncTestCondition.message), status: "invalid" }
-                    resolve([error])
-                })
-                .catch(reason => {
-                    if (reason == null)
-                        error = { ...createValidationError(context, 'asyncTest', "Async test skipped"), status: "skipped" }
-                    else {
-                        error = {
-                            ...createValidationError(context, 'asyncTest', reason.message ?? reason.toString?.()),
-                            status: "unavailable",
-                            reason: reason
-                        }
-                    }
-                    resolve([error])
-                })
-        })
-    }
+    //     const asyncTestCondition = this.constraints.asyncTestCondition
+    //     return new Promise(resolve => {
+    //         asyncTestCondition.value(testContext)
+    //             .then(success => {
+    //                 if (success)
+    //                     error = { ...createValidationError(context, 'asyncTest', 'Async test successful'), status: "valid" }
+    //                 else if (error == null)
+    //                     error = { ...createValidationError(context, 'asyncTest', asyncTestCondition.message), status: "invalid" }
+    //                 resolve([error])
+    //             })
+    //             .catch(reason => {
+    //                 if (reason == null)
+    //                     error = { ...createValidationError(context, 'asyncTest', "Async test skipped"), status: "skipped" }
+    //                 else {
+    //                     error = {
+    //                         ...createValidationError(context, 'asyncTest', reason.message ?? reason.toString?.()),
+    //                         status: "unavailable",
+    //                         reason: reason
+    //                     }
+    //                 }
+    //                 resolve([error])
+    //             })
+    //     })
+    // }
 
-    protected baseValidateAt(async: boolean, path: string, value: object, userContext?: any): ValidationError[] | AsyncValidationResult | null {
-        if (path === '')
-            return this.validate(value, userContext)
+    // protected baseValidateAt(async: boolean, path: string, value: object, userContext?: any): ValidationError[] | AsyncValidationResult | null {
+    //     if (path === '')
+    //         return this.validate(value, userContext)
 
-        const schemaAtPath = this.schemaAt(path, value, userContext)
-        if (!schemaAtPath)
-            return null
+    //     const schemaAtPath = this.schemaAt(path, value, userContext)
+    //     if (!schemaAtPath)
+    //         return null
         
-        const pathElements = toPath(path)
-        const parent = pathElements.length > 1 ? get(value, pathElements.slice(0, -1)) : value
-        const valueAtPath = get(parent, pathElements[pathElements.length - 1])
+    //     const pathElements = toPath(path)
+    //     const parent = pathElements.length > 1 ? get(value, pathElements.slice(0, -1)) : value
+    //     const valueAtPath = get(parent, pathElements[pathElements.length - 1])
 
-        const context = { path, root: value, parent: parent, schema: schemaAtPath as any, value: valueAtPath, userContext }
-        return async ? schemaAtPath.validateAsyncInContext(context) : schemaAtPath.validateInContext(context)
-    }
+    //     const context = { path, root: value, parent: parent, schema: schemaAtPath as any, value: valueAtPath, userContext }
+    //     return async ? schemaAtPath.validateAsyncInContext(context) : schemaAtPath.validateInContext(context)
+    // }
 }

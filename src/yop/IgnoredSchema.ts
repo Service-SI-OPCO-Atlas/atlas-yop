@@ -1,14 +1,14 @@
-import { AnySchema, AsyncValidationResult, createAsyncValidationResult, deepFreeze, IgnoredConstraint, SchemaConstraints, ValidationContext, ValidationError } from "./AnySchema"
+import { AnySchema, AsyncValidationResult, createAsyncValidationResult, deepFreeze, IgnoredConstraint, ValidationContext } from "./AnySchema"
 
 export class IgnoredSchema extends AnySchema<any | null | undefined> {
 
     constructor() {
         super('ignored')
-        this.constraintsExecutor.add(new IgnoredConstraint())
+        this.constraints.add(new IgnoredConstraint())
         deepFreeze(this)
     }
 
-    protected clone(_?: SchemaConstraints): this {
+    protected clone(): this {
         throw new Error("IgnoredSchema isn't mutable!")
     }
     

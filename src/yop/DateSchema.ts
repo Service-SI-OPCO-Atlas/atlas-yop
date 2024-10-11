@@ -17,7 +17,7 @@ class MaxDateConstraint extends MaxConstraint<Date | null | undefined, Date> {
 export class DateSchema<T extends Date | null | undefined> extends AnySchema<T> {
 
     constructor(constraints?: ConstraintsExecutor<T>) {
-        super({ name: 'date', test: (value: any) => value instanceof Date }, undefined, constraints ?? new ConstraintsExecutor<T>())
+        super({ name: 'date', test: (value: any) => value instanceof Date }, constraints ?? new ConstraintsExecutor<T>())
         deepFreeze(this)
     }
 

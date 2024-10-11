@@ -16,7 +16,7 @@ class MaxNumberConstraint extends MaxConstraint<number | null | undefined, numbe
 export class NumberSchema<T extends number | null | undefined> extends AnySchema<T> {
 
     constructor(constraints?: ConstraintsExecutor<T>) {
-        super('number', undefined, constraints ?? new ConstraintsExecutor<T>())
+        super('number', constraints ?? new ConstraintsExecutor<T>())
         deepFreeze(this)
     }
 

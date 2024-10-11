@@ -1,4 +1,4 @@
-import { AbstractConstraint, AnySchema, ConstraintsExecutor, ConstraintValue, createValidationError, deepFreeze, DefinedType, MaxConstraint, Message, MinConstraint, OneOfConstraint, PreserveUndefinedAndNull, Reference, RequiredConstraint, RequiredType, resolveConstraintValue, SchemaConstraints, TestConstraint, validateMaxConstraint, validateMinConstraint, ValidationContext, ValidationError } from "./AnySchema";
+import { AbstractConstraint, AnySchema, ConstraintsExecutor, ConstraintValue, createValidationError, deepFreeze, MaxConstraint, Message, MinConstraint, OneOfConstraint, RequiredConstraint, resolveConstraintValue, ValidationContext } from "./AnySchema";
 
 type StringVariant = 'email' | 'time'
 
@@ -98,7 +98,7 @@ export class StringSchema<T extends string | null | undefined> extends AnySchema
     readonly variant?: StringVariant
   
     constructor(constraints?: ConstraintsExecutor<T>, variant?: StringVariant) {
-        super('string', undefined, constraints ?? new ConstraintsExecutor<T>(value => !value))
+        super('string', constraints ?? new ConstraintsExecutor<T>(value => !value))
         this.variant = variant
         deepFreeze(this)
     }
@@ -119,7 +119,7 @@ export class StringSchema<T extends string | null | undefined> extends AnySchema
         return this.addConstraints(new MaxStringConstraint(value as any, message))
     }
 
-    length<P extends object = any, R extends object = any>(value: number | Reference<number, P, R>, message?: Message) {
+    length(value: ConstraintValue<T, number>, message?: Message) {
         return this.addConstraints(new MinStringConstraint(value as any, message), new MaxStringConstraint(value as any, message))
     }
 
@@ -128,11 +128,11 @@ export class StringSchema<T extends string | null | undefined> extends AnySchema
     }
 
     email(message?: Message) {
-        return this.clone(this.constraintsExecutor.clone().add(new RegExpConstraint(StringSchema.emailRegex, message)), "email")
+        return this.clone(this.constraints.clone().add(new RegExpConstraint(StringSchema.emailRegex, message)), "email")
     }
 
     time(message?: Message) {
-        return this.clone(this.constraintsExecutor.clone().add(new RegExpConstraint(StringSchema.timeRegex, message)), "time")
+        return this.clone(this.constraints.clone().add(new RegExpConstraint(StringSchema.timeRegex, message)), "time")
     }
 
     oneOf<U extends T>(values: ConstraintValue<T, readonly U[]>, message?: Message) {

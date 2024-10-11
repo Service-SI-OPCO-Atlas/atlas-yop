@@ -1,51 +1,24 @@
-import { AnySchema, AsyncValidationResult, createAsyncValidationResult, deepFreeze, DefinedType, Message, RequiredType, SchemaConstraints, SchemaForType, ValidationContext, ValidationError } from "./AnySchema"
-import { ArraySchema } from "./ArraySchema"
-import { BooleanSchema } from "./BooleanSchema"
-import { DateSchema } from "./DateSchema"
-import { FileSchema } from "./FileSchema"
-import { NumberSchema } from "./NumberSchema"
-import { StringSchema } from "./StringSchema"
+import { AnySchema, AsyncValidationResult, ConstraintsExecutor, createAsyncValidationResult, deepFreeze, SchemaForType, ValidationContext, ValidationError } from "./AnySchema"
 
-export type SchemaType<Schema> = Schema extends AnySchema<infer PropertyType> ?
-    [PropertyType] extends [string | null | undefined] ?
-        StringSchema<PropertyType> :
-    [PropertyType] extends [number | null | undefined] ?
-        NumberSchema<PropertyType> :
-    [PropertyType] extends [boolean | null | undefined] ?
-        BooleanSchema<PropertyType> :
-    [PropertyType] extends [Date | null | undefined] ?
-        DateSchema<PropertyType> :
-    [PropertyType] extends [File | null | undefined] ?
-        FileSchema<PropertyType> :
-    [PropertyType] extends [any[] | null | undefined] ?
-        ArraySchema<PropertyType> :
-    [PropertyType] extends [object | null | undefined] ?
-        ObjectSchema<PropertyType> :
-    never : never
-
-export type ObjectPropertiesSchemas<T> = { [P in keyof T]: SchemaType<AnySchema<T[P]>> }
-
-type KeyedSchemas<T> = {
-    [P in keyof T]: SchemaForType<T[P]>;
-}
+export type ObjectPropertiesSchemas<T extends object | null | undefined> = { [P in keyof T]: SchemaForType<T[P]> }
 
 export class ObjectSchema<T extends object | null | undefined> extends AnySchema<T> {
 
-    readonly propertiesSchemas: KeyedSchemas<NonNullable<T>>
+    readonly propertiesSchemas: ObjectPropertiesSchemas<T>
     readonly validationPath: string | null
 
-    constructor(propertiesSchemas: ObjectPropertiesSchemas<T>, constraints?: SchemaConstraints, validationPath: string | null = null) {
+    constructor(propertiesSchemas: ObjectPropertiesSchemas<T>, constraints?: ConstraintsExecutor<T>, validationPath: string | null = null) {
         super('object', constraints)
-        this.propertiesSchemas = propertiesSchemas as KeyedSchemas<NonNullable<T>>
+        this.propertiesSchemas = propertiesSchemas
         this.validationPath = validationPath
         deepFreeze(this)
     }
 
-    protected clone(constraints?: SchemaConstraints, validationPath: string | null = null): this {
-        return new ObjectSchema<T>(this.propertiesSchemas as ObjectPropertiesSchemas<T>, constraints, validationPath) as this
+    protected clone(constraints?: ConstraintsExecutor<T>, validationPath: string | null = null) {
+        return new ObjectSchema<T>(this.propertiesSchemas, constraints, validationPath) as this
     }
 
-    validateInContext(context: ValidationContext<T>): ValidationError[] {
+    override validateInContext(context: ValidationContext<T>): ValidationError[] {
         let errors = this.validateBasics(context)
         
         if (errors === undefined) {
@@ -81,51 +54,43 @@ export class ObjectSchema<T extends object | null | undefined> extends AnySchema
     override validateAsyncInContext(context: ValidationContext<T>): AsyncValidationResult {
         const result = createAsyncValidationResult()
         
-        const errors = this.validateBasics(context)
-        if (errors != null) {
-            result.errors.push(...errors)
-            return result
-        }
+        // const errors = this.validateBasics(context)
+        // if (errors != null) {
+        //     result.errors.push(...errors)
+        //     return result
+        // }
 
-        const value = context.value as any
-        for (const [propertyName, schema] of Object.entries(this.propertiesSchemas)) {
-            let propertySchema = (schema as AnySchema<any>)
-            const propertyValue = value[propertyName]
-            const propertyContext = {
-                userContext: context.userContext,
-                schema: propertySchema,
-                root: context.root ?? value,
-                parent: value,
-                path: context.path ? `${context.path}.${propertyName}` : propertyName,
-                value: propertyValue
-            }
+        // const value = context.value as any
+        // for (const [propertyName, schema] of Object.entries(this.propertiesSchemas)) {
+        //     let propertySchema = (schema as AnySchema<any>)
+        //     const propertyValue = value[propertyName]
+        //     const propertyContext = {
+        //         userContext: context.userContext,
+        //         schema: propertySchema,
+        //         root: context.root ?? value,
+        //         parent: value,
+        //         path: context.path ? `${context.path}.${propertyName}` : propertyName,
+        //         value: propertyValue
+        //     }
 
-            propertySchema = AnySchema.resolveConditions(propertyContext as ValidationContext<any>)
-            propertyContext.schema = propertySchema
+        //     propertySchema = AnySchema.resolveConditions(propertyContext as ValidationContext<any>)
+        //     propertyContext.schema = propertySchema
             
-            const propertyResult = propertySchema.validateAsyncInContext(propertyContext as ValidationContext<any>)
-            result.errors.push(...propertyResult.errors)
-            result.promises.push(...propertyResult.promises)
-        }
+        //     const propertyResult = propertySchema.validateAsyncInContext(propertyContext as ValidationContext<any>)
+        //     result.errors.push(...propertyResult.errors)
+        //     result.promises.push(...propertyResult.promises)
+        // }
 
-        if (result.errors.length === 0 && result.promises.length === 0)
-            result.errors.push(...super.validateTestCondition(context))
+        // if (result.errors.length === 0 && result.promises.length === 0)
+        //     result.errors.push(...super.validateTestCondition(context))
         
-        if (result.errors.length === 0 && result.promises.length === 0) {
-            const promise = super.validateAsyncTestCondition(context)
-            if (promise != null)
-                result.promises.push(promise)
-        }
+        // if (result.errors.length === 0 && result.promises.length === 0) {
+        //     const promise = super.validateAsyncTestCondition(context)
+        //     if (promise != null)
+        //         result.promises.push(promise)
+        // }
 
         return result
-    }
-
-    override required(message?: Message) {
-        return super.required(message) as unknown as ObjectSchema<RequiredType<T>>
-    }
-
-    override defined(message?: Message) {
-        return super.defined(message) as unknown as ObjectSchema<DefinedType<T>>
     }
 
     focusOn(validationPath: string) {

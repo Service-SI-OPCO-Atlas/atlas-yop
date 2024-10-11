@@ -1,4 +1,4 @@
-import { AnySchema, ConstraintsExecutor, ConstraintValue, deepFreeze, MaxConstraint, Message, MinConstraint, SchemaConstraints } from "./AnySchema"
+import { AnySchema, ConstraintsExecutor, ConstraintValue, deepFreeze, MaxConstraint, Message, MinConstraint } from "./AnySchema"
 
 class MinFileConstraint extends MinConstraint<File | null | undefined, File | number> {
     
@@ -17,7 +17,7 @@ class MaxFileConstraint extends MaxConstraint<File | null | undefined, File | nu
 export class FileSchema<T extends File | null | undefined> extends AnySchema<T> {
 
     constructor(constraints?: ConstraintsExecutor<T>) {
-        super({ name: 'file', test: (value: any) => value instanceof File }, undefined, constraints ?? new ConstraintsExecutor<T>())
+        super({ name: 'file', test: (value: any) => value instanceof File }, constraints ?? new ConstraintsExecutor<T>())
         deepFreeze(this)
     }
 

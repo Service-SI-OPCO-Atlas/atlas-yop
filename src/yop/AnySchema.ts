@@ -1,4 +1,4 @@
-import { get, toPath } from "lodash-es"
+import { toPath } from "lodash-es"
 import { ArraySchema } from "./ArraySchema"
 import { BooleanSchema } from "./BooleanSchema"
 import { DateSchema } from "./DateSchema"
@@ -8,6 +8,31 @@ import { NumberSchema } from "./NumberSchema"
 import { ObjectSchema } from "./ObjectSchema"
 import { StringSchema } from "./StringSchema"
 import { Yop } from "./Yop"
+
+/*
+export type FieldNames<T> = Partial<{
+    [P in keyof T]: (
+        [T[P]] extends [string | null | undefined] ? boolean | StringFieldMetadata<any> :
+        [T[P]] extends [number | null | undefined] ? boolean | NumberFieldMetadata<any> :
+        [T[P]] extends [boolean | null | undefined] ? boolean | BooleanFieldMetadata<any> :
+        [T[P]] extends [Date | null | undefined] ? boolean | DateFieldMetadata<any> :
+        [T[P]] extends [File | null | undefined] ? boolean | FileFieldMetadata<any> :
+        [T[P]] extends [any[] | null | undefined] ? [number, FieldNames<ArrayItemType<T[P]>>] :
+        [T[P]] extends [object | null | undefined] ? FieldNames<T[P]> :
+        never
+    )
+}>
+*/
+
+// type Schema<T> =
+//     [T] extends [string | null | undefined] ? StringSchema<T> :
+//     [T] extends [number | null | undefined] ? NumberSchema<T> :
+//     [T] extends [boolean | null | undefined] ? BooleanSchema<T> :
+//     [T] extends [Date | null | undefined] ? DateSchema<T> :
+//     [T] extends [File | null | undefined] ? FileSchema<T> :
+//     [T] extends [any[] | null | undefined] ? ArraySchema<Schema<T>> :
+//     [T] extends [object | null | undefined] ? ObjectSchema<{ [P in keyof T]: Schema<T[P]> }> :
+//     never
 
 export type SchemaForType<T> =
     [T] extends [string | null | undefined] ? StringSchema<T> :

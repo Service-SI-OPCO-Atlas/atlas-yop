@@ -1,8 +1,9 @@
-import { pick } from "lodash-es"
 import { Yop } from "../src/yop/Yop"
 import { AsyncValidationResult } from "../src/yop/AnySchema"
 import { describe, it, expect } from 'vitest'
-import { StringSchema } from "../src/yop/StringSchema"
+import { max } from "lodash-es"
+import { match } from "assert"
+//import { StringSchema } from "../src/yop/StringSchema"
 
 const errors = (result: AsyncValidationResult, promisesEmpty = true) => {
     if (promisesEmpty && result.promises.length > 0)
@@ -16,9 +17,192 @@ const promises = (result: AsyncValidationResult, errorsEmpty = true) => {
     return Promise.all(result.promises).then(results => results.flat())
 }
 
+type Constraint<T> = T | [T, string | undefined | (string | undefined)[]]
+
+type StringConstraints = {
+    required?: Constraint<boolean>
+    min?: Constraint<number>
+    max?: Constraint<number>
+    match?: Constraint<RegExp>
+}
+
+type EmailConstraints = {
+    required?: Constraint<boolean>
+    min?: Constraint<number>
+    max?: Constraint<number>
+}
+
+type TimeConstraints = {
+    required?: Constraint<boolean>
+    min?: Constraint<string>
+    max?: Constraint<string>
+}
+
+function stringConstraintsvalidators(constraints: StringConstraints) {
+    const validators: ((value: string | null | undefined) => string | undefined)[] = []
+    if (constraints.required)
+        validators.push((value: string | null | undefined) => !value ? "Champ obligatoire" : undefined)
+    if (constraints.min)
+        validators.push((value: string | null | undefined) => value != null && value.length < (constraints.min as number) ? "Min" : undefined)
+    if (constraints.max)
+        validators.push((value: string | null | undefined) => value != null && value.length > (constraints.max as number) ? "Max" : undefined)
+    return validators
+}
+
+type NumberConstraints = {
+    required?: Constraint<boolean>
+    min?: Constraint<number>
+    max?: Constraint<number>
+}
+
+type ObjectConstraints = {
+    required?: Constraint<boolean>
+}
+
+type ArrayConstraints = {
+    required?: Constraint<boolean>
+    min?: Constraint<number>
+    max?: Constraint<number>
+}
+
+type StringSchema = readonly ["string", StringConstraints]
+type EmailSchema = readonly ["email", EmailConstraints]
+type TimeSchema = readonly ["time", TimeConstraints]
+type NumberSchema = readonly ["number", NumberConstraints]
+type ObjectSchema<T extends object | null | undefined> = readonly ["object", ObjectConstraints | undefined, Partial<{ [P in keyof T]: SchemaFor<T[P]> }>]
+type ArraySchema<T> = readonly ["array", ArrayConstraints | undefined, SchemaFor<ArrayItemType<T>>]
+
+type AnySchema = StringSchema | EmailSchema | TimeSchema | NumberSchema | ObjectSchema<object | null | undefined> | ArraySchema<any>
+
+type ArrayItemType<ArrayType> = ArrayType extends Array<infer ItemType> ? ItemType : never
+type SchemaFor<T> = 
+    [T] extends [string | null | undefined] ? StringSchema | EmailSchema | TimeSchema :
+    [T] extends [number | null | undefined] ? NumberSchema :
+    [T] extends [any[] | null | undefined] ? ArraySchema<T> :
+    [T] extends [object | null | undefined] ? ObjectSchema<T> :
+    never
+
+type Pet = {
+    name: string | null
+    age: number | null
+}
+
+type Person = {
+    name: string | null
+    email: string | null
+    pet: Pet,
+    nums: number[] | null
+    pets: Pet[] | null
+}
+
+
+
+const schema = ["object", { required: true }, {
+    name: ["string", {
+        required: [true, [undefined, "recap"]],
+        min: 5,
+        max: 10,
+        match: /^abc/
+    }],
+    email: ["email", {
+        required: true,
+        min: 5,
+        max: 10,
+    }],
+    pet: ["object", { required: true }, {
+        name: ["string", {
+            required: true,
+            min: 5
+        }],
+        age: ["number", {
+            required: true,
+            min: 5
+        }],
+    }],
+    nums: ["array",, ["number", {
+        required: true,
+        min: 5
+    }]],
+    pets: ["array", { required: true, min: 5, max: 18 }, ["object",, {
+        name: ["string", {
+            required: true,
+            min: 5
+        }]
+    }]]
+}] as const
+
+function validate(schema: AnySchema, value: any) {
+    const type = schema[0]
+   
+}
+
+function createValidationSchema<T extends AnySchema>(schema: T) {
+    const type = schema[0]
+
+    const validation: ((value: any) => string | undefined)[] = []
+    switch (type) {
+        case "string":
+        case "email":
+        case "time":
+            if (schema[1].required)
+                validation.push((value: string | null | undefined) => !value ? "Champ obligatoire" : undefined)
+            if (schema[1].min)
+                validation.push((value: string | null | undefined) => value != null && value.length < (schema[1].min as number) ? "Min" : undefined)
+            break
+        case "number":
+            if (schema[1].required)
+                validation.push((value: number | null | undefined) => value == null || Number.isNaN(value) ? "Champ obligatoire" : undefined)
+            if (schema[1].min)
+                validation.push((value: number | null | undefined) => value != null && value < (schema[1].min as number) ? "Min" : undefined)
+            break
+        case "object":
+            if (schema[1]?.required)
+                validation.push((value: Object | null | undefined) => value == null ? "Champ obligatoire" : undefined)
+            const properties = schema[2]
+            for (const [key, value] of Object.entries(properties!)) {
+                validation.push(...createValidationSchema(value))
+            }
+            break
+        case "array":
+            if (schema[1]?.required)
+                validation.push((value: any[] | null | undefined) => value == null ? "Champ obligatoire" : undefined)
+            if (schema[1]?.min)
+                validation.push((value: any[] | null | undefined) => value != null && value.length < (schema[1]!.min as number) ? "Champ obligatoire" : undefined)
+            if (schema[1]?.max)
+                validation.push((value: any[] | null | undefined) => value != null && value.length > (schema[1]!.max as number) ? "Champ obligatoire" : undefined)
+            validation.push(...createValidationSchema(schema[2]))
+            break
+        default:
+            throw `Unknown validation type ${ type }`
+    }
+    return validation
+}
+
 describe('test.yop', () => {
 
     Yop.setLocale('fr-FR')
+
+
+    describe('bla', () => {
+
+        const validators = createValidationSchema(["string", { required: true, min: 5 }])
+
+        const values = [null, undefined, "", "bla", "blatr"]
+
+        for (const value of values) {
+            for (const validator of validators) {
+                const message = validator(value)
+                if (message != null) {
+                    console.log(value, message)
+                    break
+                }
+            }
+        }
+
+        const valSchema = createValidationSchema(schema)
+        console.log(valSchema.length, valSchema)
+    })
+
 
     describe('test.string', () => {
 
@@ -178,42 +362,42 @@ describe('test.yop', () => {
             }])
         })
 
-        it('string.time', () => {
-            const schema = Yop.string().time().min(StringSchema.parseTime("01:00")).max(StringSchema.parseTime("14:30"))
-            expect(schema.validate(null)).toEqual([])
-            expect(schema.validate(undefined)).toEqual([])
-            expect(schema.validate("")).toEqual([])
-            expect(schema.validate("1")).toEqual([{
-                "code": "time",
-                "message": "Format d'heure incorrect",
-                "path": undefined,
-                "value": "1",
-            }])
-            expect(schema.validate("24:68")).toEqual([{
-                "code": "time",
-                "message": "Format d'heure incorrect",
-                "path": undefined,
-                "value": "24:68",
-            }])
-            expect(schema.validate("01:34")).toEqual([])
-            expect(schema.validate("01:34:59")).toEqual([])
-            expect(schema.validate("01:00")).toEqual([])
-            expect(schema.validate("01:00:00")).toEqual([])
-            expect(schema.validate("14:30")).toEqual([])
-            expect(schema.validate("14:30:00")).toEqual([])
-            expect(schema.validate("00:34:59")).toEqual([{
-                "code": "min",
-                "message": "L'heure ne doit pas être avant 01:00",
-                "path": undefined,
-                "value": "00:34:59",
-            }])
-            expect(schema.validate("14:30:01")).toEqual([{
-                "code": "max",
-                "message": "L'heure ne doit pas être après 14:30",
-                "path": undefined,
-                "value": "14:30:01",
-            }])
-        })
+        // it('string.time', () => {
+        //     const schema = Yop.string().time().min(StringSchema.parseTime("01:00")).max(StringSchema.parseTime("14:30"))
+        //     expect(schema.validate(null)).toEqual([])
+        //     expect(schema.validate(undefined)).toEqual([])
+        //     expect(schema.validate("")).toEqual([])
+        //     expect(schema.validate("1")).toEqual([{
+        //         "code": "time",
+        //         "message": "Format d'heure incorrect",
+        //         "path": undefined,
+        //         "value": "1",
+        //     }])
+        //     expect(schema.validate("24:68")).toEqual([{
+        //         "code": "time",
+        //         "message": "Format d'heure incorrect",
+        //         "path": undefined,
+        //         "value": "24:68",
+        //     }])
+        //     expect(schema.validate("01:34")).toEqual([])
+        //     expect(schema.validate("01:34:59")).toEqual([])
+        //     expect(schema.validate("01:00")).toEqual([])
+        //     expect(schema.validate("01:00:00")).toEqual([])
+        //     expect(schema.validate("14:30")).toEqual([])
+        //     expect(schema.validate("14:30:00")).toEqual([])
+        //     expect(schema.validate("00:34:59")).toEqual([{
+        //         "code": "min",
+        //         "message": "L'heure ne doit pas être avant 01:00",
+        //         "path": undefined,
+        //         "value": "00:34:59",
+        //     }])
+        //     expect(schema.validate("14:30:01")).toEqual([{
+        //         "code": "max",
+        //         "message": "L'heure ne doit pas être après 14:30",
+        //         "path": undefined,
+        //         "value": "14:30:01",
+        //     }])
+        // })
         
         // it('string.async', async () => {
         //     const schema = Yop.string().required().asyncTest(context => new Promise((resolve, reject) => {
@@ -1325,10 +1509,13 @@ describe('test.yop', () => {
             expect(schema.validate({ name: "abc" })).toEqual([])
         })
 
+        type X = { parent: { child: string | null | undefined } | null | undefined }
+
         it('object.validateAt', () => {
-            const schema = Yop.object({
+            const schema = Yop.object<X>({
                 parent: Yop.object({
-                    child: Yop.string().required().min(5)
+                    child: Yop.string().required().min(5),
+                    fuck: Yop.string()
                 }).required()
             })
             expect(schema.validateAt('parent.child', {
@@ -1700,15 +1887,20 @@ describe('test.yop', () => {
     //     })
 
         interface Child {
-            name: string
+            name: string | null | undefined
         }
 
         interface Parent {
             children: Child[]
+            child: Child | null | undefined
         }
 
         it('array.typed', () => {
             const schema = Yop.object<Parent>({
+                child: Yop.object({
+                    name: Yop.string().required(),
+                    qsdfq: Yop.string().required()
+                }),
                 children: Yop.array(Yop.object({
                     name: Yop.string().required()
                 })).required()

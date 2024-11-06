@@ -8,3 +8,5 @@ export * from './yop/IgnoredSchema'
 export * from './yop/NumberSchema'
 export * from './yop/ObjectSchema'
 export * from './yop/StringSchema'
+
+export * as Yop3 from './yop3'

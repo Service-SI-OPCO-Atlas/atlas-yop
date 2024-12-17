@@ -1,192 +1,108 @@
-import { ArrayConstraints, ArraySchema, ArrayType } from "./arrays"
-import { BooleanSchema, BooleanType } from "./booleans"
-import { DateSchema, DateType } from "./dates"
-import { FileSchema, FileType } from "./files"
-import { NumberSchema, NumberType } from "./numbers"
-import { ObjectConstraints, ObjectSchema, ObjectType } from "./objects"
-import { EmailSchema, StringSchema, StringType, TimeSchema } from "./strings"
+import { CommonConstraints } from "./constraints/CommonConstraints"
+import { initTypeConstraints, InternalClassConstraints, validateType } from "./decorators/type"
+import { Path, splitPath } from "./Path"
+import { Constructor } from "./types"
+import { ValidationContext, ValidationError } from "./ValidationContext"
 
-export type SchemaFor<T> = 
-    [T] extends [StringType] ? StringSchema :
-    [T] extends [NumberType] ? NumberSchema :
-    [T] extends [BooleanType] ? BooleanSchema :
-    [T] extends [DateType] ? DateSchema :
-    [T] extends [FileType] ? FileSchema :
-    [T] extends [ArrayType] ? ArraySchema<T> :
-    [T] extends [ObjectType] ? ObjectSchema<T> :
-    never
+(Symbol as any).metadata ??= Symbol.for("Symbol.metadata")
 
-export class ValidationContext<ValueType, ParentType = any> {
+export const validationSymbol = Symbol('YopValidation')
 
-    readonly schema: SchemaFor<ValueType>
-    readonly value: ValueType
-    readonly path: string | undefined
-    readonly parent: ParentType | undefined
-    readonly root: any | undefined
-    readonly userContext: any | undefined
-    readonly createError: ((message: string, path?: string) => boolean) | undefined
-    readonly group: GroupType | undefined
+export interface InternalCommonConstraints extends CommonConstraints<unknown> {
+    /**
+     * The kind of the decorated value (eg: `string`, `number`, etc.).
+     */
+    kind: string
+    /**
+     * The kind of the decorated value (eg: `string`, `number`, etc.).
+     */
+    validate: (context: ValidationContext<unknown>, constraints: InternalCommonConstraints) => void
+}
 
-    constructor(config: {
-        schema: SchemaFor<ValueType>,
-        value: ValueType,
-        path?: string | undefined,
-        parent?: ParentType | undefined,
-        root?: any | undefined,
-        userContext?: any | undefined,
-        createError?: (message: string, path?: string) => boolean
-        group?: GroupType
-    }) {
-        this.schema = config.schema
-        this.value = config.value
-        this.path = config.path
-        this.parent = config.parent
-        this.root = config.root
-        this.userContext = config.userContext
-        this.createError = config.createError
-        this.group = config.group
+export interface ValidationHolder<Constraints = InternalCommonConstraints> {
+    [validationSymbol]: Constraints
+}
+
+// export interface ConstraintsTraverser<Constraints extends CommonConstraints<any, any>> {
+//     constraintsAt?: (yop: Yop, constraints: Constraints, pathSegment: string) => (CommonConstraints<unknown> & Kind) | undefined
+// }
+
+export class Yop {
+
+    private static defaultInstance?: Yop
+
+    private static classIds = new Map<string, Constructor<unknown>>()
+
+    static registerClass(id: string, constructor: Constructor<unknown>) {
+        Yop.classIds.set(id, constructor)
     }
 
-    matchGroup(group: GroupType | undefined) {
-        if (group == null)
-            return this.group == null || (Array.isArray(this.group) && this.group.includes(undefined))
-        if (Array.isArray(group))
-            return Array.isArray(this.group) ? group.some(g => (this.group as (string | undefined)[]).includes(g)) : group.includes(this.group)
-        return (Array.isArray(this.group) ? this.group.includes(group) : this.group === group)
+    static getClass(id: unknown) {
+        if (typeof id === "string") {
+            const resolved = Yop.classIds.get(id)
+            if (resolved == null)
+                console.error(`Class "${ id }" unregistered in Yop. Did you forget to add a @constraints({ id: "${ id }" }) decorator to the class?`)
+            return resolved
+        }
+        return id
     }
 
-    getRoot<T>() {
-        return this.root as T
+    validate<RootClass>(schema: Constructor<RootClass>, parent: any, path?: string | Path<RootClass>) {
+        const segments = splitPath(path ?? "")
+
+        let constraints = schema[Symbol.metadata]?.[validationSymbol] as InternalClassConstraints
+        if (constraints == null)
+            return new Map<string | undefined, ValidationError>()
+    
+        let value = parent
+        for (const segment of segments) {
+            constraints = (constraints as any)[segment]
+            if (constraints == null)
+                return new Map<string | undefined, ValidationError>()
+
+            parent = value
+            if (value !== undefined)
+                value = (typeof value === "object") ? (value as any)[segment] : undefined
+        }
+    
+        const context = new ValidationContext({
+            yop: this,
+            kind: "class",
+            value,
+            parent,
+        })
+    
+        constraints.validate(context, constraints)
+        return context.errors
+    }
+    static validate<RootClass>(schema: Constructor<RootClass>, value: any, path?: string | Path<RootClass>) {
+        return Yop.init().validate(schema, value, path)
     }
 
-    getUserContext<T>() {
-        return this.userContext as T
+    static init(): Yop {
+        if (Yop.defaultInstance == null)
+            Yop.defaultInstance = new Yop()
+        return Yop.defaultInstance
     }
 }
 
-export type ConstraintType<ValueType, ConstraintValueType, ParentType = any> = 
-    ConstraintValueType |
-    ((context: ValidationContext<ValueType, ParentType>) => ConstraintValueType)
-export type MessageType<ValueType, ParentType = any> =
-    string |
-    ((context: ValidationContext<ValueType, ParentType>) => string)
-export type GroupType =
-    string |
-    ((string | undefined)[])
+type ContraintsField<Contraints> = Contraints extends CommonConstraints<infer Field, infer _Parent> ? Field : never
+type ContraintsParent<Contraints> = Contraints extends CommonConstraints<infer _Field, infer Parent> ? Parent : never
+export function fieldValidationDecorator<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>>(
+    kind: string,
+    constraints: Constraints,
+    validate: (context: ValidationContext<Field, Parent>, constraints: Constraints) => void
+) {
+    return function decorateClassField(_: any, context: ClassFieldDecoratorContext<Parent, Field>) {
+        const classConstraints = initTypeConstraints(context.metadata)
+        if (!Object.hasOwnProperty.bind(classConstraints)("fields"))
+            classConstraints.fields = { ...classConstraints.fields }
 
-export type Constraint<ValueType, ConstraintValueType, ParentType = any> =
-    ConstraintType<ValueType, ConstraintValueType, ParentType> |
-    readonly [ConstraintType<ValueType, ConstraintValueType, ParentType>, MessageType<ValueType, ParentType>]
-    // [ConstraintType<ValueType, ConstraintValueType>, MessageType<ValueType, ParentType>, GroupType][]
-
-export type AnySchema =
-    StringSchema |
-    NumberSchema |
-    BooleanSchema |
-    DateSchema |
-    FileSchema |
-    ArraySchema |
-    ObjectSchema
-
-type ValidateParameter<Schema> =
-    Schema extends StringSchema ? StringSchema :
-    Schema extends EmailSchema ? EmailSchema :
-    Schema extends TimeSchema ? TimeSchema :
-    Schema extends NumberSchema ? NumberSchema :
-    Schema extends BooleanSchema ? BooleanSchema :
-    Schema extends DateSchema ? DateSchema :
-    Schema extends FileSchema ? FileSchema :
-    Schema extends readonly ["array", ArrayConstraints, infer ArrayItemSchema extends AnySchema] ?
-        readonly ["array", ArrayConstraints, ValidateParameter<ArrayItemSchema>] :
-    Schema extends readonly ["object", ObjectConstraints<infer ObjectShape extends ObjectType>, infer ObjectShape extends ObjectType] ?
-        readonly ["object", ObjectConstraints<ObjectShape>, { [PropertyKey in keyof ObjectShape]: ValidateParameter<ObjectShape[PropertyKey]> }] :
-    never
-
-function resolveConstraint<ValueType, ConstraintValueType>(constraint: Constraint<ValueType, ConstraintValueType> | undefined, context: ValidationContext<ValueType>) {
-    if (typeof constraint === 'function')
-        return (constraint as ((context: ValidationContext<ValueType>) => ConstraintValueType))(context)
-    // if (Array.isArray(constraint)) {
-    //     if (constraint.length === 0)
-    //         return undefined
-    //     const isConstraintMessage = (typeof constraint?.[1] === 'string' || typeof constraint?.[1] === 'function')
-    //     if (isConstraintMessage) {
-    //         const [value, message] = constraint
-    //         if (value)
-    //             return value
-    //         if (message)
-    //             return message
-    //     }
-    // }
-    return constraint as ConstraintValueType
+        const fieldName = context.name as string
+        const fields = classConstraints.fields!        
+        if (!Object.hasOwnProperty.bind(fields)(fieldName))
+            fields[fieldName] = {} as InternalCommonConstraints
+        
+        Object.assign(fields[fieldName], { ...constraints, kind, validate })
+    }
 }
-
-function stringValidator(context: ValidationContext<StringType>) {
-    const value = context.value
-    const constraints = context.schema[1]
-    if (resolveConstraint(constraints.required, context) === true && !value)
-        return ["Champ obligatoire"]
-    if (value != null) {
-        if (typeof value !== 'string')
-            return ["Bad type"]
-        const min = resolveConstraint(constraints.min, context as ValidationContext<string>) as number
-        if (min != null && value.length < min)
-            return ["Min"]
-        const max = resolveConstraint(constraints.max, context as ValidationContext<string>) as number
-        if (max != null && value.length > max)
-            return ["Max"]
-        // const match = resolveConstraint(constraints.match, context)
-        // if (match != null && !match.test(value))
-        //     return ["Match"]
-    }        
-    return []
-}
-
-export function validate<const Schema extends AnySchema>(schema: Schema & ValidateParameter<Schema>, value: any, group?: GroupType) {
-    const type = schema[0]
-
-    const validator = ({
-        "string": stringValidator,
-    } as any)[type]
-
-    return validator?.(new ValidationContext({ schema: schema as StringSchema, value, group }))
-}
-
-// validate(["object", { required: true }, {
-//     name: ["string", {
-//         required: true,
-//         min: 5,
-//         // max: 10,
-//     }],
-// }], {})
-
-class Pet {
-    age: number | null = null
-}
-class Person {
-    name: string | null = null
-    email: string | null = null
-    pet: Pet | null = null
-    pets: (Pet | null)[] | null = null
-}
-
-const petSchema: SchemaFor<Pet | null> = ["object", { required: true }, {
-    age: ["number", { required: true }]
-}]
-
-const personSchema: SchemaFor<Person> = ["object", { required: true }, {
-    name: ["string", {
-        required: (context) => true,
-        min: [5, "Minimum 5 characters"],
-        // max: (context) => context.group?.includes("recap") ? 10 : 100,
-        match: /^abc/,
-    }],
-    email: ["string", {
-        required: true,
-        min: 5,
-        // max: 10,
-    }],
-    pet: petSchema,
-    pets: ["array",, petSchema]
-}]
-
-// validate(personSchema, {})

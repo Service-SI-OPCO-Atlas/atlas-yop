@@ -1,21 +1,18 @@
 import { Yop } from "../src/yop/Yop"
-import { AsyncValidationResult } from "../src/yop/AnySchema"
 import { describe, it, expect } from 'vitest'
-import { max } from "lodash-es"
-import { match } from "assert"
 //import { StringSchema } from "../src/yop/StringSchema"
 
-const errors = (result: AsyncValidationResult, promisesEmpty = true) => {
-    if (promisesEmpty && result.promises.length > 0)
-        throw new Error("promises should be empty")
-    return result.errors
-}
+// const errors = (result: AsyncValidationResult, promisesEmpty = true) => {
+//     if (promisesEmpty && result.promises.length > 0)
+//         throw new Error("promises should be empty")
+//     return result.errors
+// }
 
-const promises = (result: AsyncValidationResult, errorsEmpty = true) => {
-    if (errorsEmpty && result.errors.length > 0)
-        throw new Error("errors should be empty")
-    return Promise.all(result.promises).then(results => results.flat())
-}
+// const promises = (result: AsyncValidationResult, errorsEmpty = true) => {
+//     if (errorsEmpty && result.errors.length > 0)
+//         throw new Error("errors should be empty")
+//     return Promise.all(result.promises).then(results => results.flat())
+// }
 
 type Constraint<T> = T | [T, string | undefined | (string | undefined)[]]
 
@@ -38,16 +35,16 @@ type TimeConstraints = {
     max?: Constraint<string>
 }
 
-function stringConstraintsvalidators(constraints: StringConstraints) {
-    const validators: ((value: string | null | undefined) => string | undefined)[] = []
-    if (constraints.required)
-        validators.push((value: string | null | undefined) => !value ? "Champ obligatoire" : undefined)
-    if (constraints.min)
-        validators.push((value: string | null | undefined) => value != null && value.length < (constraints.min as number) ? "Min" : undefined)
-    if (constraints.max)
-        validators.push((value: string | null | undefined) => value != null && value.length > (constraints.max as number) ? "Max" : undefined)
-    return validators
-}
+// function stringConstraintsvalidators(constraints: StringConstraints) {
+//     const validators: ((value: string | null | undefined) => string | undefined)[] = []
+//     if (constraints.required)
+//         validators.push((value: string | null | undefined) => !value ? "Champ obligatoire" : undefined)
+//     if (constraints.min)
+//         validators.push((value: string | null | undefined) => value != null && value.length < (constraints.min as number) ? "Min" : undefined)
+//     if (constraints.max)
+//         validators.push((value: string | null | undefined) => value != null && value.length > (constraints.max as number) ? "Max" : undefined)
+//     return validators
+// }
 
 type NumberConstraints = {
     required?: Constraint<boolean>
@@ -82,18 +79,18 @@ type SchemaFor<T> =
     [T] extends [object | null | undefined] ? ObjectSchema<T> :
     never
 
-type Pet = {
-    name: string | null
-    age: number | null
-}
+// type Pet = {
+//     name: string | null
+//     age: number | null
+// }
 
-type Person = {
-    name: string | null
-    email: string | null
-    pet: Pet,
-    nums: number[] | null
-    pets: Pet[] | null
-}
+// type Person = {
+//     name: string | null
+//     email: string | null
+//     pet: Pet,
+//     nums: number[] | null
+//     pets: Pet[] | null
+// }
 
 
 
@@ -131,10 +128,10 @@ const schema = ["object", { required: true }, {
     }]]
 }] as const
 
-function validate(schema: AnySchema, value: any) {
-    const type = schema[0]
+// function validate(schema: AnySchema, value: any) {
+//     const type = schema[0]
    
-}
+// }
 
 function createValidationSchema<T extends AnySchema>(schema: T) {
     const type = schema[0]
@@ -159,7 +156,7 @@ function createValidationSchema<T extends AnySchema>(schema: T) {
             if (schema[1]?.required)
                 validation.push((value: Object | null | undefined) => value == null ? "Champ obligatoire" : undefined)
             const properties = schema[2]
-            for (const [key, value] of Object.entries(properties!)) {
+            for (const [_, value] of Object.entries(properties!)) {
                 validation.push(...createValidationSchema(value))
             }
             break

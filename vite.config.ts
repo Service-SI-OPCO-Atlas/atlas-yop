@@ -2,6 +2,7 @@
 import { resolve } from "path"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
     build: {
@@ -17,7 +18,16 @@ export default defineConfig({
         sourcemap: true,
         emptyOutDir: true,
     },
-    plugins: [dts({ rollupTypes: true })],
+    plugins: [
+        react({
+            babel: {
+                plugins: [
+                    ["@babel/plugin-proposal-decorators", { version: "2023-11" }],
+                ]
+            }
+        }),
+        dts({ rollupTypes: true })
+    ],
     test: {
         include: ['test/**/*.test.ts'],
     },

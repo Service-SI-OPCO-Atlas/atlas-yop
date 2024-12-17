@@ -1,5 +1,5 @@
 import { CommonConstraints } from "./constraints/CommonConstraints"
-import { initTypeConstraints, InternalClassConstraints, validateType } from "./decorators/type"
+import { initTypeConstraints, InternalClassConstraints } from "./decorators/type"
 import { Path, splitPath } from "./Path"
 import { Constructor } from "./types"
 import { ValidationContext, ValidationError } from "./ValidationContext"

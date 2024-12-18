@@ -2,26 +2,36 @@ import { CommonConstraints } from "./constraints/CommonConstraints"
 import { initTypeConstraints, InternalTypeConstraints } from "./decorators/type"
 import { Path, splitPath } from "./Path"
 import { Constructor } from "./types"
-import { ValidationContext, ValidationError } from "./ValidationContext"
+import { InternalValidationContext, ValidationError } from "./ValidationContext"
 
 (Symbol as any).metadata ??= Symbol.for("Symbol.metadata")
 
 export const validationSymbol = Symbol('YopValidation')
 
+type ContraintsField<Contraints> = Contraints extends CommonConstraints<infer Field, infer _Parent> ? Field : never
+type ContraintsParent<Contraints> = Contraints extends CommonConstraints<infer _Field, infer Parent> ? Parent : never
+
+type Validator<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>> =
+    (context: InternalValidationContext<Field, Parent>, constraints: Constraints) => void
+
+type Traverser<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>> =
+    ((context: InternalValidationContext<Field, Parent>, constraints: Constraints, propertyOrIndex: string | number) =>
+    readonly [InternalCommonConstraints | undefined, InternalValidationContext<unknown>])
+
 export interface InternalCommonConstraints extends CommonConstraints<unknown> {
     /**
-     * The kind of the decorated value (eg: `string`, `number`, etc.).
+     * The kind of the decorated value (eg: `string`, `number`, etc.)
      */
     kind: string
     /**
-     * The kind of the decorated value (eg: `string`, `number`, etc.).
+     * The method that validates the decorated value.
      */
-    validate: (context: ValidationContext<unknown>, constraints: InternalCommonConstraints) => void
+    validate: Validator<this>
+    /**
+     * The method that returns the constraints and value of a nested field.
+     */
+    traverse?: Traverser<this>
 }
-
-// export interface ConstraintsTraverser<Constraints extends CommonConstraints<any, any>> {
-//     constraintsAt?: (yop: Yop, constraints: Constraints, pathSegment: string) => (CommonConstraints<unknown> & Kind) | undefined
-// }
 
 export class Yop {
 
@@ -43,30 +53,27 @@ export class Yop {
         return id
     }
 
-    validate<RootClass>(schema: Constructor<RootClass>, parent: any, path?: string | Path<RootClass>) {
+    validate<RootClass>(schema: Constructor<RootClass>, root: any, path?: string | Path<RootClass>) {
         const segments = splitPath(path ?? "")
 
-        let constraints = schema[Symbol.metadata]?.[validationSymbol] as InternalTypeConstraints
+        let constraints = schema[Symbol.metadata]?.[validationSymbol] as InternalTypeConstraints | undefined
         if (constraints == null)
             return new Map<string | undefined, ValidationError>()
     
-        let value = parent
+        let context = new InternalValidationContext({
+            yop: this,
+            kind: constraints.kind,
+            value: root,
+            parent: {},
+            root,
+        })
+        let value = root
         for (const segment of segments) {
-            constraints = (constraints as any)[segment]
+            [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
             if (constraints == null)
                 return new Map<string | undefined, ValidationError>()
-
-            parent = value
-            if (value !== undefined)
-                value = (typeof value === "object") ? (value as any)[segment] : undefined
+            context = context.createChildContext({ kind: constraints.kind, value, propertyOrIndex: segment })
         }
-    
-        const context = new ValidationContext({
-            yop: this,
-            kind: "class",
-            value,
-            parent,
-        })
     
         constraints.validate(context, constraints)
         return context.errors
@@ -82,12 +89,11 @@ export class Yop {
     }
 }
 
-type ContraintsField<Contraints> = Contraints extends CommonConstraints<infer Field, infer _Parent> ? Field : never
-type ContraintsParent<Contraints> = Contraints extends CommonConstraints<infer _Field, infer Parent> ? Parent : never
 export function fieldValidationDecorator<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>>(
     kind: string,
     constraints: Constraints,
-    validate: (context: ValidationContext<Field, Parent>, constraints: Constraints) => void
+    validate: Validator<Constraints>,
+    traverse?: Traverser<Constraints>
 ) {
     return function decorateClassField(_: any, context: ClassFieldDecoratorContext<Parent, Field>) {
         const classConstraints = initTypeConstraints(context.metadata)
@@ -99,6 +105,6 @@ export function fieldValidationDecorator<Constraints, Field = ContraintsField<Co
         if (!Object.hasOwnProperty.bind(fields)(fieldName))
             fields[fieldName] = {} as InternalCommonConstraints
         
-        Object.assign(fields[fieldName], { ...constraints, kind, validate })
+        Object.assign(fields[fieldName], { ...constraints, kind, validate, traverse })
     }
 }

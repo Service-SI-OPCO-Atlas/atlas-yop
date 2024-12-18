@@ -1,14 +1,14 @@
 import { CommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMaxConstraint, validateMinConstraint } from "../constraints/MinMaxConstraints"
 import { isFile, isNumber } from "../types"
-import { ValidationContext } from "../ValidationContext"
+import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Yop"
 
 type FileValue = File | null | undefined
 
 interface FileConstraints<Value extends FileValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {}
 
-function validateFile<Value extends FileValue, Parent>(context: ValidationContext<Value, Parent>, constraints: FileConstraints<Value, Parent>) {
+function validateFile<Value extends FileValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: FileConstraints<Value, Parent>) {
     validateCommonConstraints(context, constraints) &&
     validateValueType(context, isFile, "date") &&
     validateMinConstraint(context, constraints, isNumber, (value, constraint) => value.size >= constraint) &&

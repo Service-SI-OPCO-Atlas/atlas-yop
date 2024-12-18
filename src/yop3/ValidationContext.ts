@@ -11,9 +11,24 @@ export type ValidationError = {
     message: string
 }
 
-export class ValidationContext<ValueType, ParentType = unknown> {
+export interface ValidationContext<ValueType, ParentType = unknown> {
+    
+    readonly kind: string
+    readonly value: ValueType
+    readonly parent: ParentType
+    readonly path: string | undefined
+    readonly root: unknown | undefined
+    readonly userContext: unknown | undefined
+
+    createError(code: string, constraint: any, message?: string, path?: string): false
+    getRoot<T>(): T
+    getUserContext<T>(): T
+}
+
+export class InternalValidationContext<ValueType, ParentType = unknown> implements ValidationContext<ValueType, ParentType> {
 
     readonly yop: Yop
+    readonly parentContext: InternalValidationContext<ParentType> | undefined
     readonly kind: string
     readonly value: ValueType
     readonly parent: ParentType
@@ -28,6 +43,7 @@ export class ValidationContext<ValueType, ParentType = unknown> {
         kind: string
         value: ValueType
         parent: ParentType
+        parentContext?: InternalValidationContext<ParentType> | undefined
         path?: string | undefined
         root?: unknown | undefined
         userContext?: unknown | undefined
@@ -35,6 +51,7 @@ export class ValidationContext<ValueType, ParentType = unknown> {
         errors?: Map<string | undefined, ValidationError>
     }) {
         this.yop = props.yop
+        this.parentContext = props.parentContext
         this.kind = props.kind
         this.value = props.value
         this.parent = props.parent
@@ -48,19 +65,32 @@ export class ValidationContext<ValueType, ParentType = unknown> {
     createChildContext(props: {
         kind: string
         value: ValueType
-        path?: string | undefined
+        propertyOrIndex: string | number
     }) {
-        return new ValidationContext({
+        const path = typeof props.propertyOrIndex === "number" ?
+            `${ this.path ?? "" }[${ props.propertyOrIndex }]` :
+            this.path ? `${ this.path }.${ props.propertyOrIndex }` : props.propertyOrIndex
+
+        return new InternalValidationContext({
             yop: this.yop,
             kind: props.kind,
             value: props.value,
             parent: this.value,
-            path: props.path,
+            parentContext: this,
+            path,
             root: this.root,
             userContext: this.userContext,
             group: this.group,
             errors: this.errors,
         })
+    }
+
+    matchGroup(group: GroupType | undefined) {
+        if (group == null)
+            return this.group == null || (Array.isArray(this.group) && this.group.includes(undefined))
+        if (Array.isArray(group))
+            return Array.isArray(this.group) ? group.some(g => (this.group as (string | undefined)[]).includes(g)) : group.includes(this.group)
+        return (Array.isArray(this.group) ? this.group.includes(group) : this.group === group)
     }
 
     createError(code: string, constraint: any, message?: string, path?: string): false {
@@ -73,14 +103,6 @@ export class ValidationContext<ValueType, ParentType = unknown> {
             message: message ?? code
         })
         return false
-    }
-
-    matchGroup(group: GroupType | undefined) {
-        if (group == null)
-            return this.group == null || (Array.isArray(this.group) && this.group.includes(undefined))
-        if (Array.isArray(group))
-            return Array.isArray(this.group) ? group.some(g => (this.group as (string | undefined)[]).includes(g)) : group.includes(this.group)
-        return (Array.isArray(this.group) ? this.group.includes(group) : this.group === group)
     }
 
     getRoot<T>() {

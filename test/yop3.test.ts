@@ -10,21 +10,16 @@ import { email } from '../src/yop3/decorators/email'
 import { array } from '../src/yop3'
 import { type } from '../src/yop3/decorators/type'
 
-class Pet {
-    @string({ required: true, min: 1 })
-    name: string | null = null
-}
-
-function x() {
-    return @type({ id: "Fuck", required: true }) class extends Pet {}
-}
-
 describe('test.yop3', () => {
 
     describe('test.string', () => {
 
         it('string', () => {
-
+            class Pet {
+                @string({ required: true, min: 1 })
+                name: string | null = null
+            }
+            
             class Dog extends Pet {
                 @string({ required: true, min: 2 })
                 food: string | null = null
@@ -92,8 +87,6 @@ describe('test.yop3', () => {
                 doc: File | null = null
             }
 
-            // // const p: (new (...args: any[]) => object) = Person
-
             console.log("validate", Yop.validate(Person, {
                 dummy: undefined,
                 firstName: "12345678901234567890",
@@ -107,15 +100,7 @@ describe('test.yop3', () => {
                 pets: [{ name: "a", food: "b" }],
                 names: ["ab", null, "c"],
                 friends: [{ firstName: "a", lastName: "b" }, null]
-            }))
-
-            const y = x()
-            console.log(y)
-
-
-            // // const s = strings({ required: (context) => true, min: 2, max: 20 })
-            // // console.log(s)
-            // // console.log(Person[(Symbol as any).metadata])
+            }, "pets[0]"))
         })
     })
 })

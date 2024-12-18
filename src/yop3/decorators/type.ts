@@ -1,7 +1,7 @@
 import { CommonCodes, CommonConstraints } from "../constraints/CommonConstraints"
 import { validateConstraint } from "../constraints/Constraint"
 import { Constructor, isBoolean } from "../types"
-import { ValidationContext } from "../ValidationContext"
+import { InternalValidationContext } from "../ValidationContext"
 import { InternalCommonConstraints, validationSymbol, Yop } from "../Yop"
 
 export interface TypeConstraints extends CommonConstraints<unknown> {
@@ -20,18 +20,25 @@ export function initTypeConstraints(decoratorMetadata: DecoratorMetadata) {
     
     const validation = metadata[validationSymbol]
     validation.validate ??= validateType
+    validation.traverse ??= traverseType
     validation.kind ??= "class"
     return validation
 }
 
-export function validateType<Value, Parent>(context: ValidationContext<Value, Parent>, constraints: InternalTypeConstraints) {
+function traverseType(context: InternalValidationContext<any>, constraints: InternalTypeConstraints, propertyOrIndex: string | number)
+    : [InternalTypeConstraints | undefined, any] {
+    if (context.value == null || typeof context.value !== "object" || typeof propertyOrIndex !== "string")
+        return [undefined, undefined]
+    return [constraints.fields?.[propertyOrIndex], context.value[propertyOrIndex]]
+}
+
+export function validateType<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InternalTypeConstraints) {
     const parent = context.value as Record<string, any>
-    const parentPath = context.path
     for (const [fieldName, fieldConstraints] of Object.entries(constraints.fields!)) {
         const fieldContext = context.createChildContext({
             kind: fieldConstraints.kind,
             value: parent[fieldName],
-            path: parentPath ? `${ parentPath }.${ fieldName }` : fieldName,
+            propertyOrIndex: fieldName,
         })
         
         validateConstraint(fieldContext, fieldConstraints.exists, isBoolean, (_, constraint) => constraint !== true || fieldName in parent, CommonCodes.exists) &&

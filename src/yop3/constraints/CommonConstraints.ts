@@ -1,6 +1,6 @@
 import { Constraint, validateConstraint } from "./Constraint"
 import { isBoolean } from "../types"
-import { ValidationContext } from "../ValidationContext"
+import { InternalValidationContext } from "../ValidationContext"
 
 export interface CommonConstraints<Field, Parent = unknown> {
     /**
@@ -28,7 +28,7 @@ export enum CommonCodes {
     required = "required",
 }
 
-export function validateCommonConstraints<ValueType, Parent>(context: ValidationContext<ValueType, Parent>, constraints: CommonConstraints<ValueType, Parent>) {
+export function validateCommonConstraints<ValueType, Parent>(context: InternalValidationContext<ValueType, Parent>, constraints: CommonConstraints<ValueType, Parent>) {
     return (
         validateConstraint(context, constraints.defined, isBoolean, (value, constraint) => constraint !== true || value !== undefined, CommonCodes.defined) &&
         validateConstraint(context, constraints.notnull, isBoolean, (value, constraint) => constraint !== true || value !== null, CommonCodes.notnull) &&
@@ -36,6 +36,6 @@ export function validateCommonConstraints<ValueType, Parent>(context: Validation
     )
 }
 
-export function validateValueType(context: ValidationContext<any>, checkType: (value: any) => boolean, expectedType: string) {
+export function validateValueType(context: InternalValidationContext<any>, checkType: (value: any) => boolean, expectedType: string) {
     return context.value != null && (checkType(context.value) || context.createError("type", expectedType))
 }

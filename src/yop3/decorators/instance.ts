@@ -1,6 +1,6 @@
 import { CommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
 import { Constructor, isObject } from "../types"
-import { ValidationContext } from "../ValidationContext"
+import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
 import { validateType } from "./type"
 
@@ -39,7 +39,7 @@ interface InstanceConstraints<Value extends InstanceValue, Parent> extends Commo
 //     return of[Symbol.metadata]?.[validationSymbol]?.[pathSegment] as (CommonConstraints<unknown, unknown> & Kind) | undefined
 // }
 
-function validateInstance<Value extends InstanceValue, Parent>(context: ValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>) {
+function validateInstance<Value extends InstanceValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>) {
     if (!validateCommonConstraints(context, constraints) ||
         !validateValueType(context, isObject, "object") ||
         ((constraints.of as any) = Yop.resolveClass(constraints.of)) == null)

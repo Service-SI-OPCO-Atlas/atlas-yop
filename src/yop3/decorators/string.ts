@@ -2,7 +2,7 @@ import { CommonConstraints, validateCommonConstraints, validateValueType } from 
 import { Constraint, validateConstraint } from "../constraints/Constraint"
 import { MinMaxConstraints, validateMaxConstraint, validateMinConstraint } from "../constraints/MinMaxConstraints"
 import { isNumber, isRegExp, isString, isStringArray } from "../types"
-import { ValidationContext } from "../ValidationContext"
+import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Yop"
 
 type StringValue = string | null | undefined
@@ -13,7 +13,7 @@ interface StringConstraints<Value extends StringValue, Parent> extends CommonCon
 }
 
 
-function validateString<Value extends StringValue, Parent>(context: ValidationContext<Value, Parent>, constraints: StringConstraints<Value, Parent>) {
+function validateString<Value extends StringValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: StringConstraints<Value, Parent>) {
     validateCommonConstraints(context, constraints) &&
     validateValueType(context, isString, "string") &&
     validateMinConstraint(context, constraints, isNumber, (value, constraint) => value.length >= constraint) &&

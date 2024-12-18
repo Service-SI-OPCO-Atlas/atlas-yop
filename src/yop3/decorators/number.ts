@@ -1,14 +1,14 @@
 import { CommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMaxConstraint, validateMinConstraint } from "../constraints/MinMaxConstraints"
 import { isNumber } from "../types"
-import { ValidationContext } from "../ValidationContext"
+import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Yop"
 
 export type NumberValue = number | null | undefined
 
 interface NumberConstraints<Value extends NumberValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {}
 
-function validateNumber<Value extends NumberValue, Parent>(context: ValidationContext<Value, Parent>, constraints: NumberConstraints<Value, Parent>) {
+function validateNumber<Value extends NumberValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: NumberConstraints<Value, Parent>) {
     validateCommonConstraints(context, constraints) &&
     validateValueType(context, isNumber, "number") &&
     validateMinConstraint(context, constraints, isNumber, (value, constraint) => value >= constraint) &&

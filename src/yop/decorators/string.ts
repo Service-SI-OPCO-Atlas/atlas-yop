@@ -18,7 +18,7 @@ export interface StringConstraints<Value extends StringValue, Parent> extends
 }
 
 
-function validateString<Value extends StringValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: StringConstraints<Value, Parent>) {
+export function validateString<Value extends StringValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: StringConstraints<Value, Parent>) {
     return (
         validateCommonConstraints(context, constraints) &&
         validateValueType(context, isString, "string") &&

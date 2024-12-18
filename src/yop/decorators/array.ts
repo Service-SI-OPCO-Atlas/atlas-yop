@@ -24,7 +24,7 @@ function resolveOf<Value extends ArrayValue, Parent>(constraints: ArrayConstrain
     let of: any = Yop.resolveClass(constraints.of)
     if (of?.[Symbol.metadata] == null && typeof of === "function") {
         const metadata = { [validationSymbol]: {} as InternalTypeConstraints }
-        of(null, { metadata, name: "of" });
+        of(null, { metadata, name: "of" })
         of = { [Symbol.metadata]: { [validationSymbol]: metadata[validationSymbol]!.fields!.of }}
     }
     return (constraints.of as any) = of

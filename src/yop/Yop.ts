@@ -82,6 +82,27 @@ export class Yop {
         return Yop.init().validate(schema, value, path)
     }
 
+    validateValue<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void) {
+        const metadata = { [validationSymbol]: {} as InternalTypeConstraints }
+        decorator(null, { metadata, name: "placeholder" } as any)
+        const constraints = metadata[validationSymbol]!.fields!.placeholder
+
+        const context = new InternalValidationContext<unknown>({
+            yop: this,
+            kind: constraints.kind,
+            value: value,
+            parent: {},
+            root: {},
+        })
+        
+        constraints.validate(context, constraints)
+        return context.errors.get(undefined)
+    }
+
+    static validateValue<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void) {
+        return Yop.init().validateValue(value, decorator)
+    }
+
     static init(): Yop {
         if (Yop.defaultInstance == null)
             Yop.defaultInstance = new Yop()

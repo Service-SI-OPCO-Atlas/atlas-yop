@@ -1,10 +1,14 @@
 import { CommonCodes, CommonConstraints } from "../constraints/CommonConstraints"
 import { validateConstraint } from "../constraints/Constraint"
+import { TestConstraints, validateTestConstraint } from "../constraints/TestConstraints"
 import { Constructor, isBoolean } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { InternalCommonConstraints, validationSymbol, Yop } from "../Yop"
 
-export interface TypeConstraints extends CommonConstraints<unknown> {
+export interface TypeConstraints extends
+    CommonConstraints<unknown>,
+    TestConstraints<unknown>
+{
     id?: string
 }
 
@@ -34,6 +38,7 @@ function traverseType(context: InternalValidationContext<any>, constraints: Inte
 
 export function validateType<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InternalTypeConstraints) {
     const parent = context.value as Record<string, any>
+    let valid = true
     for (const [fieldName, fieldConstraints] of Object.entries(constraints.fields!)) {
         const fieldContext = context.createChildContext({
             kind: fieldConstraints.kind,
@@ -41,14 +46,18 @@ export function validateType<Value, Parent>(context: InternalValidationContext<V
             propertyOrIndex: fieldName,
         })
         
-        validateConstraint(fieldContext, fieldConstraints.exists, isBoolean, (_, constraint) => constraint !== true || fieldName in parent, CommonCodes.exists) &&
-        fieldConstraints.validate(fieldContext, fieldConstraints)
+        valid = (
+            validateConstraint(fieldContext, fieldConstraints.exists, isBoolean, (_, constraint) => constraint !== true || fieldName in parent, CommonCodes.exists) &&
+            fieldConstraints.validate(fieldContext, fieldConstraints) &&
+            valid
+        )
     }
+    return valid && validateTestConstraint(context, constraints)
 }
 
 export function type<Type extends object, Class extends Constructor<Type>>(constraints: TypeConstraints) {
     return function decorateClass(target: Class, context: ClassDecoratorContext<Class>) {
-        const { id, exists, defined, notnull, required, ...fields } = constraints
+        const { id, exists, defined, notnull, required, test, ...fields } = constraints
         
         const classConstraints = initTypeConstraints(context.metadata)
         classConstraints.id = id
@@ -56,6 +65,7 @@ export function type<Type extends object, Class extends Constructor<Type>>(const
         classConstraints.required = required ?? classConstraints.required
         classConstraints.defined = defined ?? classConstraints.defined
         classConstraints.notnull = notnull ?? classConstraints.notnull
+        classConstraints.test = test ?? classConstraints.test
         classConstraints.fields = { ...classConstraints.fields, ...fields }
 
         if (id != null)

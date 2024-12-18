@@ -8,14 +8,14 @@ import { InternalValidationContext, ValidationError } from "./ValidationContext"
 
 export const validationSymbol = Symbol('YopValidation')
 
-type ContraintsField<Contraints> = Contraints extends CommonConstraints<infer Field, infer _Parent> ? Field : never
-type ContraintsParent<Contraints> = Contraints extends CommonConstraints<infer _Field, infer Parent> ? Parent : never
+type ContraintsValue<Contraints> = Contraints extends CommonConstraints<infer Value, infer _Parent> ? Value : never
+type ContraintsParent<Contraints> = Contraints extends CommonConstraints<infer _Value, infer Parent> ? Parent : never
 
-type Validator<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>> =
-    (context: InternalValidationContext<Field, Parent>, constraints: Constraints) => void
+type Validator<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>> =
+    (context: InternalValidationContext<Value, Parent>, constraints: Constraints) => boolean
 
-type Traverser<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>> =
-    ((context: InternalValidationContext<Field, Parent>, constraints: Constraints, propertyOrIndex: string | number) =>
+type Traverser<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>> =
+    ((context: InternalValidationContext<Value, Parent>, constraints: Constraints, propertyOrIndex: string | number) =>
     readonly [InternalCommonConstraints | undefined, InternalValidationContext<unknown>])
 
 export interface InternalCommonConstraints extends CommonConstraints<unknown> {
@@ -89,13 +89,13 @@ export class Yop {
     }
 }
 
-export function fieldValidationDecorator<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>>(
+export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>>(
     kind: string,
     constraints: Constraints,
     validate: Validator<Constraints>,
     traverse?: Traverser<Constraints>
 ) {
-    return function decorateClassField(_: any, context: ClassFieldDecoratorContext<Parent, Field>) {
+    return function decorateClassField(_: any, context: ClassFieldDecoratorContext<Parent, Value>) {
         const classConstraints = initTypeConstraints(context.metadata)
         if (!Object.hasOwnProperty.bind(classConstraints)("fields"))
             classConstraints.fields = { ...classConstraints.fields }

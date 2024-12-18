@@ -1,13 +1,18 @@
 import { CommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMaxConstraint, validateMinConstraint } from "../constraints/MinMaxConstraints"
+import { TestConstraints, validateTestConstraint } from "../constraints/TestConstraints"
 import { ArrayElementType, Constructor, isNumber } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
+import { fieldValidationDecorator, InternalCommonConstraints, validationSymbol, Yop } from "../Yop"
 import { InternalTypeConstraints } from "./type"
 
 export type ArrayValue = any[] | null | undefined
 
-export interface ArrayConstraints<Value extends ArrayValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {
+export interface ArrayConstraints<Value extends ArrayValue, Parent> extends
+    CommonConstraints<Value, Parent>,
+    MinMaxConstraints<Value, number, Parent>,
+    TestConstraints<Value, Parent>
+{
     of: (
         Constructor<ArrayElementType<Value>> |
         string |
@@ -43,20 +48,21 @@ function validateArray<Value extends ArrayValue, Parent>(context: InternalValida
         !validateMinConstraint(context, constraints, isNumber, (value, constraint) => value.length >= constraint) ||
         !validateMaxConstraint(context, constraints, isNumber, (value, constraint) => value.length <= constraint) ||
         resolveOf(constraints) == null)
-        return
+        return false
 
-    const elementConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol]
-    if (elementConstraints == null)
-        return
-
-    for (const [index, element] of context.value!.entries()) {
-        const elementContext = context.createChildContext({
-            kind: elementConstraints.kind,
-            value: element,
-            propertyOrIndex: index,
-        })
-        elementConstraints.validate(elementContext, elementConstraints)
+    const elementConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol] as InternalCommonConstraints | undefined
+    let valid = true
+    if (elementConstraints != null) {
+        for (const [index, element] of context.value!.entries()) {
+            const elementContext = context.createChildContext({
+                kind: elementConstraints.kind,
+                value: element,
+                propertyOrIndex: index,
+            })
+            valid = elementConstraints.validate(elementContext, elementConstraints) && valid
+        }    
     }
+    return valid && validateTestConstraint(context, constraints)
 }
 
 export function array<Value extends ArrayValue, Parent>(constraints: ArrayConstraints<Value, Parent>) {

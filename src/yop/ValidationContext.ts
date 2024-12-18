@@ -1,6 +1,6 @@
 import { Yop } from "./Yop"
 
-export type GroupType = string | ((string | undefined)[])
+export type Group = string | ((string | undefined)[])
 
 export type ValidationError = {
     path?: string
@@ -35,7 +35,7 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
     readonly path: string | undefined
     readonly root: unknown | undefined
     readonly userContext: unknown | undefined
-    readonly group: GroupType | undefined
+    readonly group: Group | undefined
     readonly errors: Map<string | undefined, ValidationError>
 
     constructor(props: {
@@ -47,7 +47,7 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
         path?: string | undefined
         root?: unknown | undefined
         userContext?: unknown | undefined
-        group?: GroupType
+        group?: Group
         errors?: Map<string | undefined, ValidationError>
     }) {
         this.yop = props.yop
@@ -85,7 +85,7 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
         })
     }
 
-    matchGroup(group: GroupType | undefined) {
+    matchGroup(group: Group | undefined) {
         if (group == null)
             return this.group == null || (Array.isArray(this.group) && this.group.includes(undefined))
         if (Array.isArray(group))
@@ -94,8 +94,9 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
     }
 
     createError(code: string, constraint: any, message?: string, path?: string): false {
-        this.errors.set(this.path, {
-            path: path ?? this.path,
+        const errorPath = path ?? this.path
+        this.errors.set(errorPath, {
+            path: errorPath,
             value: this.value,
             kind: this.kind,
             code,

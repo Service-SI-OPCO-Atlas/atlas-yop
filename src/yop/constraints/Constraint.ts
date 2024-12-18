@@ -1,43 +1,41 @@
-import { GroupType, InternalValidationContext, ValidationContext } from "../ValidationContext"
+import { Group, InternalValidationContext, ValidationContext } from "../ValidationContext"
 
-type ConstraintType<ValueType, ConstraintValueType, ParentType = unknown> = 
-    ConstraintValueType |
-    ((context: ValidationContext<ValueType, ParentType>) => ConstraintValueType)
+export type ConstraintType<Value, ConstraintValue, Parent = unknown> = 
+    ConstraintValue |
+    ((context: ValidationContext<Value, Parent>) => ConstraintValue)
 
-type MessageType<ValueType, ParentType = unknown> =
+export type MessageType<Value, Parent = unknown> =
     string |
     undefined |
-    ((context: ValidationContext<ValueType, ParentType>) => string | undefined)
+    ((context: ValidationContext<Value, Parent>) => string | undefined)
 
-type SingleConstraintTuple<ValueType, ConstraintValueType, ParentType = unknown> =
-    readonly [ConstraintType<ValueType, ConstraintValueType, ParentType>, MessageType<ValueType, ParentType>, GroupType?]
+export type SingleConstraintTuple<Value, ConstraintValue, Parent = unknown> =
+    readonly [ConstraintType<Value, ConstraintValue, Parent>, MessageType<Value, Parent>, Group?]
 
-type MultipleConstraintTuple<ValueType, ConstraintValueType, ParentType = unknown> =
-    readonly [ConstraintType<ValueType, ConstraintValueType, ParentType>, MessageType<ValueType, ParentType>, GroupType]
+export type MultipleConstraintTuple<Value, ConstraintValue, Parent = unknown> =
+    readonly [ConstraintType<Value, ConstraintValue, Parent>, MessageType<Value, Parent>, Group]
 
-export type Constraint<ValueType, ConstraintValueType, ParentType = unknown> =
-    ConstraintType<ValueType, ConstraintValueType, ParentType> |
-    SingleConstraintTuple<ValueType, ConstraintValueType, ParentType> |
-    [MultipleConstraintTuple<ValueType, ConstraintValueType, ParentType>, ...MultipleConstraintTuple<ValueType, ConstraintValueType, ParentType>[]]
+export type Constraint<Value, ConstraintValue, Parent = unknown> =
+    ConstraintType<Value, ConstraintValue, Parent> |
+    SingleConstraintTuple<Value, ConstraintValue, Parent> |
+    [MultipleConstraintTuple<Value, ConstraintValue, Parent>, ...MultipleConstraintTuple<Value, ConstraintValue, Parent>[]]
 
-export function validateConstraint<ValueType, ConstraintValueType, Parent>(
-    context: InternalValidationContext<ValueType | null | undefined, Parent>,
-    constraint: Constraint<ValueType, ConstraintValueType, Parent> | undefined,
-    isConstraintValue: (value: any) => value is ConstraintValueType,
-    validate: (value: ValueType, constraintValue: NonNullable<ConstraintValueType>) => boolean,
+export function validateConstraint<Value, ConstraintValue, Parent>(
+    context: InternalValidationContext<Value | null | undefined, Parent>,
+    constraint: Constraint<Value, ConstraintValue, Parent> | undefined,
+    isConstraintValue: (value: any) => value is ConstraintValue,
+    validate: (value: Value, constraintValue: NonNullable<ConstraintValue>) => boolean,
     errorCode: string,
-    defaultConstraint?: Constraint<ValueType, ConstraintValueType, Parent>
+    defaultConstraint?: Constraint<Value, ConstraintValue, Parent>
 ) {
-    const _context = context as InternalValidationContext<ValueType>
-
-    let message: MessageType<ValueType> | undefined = undefined
+    let message: MessageType<Value> | undefined = undefined
 
     if (constraint != null && !isConstraintValue(constraint)) {
         if (Array.isArray(constraint)) {
             const [maybeConstraint, maybeMessage, _maybeGroup] = constraint
             if (maybeConstraint == null || isConstraintValue(maybeConstraint)) {
                 constraint = maybeConstraint
-                message = maybeMessage as unknown as MessageType<ValueType> | undefined
+                message = maybeMessage as unknown as MessageType<Value> | undefined
             }
             else if (Array.isArray(maybeConstraint)) {
                 // TODO: array of tuples with groups
@@ -46,16 +44,16 @@ export function validateConstraint<ValueType, ConstraintValueType, Parent>(
     }
 
     if (typeof message === "function")
-        message = (message as ((context: InternalValidationContext<ValueType>) => string))(_context)
+        message = (message as (context: any) => string)(context)
     
     if (constraint == null && defaultConstraint != null)
         constraint = defaultConstraint
     if (typeof constraint === "function")
-        constraint = (constraint as ((context: InternalValidationContext<ValueType>) => ConstraintValueType))(_context)
+        constraint = (constraint as (context: any) => ConstraintValue)(context)
 
     return (
         constraint == null ||
-        validate(_context.value, constraint as NonNullable<ConstraintValueType>) ||
+        validate(context.value as Value, constraint as NonNullable<ConstraintValue>) ||
         context.createError(errorCode, constraint, message) // false
     )
 }

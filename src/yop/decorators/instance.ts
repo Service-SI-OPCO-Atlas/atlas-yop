@@ -1,8 +1,9 @@
 import { CommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
+import { TestConstraints, validateTestConstraint } from "../constraints/TestConstraints"
 import { Constructor, isObject } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
-import { validateType } from "./type"
+import { InternalTypeConstraints, validateType } from "./type"
 
 type ExcludeFromObject<T extends object | null | undefined, U extends object, M = { [K in keyof T]: T[K] }> =
     M extends object ?
@@ -28,18 +29,22 @@ type CheckValue<Value extends object | null | undefined> = ExcludeFromObject<Val
 
 export type InstanceValue = object | null | undefined
 
-export interface InstanceConstraints<Value extends InstanceValue, Parent> extends CommonConstraints<Value, Parent> {
-    readonly of: Constructor<Value> | string
+export interface InstanceConstraints<Value extends InstanceValue, Parent> extends
+    CommonConstraints<Value, Parent>,
+    TestConstraints<Value, Parent>
+{
+    of: Constructor<Value> | string
 }
 
 function validateInstance<Value extends InstanceValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>) {
     if (!validateCommonConstraints(context, constraints) ||
         !validateValueType(context, isObject, "object") ||
+        !validateTestConstraint(context, constraints) ||
         ((constraints.of as any) = Yop.resolveClass(constraints.of)) == null)
-        return
+        return false
 
-    const classConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol]
-    validateType(context, classConstraints)
+    const classConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol] as InternalTypeConstraints | undefined
+    return classConstraints == null || validateType(context, classConstraints)
 }
 
 export function instance<Value extends CheckValue<Value>, Parent>(constraints: InstanceConstraints<Value, Parent>) {

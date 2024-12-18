@@ -1,13 +1,18 @@
 import { CommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
 import { Constraint, validateConstraint } from "../constraints/Constraint"
 import { MinMaxConstraints, validateMaxConstraint, validateMinConstraint } from "../constraints/MinMaxConstraints"
+import { TestConstraints, validateTestConstraint } from "../constraints/TestConstraints"
 import { isNumber, isRegExp, isString } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Yop"
 
 export type EmailValue = string | null | undefined
 
-export interface EmailConstraints<Value extends EmailValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {
+export interface EmailConstraints<Value extends EmailValue, Parent> extends
+    CommonConstraints<Value, Parent>,
+    MinMaxConstraints<Value, number, Parent>,
+    TestConstraints<Value, Parent>
+{
     readonly match?: Constraint<NonNullable<Value>, RegExp | undefined, Parent>
 }
 
@@ -15,11 +20,14 @@ const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF
 
 
 function validateEmail<Value extends EmailValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: EmailConstraints<Value, Parent>) {
-    validateCommonConstraints(context, constraints) &&
-    validateValueType(context, isString, "email") &&
-    validateMinConstraint(context, constraints, isNumber, (value, constraint) => value.length >= constraint) &&
-    validateMaxConstraint(context, constraints, isNumber, (value, constraint) => value.length <= constraint) &&
-    validateConstraint(context, constraints.match, isRegExp, (value, constraint) => constraint.test(value), "match", emailRegex)
+    return (
+        validateCommonConstraints(context, constraints) &&
+        validateValueType(context, isString, "email") &&
+        validateMinConstraint(context, constraints, isNumber, (value, constraint) => value.length >= constraint) &&
+        validateMaxConstraint(context, constraints, isNumber, (value, constraint) => value.length <= constraint) &&
+        validateConstraint(context, constraints.match, isRegExp, (value, constraint) => constraint.test(value), "match", emailRegex) &&
+        validateTestConstraint(context, constraints)
+    )
 }
 
 export function email<Value extends EmailValue, Parent>(constraints: EmailConstraints<Value, Parent>) {

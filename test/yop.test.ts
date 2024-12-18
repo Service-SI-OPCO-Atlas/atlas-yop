@@ -43,6 +43,7 @@ describe('test.yop', () => {
                     required: context => context.parent.firstName != null,
                     // min: [2, "Le nom de famille doit avoir au moins un caratère"],
                     min: [2, context => context.parent.firstName != null ? "Le nom de famille doit avoir au moins un caratère lorsque le prénom est renseigné" : undefined],
+                    test: context => context.value === "fuck" || context.createError("Should be 'fuck'"),
                 })
                 lastName: string | null = null
                 
@@ -90,7 +91,7 @@ describe('test.yop', () => {
             console.log("validate", Yop.validate(Person, {
                 dummy: undefined,
                 firstName: "12345678901234567890",
-                lastName: "1",
+                lastName: "azerty",
                 email: "test",
                 female: false,
                 gender: "other",

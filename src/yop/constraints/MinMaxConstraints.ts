@@ -19,10 +19,10 @@ export function validateMinConstraint<Value, Min, Parent>(
     return validateConstraint(context as InternalValidationContext<NonNullable<Value>, Parent>, constraints.min, isConstraintValue, validate, MinMaxCodes.min)
 }
 
-export function validateMaxConstraint<ValueType, Max, Parent>(
-    context: InternalValidationContext<ValueType, Parent>,
-    constraints: MinMaxConstraints<NonNullable<ValueType>, Max, Parent>,
+export function validateMaxConstraint<Value, Max, Parent>(
+    context: InternalValidationContext<Value, Parent>,
+    constraints: MinMaxConstraints<NonNullable<Value>, Max, Parent>,
     isConstraintValue: (value: any) => value is Max,
-    validate: (value: NonNullable<ValueType>, max: NonNullable<Max>) => boolean) {
-    return validateConstraint(context as InternalValidationContext<NonNullable<ValueType>, Parent>, constraints.max, isConstraintValue, validate, MinMaxCodes.max)
+    validate: (value: NonNullable<Value>, max: NonNullable<Max>) => boolean) {
+    return validateConstraint(context as InternalValidationContext<NonNullable<Value>, Parent>, constraints.max, isConstraintValue, validate, MinMaxCodes.max)
 }

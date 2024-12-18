@@ -2,23 +2,23 @@ import { Constraint, validateConstraint } from "./Constraint"
 import { isBoolean } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 
-export interface CommonConstraints<Field, Parent = unknown> {
+export interface CommonConstraints<Value, Parent = unknown> {
     /**
      * If `true`, the property must be present in the parent object (ie: `"prop" in obj` is true).
      */
-    exists?: Constraint<Field | null | undefined, boolean, Parent>
+    exists?: Constraint<Value | null | undefined, boolean, Parent>
     /**
      * If `true`, the value must not be `undefined`.
      */
-    defined?: Constraint<Field | null | undefined, boolean, Parent>
+    defined?: Constraint<Value | null | undefined, boolean, Parent>
     /**
      * If `true`, the value must not be `null`.
      */
-    notnull?: Constraint<Field | null | undefined, boolean, Parent>
+    notnull?: Constraint<Value | null | undefined, boolean, Parent>
     /**
      * If `true`, the the value must not be `undefined` or `null`.
      */
-    required?: Constraint<Field | null | undefined, boolean, Parent>
+    required?: Constraint<Value | null | undefined, boolean, Parent>
 }
 
 export enum CommonCodes {
@@ -28,7 +28,7 @@ export enum CommonCodes {
     required = "required",
 }
 
-export function validateCommonConstraints<ValueType, Parent>(context: InternalValidationContext<ValueType, Parent>, constraints: CommonConstraints<ValueType, Parent>) {
+export function validateCommonConstraints<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: CommonConstraints<Value, Parent>) {
     return (
         validateConstraint(context, constraints.defined, isBoolean, (value, constraint) => constraint !== true || value !== undefined, CommonCodes.defined) &&
         validateConstraint(context, constraints.notnull, isBoolean, (value, constraint) => constraint !== true || value !== null, CommonCodes.notnull) &&

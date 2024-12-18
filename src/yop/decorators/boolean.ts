@@ -4,9 +4,9 @@ import { isBoolean, isBooleanArray } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Yop"
 
-type BooleanValue = boolean | null | undefined
+export type BooleanValue = boolean | null | undefined
 
-interface BooleanConstraints<Value extends BooleanValue, Parent> extends CommonConstraints<Value, Parent> {
+export interface BooleanConstraints<Value extends BooleanValue, Parent> extends CommonConstraints<Value, Parent> {
     readonly oneOf?: Constraint<NonNullable<Value>, NoInfer<NonNullable<Value>>[], Parent>
 }
 

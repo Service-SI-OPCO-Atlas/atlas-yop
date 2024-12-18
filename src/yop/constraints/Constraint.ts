@@ -1,13 +1,13 @@
-import { GroupType, InternalValidationContext } from "../ValidationContext"
+import { GroupType, InternalValidationContext, ValidationContext } from "../ValidationContext"
 
 type ConstraintType<ValueType, ConstraintValueType, ParentType = unknown> = 
     ConstraintValueType |
-    ((context: InternalValidationContext<ValueType, ParentType>) => ConstraintValueType)
+    ((context: ValidationContext<ValueType, ParentType>) => ConstraintValueType)
 
-export type MessageType<ValueType, ParentType = unknown> =
+type MessageType<ValueType, ParentType = unknown> =
     string |
     undefined |
-    ((context: InternalValidationContext<ValueType, ParentType>) => string | undefined)
+    ((context: ValidationContext<ValueType, ParentType>) => string | undefined)
 
 type SingleConstraintTuple<ValueType, ConstraintValueType, ParentType = unknown> =
     readonly [ConstraintType<ValueType, ConstraintValueType, ParentType>, MessageType<ValueType, ParentType>, GroupType?]

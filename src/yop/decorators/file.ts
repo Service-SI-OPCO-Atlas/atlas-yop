@@ -4,9 +4,9 @@ import { isFile, isNumber } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Yop"
 
-type FileValue = File | null | undefined
+export type FileValue = File | null | undefined
 
-interface FileConstraints<Value extends FileValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {}
+export interface FileConstraints<Value extends FileValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {}
 
 function validateFile<Value extends FileValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: FileConstraints<Value, Parent>) {
     validateCommonConstraints(context, constraints) &&

@@ -5,9 +5,9 @@ import { isNumber, isRegExp, isString } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Yop"
 
-type EmailValue = string | null | undefined
+export type EmailValue = string | null | undefined
 
-interface EmailConstraints<Value extends EmailValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {
+export interface EmailConstraints<Value extends EmailValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {
     readonly match?: Constraint<NonNullable<Value>, RegExp | undefined, Parent>
 }
 

@@ -24,20 +24,13 @@ type ExcludedObjects =
     Set<any> |
     Map<any, any>
 
-type InstanceValue = object | null | undefined
-
 type CheckValue<Value extends object | null | undefined> = ExcludeFromObject<Value, ExcludedObjects>
 
-interface InstanceConstraints<Value extends InstanceValue, Parent> extends CommonConstraints<Value, Parent> {
+export type InstanceValue = object | null | undefined
+
+export interface InstanceConstraints<Value extends InstanceValue, Parent> extends CommonConstraints<Value, Parent> {
     readonly of: Constructor<Value> | string
 }
-
-// function constraintsAt(yop: Yop, constraints: InstanceConstraints<any, any, any>, pathSegment: string) {
-//     let of = constraints.of
-//     if (typeof of === 'string')
-//         of = yop.getClass(of)
-//     return of[Symbol.metadata]?.[validationSymbol]?.[pathSegment] as (CommonConstraints<unknown, unknown> & Kind) | undefined
-// }
 
 function validateInstance<Value extends InstanceValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>) {
     if (!validateCommonConstraints(context, constraints) ||

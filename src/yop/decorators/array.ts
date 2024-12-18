@@ -5,9 +5,9 @@ import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
 import { InternalTypeConstraints } from "./type"
 
-type ArrayValue = any[] | null | undefined
+export type ArrayValue = any[] | null | undefined
 
-interface ArrayConstraints<Value extends ArrayValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {
+export interface ArrayConstraints<Value extends ArrayValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {
     of: (
         Constructor<ArrayElementType<Value>> |
         string |

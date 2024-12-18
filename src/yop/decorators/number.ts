@@ -6,7 +6,7 @@ import { fieldValidationDecorator } from "../Yop"
 
 export type NumberValue = number | null | undefined
 
-interface NumberConstraints<Value extends NumberValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {}
+export interface NumberConstraints<Value extends NumberValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {}
 
 function validateNumber<Value extends NumberValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: NumberConstraints<Value, Parent>) {
     validateCommonConstraints(context, constraints) &&

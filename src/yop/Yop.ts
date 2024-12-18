@@ -1,77 +1,110 @@
-import { StringSchema } from './StringSchema'
-import { NumberSchema } from './NumberSchema'
-import { BooleanSchema } from './BooleanSchema'
-import { DateSchema } from './DateSchema'
-import { ObjectSchema, ObjectPropertiesSchemas } from './ObjectSchema'
-import { ArraySchema } from './ArraySchema'
-import { SchemaForType } from './AnySchema'
-import { FileSchema } from './FileSchema'
-import { ErrorMessages, en_US_errorMessages, fr_FR_errorMessages } from './localization'
-import { IgnoredSchema } from './IgnoredSchema'
+import { CommonConstraints } from "./constraints/CommonConstraints"
+import { initTypeConstraints, InternalTypeConstraints } from "./decorators/type"
+import { Path, splitPath } from "./Path"
+import { Constructor } from "./types"
+import { InternalValidationContext, ValidationError } from "./ValidationContext"
+
+(Symbol as any).metadata ??= Symbol.for("Symbol.metadata")
+
+export const validationSymbol = Symbol('YopValidation')
+
+type ContraintsField<Contraints> = Contraints extends CommonConstraints<infer Field, infer _Parent> ? Field : never
+type ContraintsParent<Contraints> = Contraints extends CommonConstraints<infer _Field, infer Parent> ? Parent : never
+
+type Validator<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>> =
+    (context: InternalValidationContext<Field, Parent>, constraints: Constraints) => void
+
+type Traverser<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>> =
+    ((context: InternalValidationContext<Field, Parent>, constraints: Constraints, propertyOrIndex: string | number) =>
+    readonly [InternalCommonConstraints | undefined, InternalValidationContext<unknown>])
+
+export interface InternalCommonConstraints extends CommonConstraints<unknown> {
+    /**
+     * The kind of the decorated value (eg: `string`, `number`, etc.)
+     */
+    kind: string
+    /**
+     * The method that validates the decorated value.
+     */
+    validate: Validator<this>
+    /**
+     * The method that returns the constraints and value of a nested field.
+     */
+    traverse?: Traverser<this>
+}
 
 export class Yop {
 
-    private static locale = 'en-US'
-    private static locales: Record<string, Record<string, ErrorMessages>> = {
-        'en-US': en_US_errorMessages,
-        'fr-FR': fr_FR_errorMessages,
+    private static defaultInstance?: Yop
+
+    private static classIds = new Map<string, Constructor<unknown>>()
+
+    static registerClass(id: string, constructor: Constructor<unknown>) {
+        Yop.classIds.set(id, constructor)
     }
 
-    private static stringSchema = new StringSchema()
-    private static numberSchema = new NumberSchema()
-    private static dateSchema = new DateSchema()
-    private static booleanSchema = new BooleanSchema()
-    private static fileSchema = new FileSchema()
-    private static ignoredSchema = new IgnoredSchema()
-
-    static addLocale(locale: string, errorMessages: Record<string, ErrorMessages>) {
-        Yop.locales[locale] = errorMessages
+    static resolveClass(id: unknown) {
+        if (typeof id === "string") {
+            const resolved = Yop.classIds.get(id)
+            if (resolved == null)
+                console.error(`Class "${ id }" unregistered in Yop. Did you forget to add a @constraints({ id: "${ id }" }) decorator to the class?`)
+            return resolved
+        }
+        return id
     }
 
-    static setLocale(locale: string) {
-        Yop.locale = locale
+    validate<RootClass>(schema: Constructor<RootClass>, root: any, path?: string | Path<RootClass>) {
+        const segments = splitPath(path ?? "")
+
+        let constraints = schema[Symbol.metadata]?.[validationSymbol] as InternalTypeConstraints | undefined
+        if (constraints == null)
+            return new Map<string | undefined, ValidationError>()
+    
+        let context = new InternalValidationContext({
+            yop: this,
+            kind: constraints.kind,
+            value: root,
+            parent: {},
+            root,
+        })
+        let value = root
+        for (const segment of segments) {
+            [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
+            if (constraints == null)
+                return new Map<string | undefined, ValidationError>()
+            context = context.createChildContext({ kind: constraints.kind, value, propertyOrIndex: segment })
+        }
+    
+        constraints.validate(context, constraints)
+        return context.errors
+    }
+    static validate<RootClass>(schema: Constructor<RootClass>, value: any, path?: string | Path<RootClass>) {
+        return Yop.init().validate(schema, value, path)
     }
 
-    static getLocale() {
-        return Yop.locale
+    static init(): Yop {
+        if (Yop.defaultInstance == null)
+            Yop.defaultInstance = new Yop()
+        return Yop.defaultInstance
     }
+}
 
-    static getErrorMessages() {
-        let messages = Yop.locales[Yop.locale]
-        if (messages == null)
-            messages = Yop.locales['en-US']
-        return messages
-    }
+export function fieldValidationDecorator<Constraints, Field = ContraintsField<Constraints>, Parent = ContraintsParent<Constraints>>(
+    kind: string,
+    constraints: Constraints,
+    validate: Validator<Constraints>,
+    traverse?: Traverser<Constraints>
+) {
+    return function decorateClassField(_: any, context: ClassFieldDecoratorContext<Parent, Field>) {
+        const classConstraints = initTypeConstraints(context.metadata)
+        if (!Object.hasOwnProperty.bind(classConstraints)("fields"))
+            classConstraints.fields = { ...classConstraints.fields }
 
-    static string() {
-        return Yop.stringSchema
-    }
-
-    static number() {
-        return Yop.numberSchema
-    }
-
-    static date() {
-        return Yop.dateSchema
-    }
-
-    static boolean() {
-        return Yop.booleanSchema
-    }
-
-    static file() {
-        return Yop.fileSchema
-    }
-
-    static ignored() {
-        return Yop.ignoredSchema as any
-    }
-
-    static object<T extends object | null | undefined>(definition: ObjectPropertiesSchemas<T>) {
-        return new ObjectSchema<T | null | undefined>(definition)
-    }
-
-    static array<T extends any>(elementType: SchemaForType<T | null | undefined>) {
-        return new ArraySchema<T[] | null | undefined>(elementType as any)
+        const fieldName = context.name as string
+        const fields = classConstraints.fields!        
+        if (!Object.hasOwnProperty.bind(fields)(fieldName))
+            fields[fieldName] = {} as InternalCommonConstraints
+        
+        Object.assign(fields[fieldName], { ...constraints, kind, validate, traverse })
     }
 }

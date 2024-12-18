@@ -5,9 +5,9 @@ import { isNumber, isRegExp, isString, isStringArray } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Yop"
 
-type StringValue = string | null | undefined
+export type StringValue = string | null | undefined
 
-interface StringConstraints<Value extends StringValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {
+export interface StringConstraints<Value extends StringValue, Parent> extends CommonConstraints<Value, Parent>, MinMaxConstraints<Value, number, Parent> {
     match?: Constraint<NonNullable<Value>, RegExp, Parent>
     oneOf?: Constraint<NonNullable<Value>, NoInfer<NonNullable<Value>>[], Parent>
 }

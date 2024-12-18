@@ -2,8 +2,8 @@ import { CommonConstraints, validateCommonConstraints, validateValueType } from 
 import { MinMaxConstraints, validateMaxConstraint, validateMinConstraint } from "../constraints/MinMaxConstraints"
 import { ArrayElementType, Constructor, isNumber } from "../types"
 import { ValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator, ValidationHolder, validationSymbol, Yop } from "../Yop"
-import { InternalClassConstraints } from "./type"
+import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
+import { InternalTypeConstraints } from "./type"
 
 type ArrayValue = any[] | null | undefined
 
@@ -20,12 +20,12 @@ function validateArray<Value extends ArrayValue, Parent>(context: ValidationCont
         !validateValueType(context, Array.isArray, "array") ||
         !validateMinConstraint(context, constraints, isNumber, (value, constraint) => value.length >= constraint) ||
         !validateMaxConstraint(context, constraints, isNumber, (value, constraint) => value.length <= constraint) ||
-        ((constraints.of as any) = Yop.getClass(constraints.of)) == null)
+        ((constraints.of as any) = Yop.resolveClass(constraints.of)) == null)
         return
 
     let of: any = constraints.of
     if (of[Symbol.metadata] == null && typeof of === "function") {
-        const metadata: Partial<ValidationHolder<InternalClassConstraints>> = {}
+        const metadata = { [validationSymbol]: {} as InternalTypeConstraints }
         of(null, { metadata, name: "of" })
         of = (constraints.of as any) = { [Symbol.metadata]: { [validationSymbol]: metadata[validationSymbol]!.fields!.of }}
         if (of == null)

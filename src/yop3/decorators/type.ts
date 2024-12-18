@@ -2,18 +2,18 @@ import { CommonCodes, CommonConstraints } from "../constraints/CommonConstraints
 import { validateConstraint } from "../constraints/Constraint"
 import { Constructor, isBoolean } from "../types"
 import { ValidationContext } from "../ValidationContext"
-import { InternalCommonConstraints, ValidationHolder, validationSymbol, Yop } from "../Yop"
+import { InternalCommonConstraints, validationSymbol, Yop } from "../Yop"
 
-export interface ClassConstraints extends CommonConstraints<unknown> {
+export interface TypeConstraints extends CommonConstraints<unknown> {
     id?: string
 }
 
-export interface InternalClassConstraints extends ClassConstraints, InternalCommonConstraints {
+export interface InternalTypeConstraints extends TypeConstraints, InternalCommonConstraints {
     fields?: Record<string, InternalCommonConstraints>
 }
 
 export function initTypeConstraints(decoratorMetadata: DecoratorMetadata) {
-    const metadata = decoratorMetadata as unknown as ValidationHolder<InternalClassConstraints>
+    const metadata = decoratorMetadata as unknown as { [validationSymbol]: InternalTypeConstraints }
     
     if (!Object.hasOwnProperty.bind(metadata)(validationSymbol))
         metadata[validationSymbol] = { ...metadata[validationSymbol] }
@@ -24,7 +24,7 @@ export function initTypeConstraints(decoratorMetadata: DecoratorMetadata) {
     return validation
 }
 
-export function validateType<Value, Parent>(context: ValidationContext<Value, Parent>, constraints: InternalClassConstraints) {
+export function validateType<Value, Parent>(context: ValidationContext<Value, Parent>, constraints: InternalTypeConstraints) {
     const parent = context.value as Record<string, any>
     const parentPath = context.path
     for (const [fieldName, fieldConstraints] of Object.entries(constraints.fields!)) {
@@ -39,7 +39,7 @@ export function validateType<Value, Parent>(context: ValidationContext<Value, Pa
     }
 }
 
-export function type<Type extends object, Class extends Constructor<Type>>(constraints: ClassConstraints) {
+export function type<Type extends object, Class extends Constructor<Type>>(constraints: TypeConstraints) {
     return function decorateClass(target: Class, context: ClassDecoratorContext<Class>) {
         const { id, exists, defined, notnull, required, ...fields } = constraints
         

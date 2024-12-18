@@ -42,7 +42,7 @@ interface InstanceConstraints<Value extends InstanceValue, Parent> extends Commo
 function validateInstance<Value extends InstanceValue, Parent>(context: ValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>) {
     if (!validateCommonConstraints(context, constraints) ||
         !validateValueType(context, isObject, "object") ||
-        ((constraints.of as any) = Yop.getClass(constraints.of)) == null)
+        ((constraints.of as any) = Yop.resolveClass(constraints.of)) == null)
         return
 
     const classConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol]

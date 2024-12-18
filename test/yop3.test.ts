@@ -82,7 +82,10 @@ describe('test.yop3', () => {
                 })
                 friend: Person | null = null
 
-                @array({ of: "Person" })
+                @array({
+                    required: true,
+                    of: instance({ of: "Person", required: true })
+                })
                 friends: Person[] = null as any
 
                 @file({ required: true })
@@ -103,7 +106,7 @@ describe('test.yop3', () => {
                 friend: null, //new Person(),
                 pets: [{ name: "a", food: "b" }],
                 names: ["ab", null, "c"],
-                friends: [{ firstName: "a", lastName: "b" }]
+                friends: [{ firstName: "a", lastName: "b" }, null]
             }))
 
             const y = x()

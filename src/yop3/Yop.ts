@@ -1,5 +1,5 @@
 import { CommonConstraints } from "./constraints/CommonConstraints"
-import { initTypeConstraints, InternalClassConstraints } from "./decorators/type"
+import { initTypeConstraints, InternalTypeConstraints } from "./decorators/type"
 import { Path, splitPath } from "./Path"
 import { Constructor } from "./types"
 import { ValidationContext, ValidationError } from "./ValidationContext"
@@ -19,10 +19,6 @@ export interface InternalCommonConstraints extends CommonConstraints<unknown> {
     validate: (context: ValidationContext<unknown>, constraints: InternalCommonConstraints) => void
 }
 
-export interface ValidationHolder<Constraints = InternalCommonConstraints> {
-    [validationSymbol]: Constraints
-}
-
 // export interface ConstraintsTraverser<Constraints extends CommonConstraints<any, any>> {
 //     constraintsAt?: (yop: Yop, constraints: Constraints, pathSegment: string) => (CommonConstraints<unknown> & Kind) | undefined
 // }
@@ -37,7 +33,7 @@ export class Yop {
         Yop.classIds.set(id, constructor)
     }
 
-    static getClass(id: unknown) {
+    static resolveClass(id: unknown) {
         if (typeof id === "string") {
             const resolved = Yop.classIds.get(id)
             if (resolved == null)
@@ -50,7 +46,7 @@ export class Yop {
     validate<RootClass>(schema: Constructor<RootClass>, parent: any, path?: string | Path<RootClass>) {
         const segments = splitPath(path ?? "")
 
-        let constraints = schema[Symbol.metadata]?.[validationSymbol] as InternalClassConstraints
+        let constraints = schema[Symbol.metadata]?.[validationSymbol] as InternalTypeConstraints
         if (constraints == null)
             return new Map<string | undefined, ValidationError>()
     

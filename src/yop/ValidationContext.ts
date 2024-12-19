@@ -93,6 +93,20 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
         return (Array.isArray(this.group) ? this.group.includes(group) : this.group === group)
     }
 
+    // getAtPath(path: string) {
+    //     const segments = splitPath(path)
+    //     if (segments.length === 0)
+    //         return this.root
+    //     let context: InternalValidationContext<unknown> = this
+    //     for (const segment of segments) {
+    //         const [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
+    //         if (constraints == null)
+    //             return undefined
+    //         context = context.createChildContext({ kind: constraints.kind, value, propertyOrIndex: segment })
+    //     }
+    //     return context
+    // }
+
     createError(code: string, constraint: any, message?: string, path?: string): false {
         const errorPath = path ?? this.path
         this.errors.set(errorPath, {

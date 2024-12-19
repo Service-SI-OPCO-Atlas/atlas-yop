@@ -13,6 +13,9 @@ export class InternalTestValidationContext<Value, Parent> extends InternalValida
     }
 
     override createError(message: string, path?: string): false {
+        if (path != null && path !== this.path) {
+            // TODO
+        }
         return super.createError("test", false, message, path)
     }
 }
@@ -58,8 +61,9 @@ export function validateTestConstraint<Value, Parent>(context: InternalValidatio
     if (isFunction(message))
         message = message(context)
 
+    const errorsCount = context.errors.size
     const valid = (constraint as (context: any) => boolean)(new InternalTestValidationContext(context))
-    if (!valid && !context.errors.has(context.path))
+    if (!valid && errorsCount === context.errors.size)
         context.createError("test", false, message)
     return valid
 }

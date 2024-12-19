@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { string } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
-import { array, boolean, date, email, emailRegex, file, number } from "../src"
+import { array, boolean, date, email, emailRegex, file, instance, number, type } from "../src"
 
 describe("yop", () => {
 
@@ -210,6 +210,14 @@ describe("yop", () => {
                 code: "test",
                 constraint: false,
                 message: "Invalid value"
+            }])
+            expect(Yop.validateValue("abc", string({ test: context => context.value === "a" || context.createError("Should be 'a'") }))).toEqual([{
+                path: "",
+                value: "abc",
+                kind: "string",
+                code: "test",
+                constraint: false,
+                message: "Should be 'a'"
             }])
         })
 
@@ -484,6 +492,14 @@ describe("yop", () => {
                 constraint: false,
                 message: "Invalid value"
             }])
+            expect(Yop.validateValue(123, number({ test: [context => context.value === 1, "Should be 1"] }))).toEqual([{
+                path: "",
+                value: 123,
+                kind: "number",
+                code: "test",
+                constraint: false,
+                message: "Should be 1"
+            }])
         })
 
         it("yop.number.type", () => {
@@ -572,6 +588,14 @@ describe("yop", () => {
                 constraint: [false],
                 message: "Should be false"
             }])
+            expect(Yop.validateValue(true, boolean({ test: [context => !context.value, "Should be false"] }))).toEqual([{
+                path: "",
+                value: true,
+                kind: "boolean",
+                code: "test",
+                constraint: false,
+                message: "Should be false"
+            }])
         })
 
         it("yop.boolean.false", () => {
@@ -592,6 +616,14 @@ describe("yop", () => {
                 kind: "boolean",
                 code: "oneOf",
                 constraint: [true],
+                message: "Should be true"
+            }])
+            expect(Yop.validateValue(false, boolean({ test: [context => context.value, "Should be true"] }))).toEqual([{
+                path: "",
+                value: false,
+                kind: "boolean",
+                code: "test",
+                constraint: false,
                 message: "Should be true"
             }])
         })
@@ -723,6 +755,33 @@ describe("yop", () => {
                 constraint: [beforeDate, afterDate],
                 message: "Too early or too late!"
             }])
+            expect(Yop.validateValue(testDate, date({ test: context => context.value.getFullYear() === 2025 }))).toEqual([{
+                path: "",
+                value: testDate,
+                kind: "date",
+                code: "test",
+                constraint: false,
+                message: "Invalid value"
+            }])
+            expect(Yop.validateValue(testDate, date({ test: [context => context.value.getFullYear() === 2025, "Should be in 2025!"] }))).toEqual([{
+                path: "",
+                value: testDate,
+                kind: "date",
+                code: "test",
+                constraint: false,
+                message: "Should be in 2025!"
+            }])
+            expect(Yop.validateValue(testDate, date({ test: [
+                context => context.value.getFullYear() === 2025,
+                context => `Should be in 2025 not in ${ context.value.getFullYear() }!`
+            ]}))).toEqual([{
+                path: "",
+                value: testDate,
+                kind: "date",
+                code: "test",
+                constraint: false,
+                message: "Should be in 2025 not in 2024!"
+            }])
         })
 
         it("yop.date.type", () => {
@@ -831,6 +890,31 @@ describe("yop", () => {
                 constraint: 2,
                 message: "File must have a size of at least 2 bytes"
             }])
+            expect(Yop.validateValue(testFile, file({ test: context => context.value.size === 1 }))).toEqual([])
+            expect(Yop.validateValue(testFile, file({ test: context => context.value.size === 2 }))).toEqual([{
+                path: "",
+                value: testFile,
+                kind: "file",
+                code: "test",
+                constraint: false,
+                message: "Invalid value"
+            }])
+            expect(Yop.validateValue(testFile, file({ test: [context => context.value.size === 2, "File must have exactly 2 bytes"] }))).toEqual([{
+                path: "",
+                value: testFile,
+                kind: "file",
+                code: "test",
+                constraint: false,
+                message: "File must have exactly 2 bytes"
+            }])
+            expect(Yop.validateValue(testFile, file({ test: context => context.value.size === 2 || context.createError("File must have exactly 2 bytes") }))).toEqual([{
+                path: "",
+                value: testFile,
+                kind: "file",
+                code: "test",
+                constraint: false,
+                message: "File must have exactly 2 bytes"
+            }])
         })
 
         it("yop.file.type", () => {
@@ -937,6 +1021,46 @@ describe("yop", () => {
                 constraint: 2,
                 message: "At least 2 elements"
             }])
+            expect(Yop.validateValue([""], array({ of: string({ min: 1 }), min: 1 }))).toEqual([{
+                path: "[0]",
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character"
+            }])
+            expect(Yop.validateValue([""], array({ of: string({ min: 1 }), min: 2 }))).toEqual([{
+                path: "",
+                value: [""],
+                kind: "array",
+                code: "min",
+                constraint: 2,
+                message: "At least 2 elements"
+            }])
+            expect(Yop.validateValue(["a", "b", "c"], array({ of: string({ min: 1 }), min: 2 }))).toEqual([])
+            expect(Yop.validateValue(["ab", "c", "de"], array({ of: string({ max: 1 }), min: 2 }))).toEqual([{
+                path: "[0]",
+                value: "ab",
+                kind: "string",
+                code: "max",
+                constraint: 1,
+                message: "Maximum 1 character"
+            }, {
+                path: "[2]",
+                value: "de",
+                kind: "string",
+                code: "max",
+                constraint: 1,
+                message: "Maximum 1 character"
+            }])
+            expect(Yop.validateValue(["ab", "c", "de"], array({ of: string({ max: 1 }), max: 2 }))).toEqual([{
+                path: "",
+                value: ["ab", "c", "de"],
+                kind: "array",
+                code: "max",
+                constraint: 2,
+                message: "At most 2 elements"
+            }])
         })
 
         it("yop.array.type", () => {
@@ -974,6 +1098,182 @@ describe("yop", () => {
             }, {
                 path: "[1]",
                 value: true,
+                kind: "string",
+                code: "type",
+                constraint: "string",
+                message: "Wrong value type (expected string)"
+            }])
+        })
+    })
+
+    describe("yop.instance", () => {
+
+        class Test {}
+
+        it("yop.instance.undefined", () => {
+            expect(Yop.validateValue(undefined, instance({ of: Test, exists: true }))).toEqual([])
+            expect(Yop.validateValue(undefined, instance({ of: Test, defined: true }))).toEqual([{
+                path: "",
+                value: undefined,
+                kind: "instance",
+                code: "defined",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue(undefined, instance({ of: Test, notnull: true }))).toEqual([])
+            expect(Yop.validateValue(undefined, instance({ of: Test, required: true }))).toEqual([{
+                path: "",
+                value: undefined,
+                kind: "instance",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue(undefined, instance({ of: Test, test: _ => false }))).toEqual([])
+        })
+
+        it("yop.instance.null", () => {
+            expect(Yop.validateValue(null, instance({ of: Test, exists: true }))).toEqual([])
+            expect(Yop.validateValue(null, instance({ of: Test, defined: true }))).toEqual([])
+            expect(Yop.validateValue(null, instance({ of: Test, notnull: true }))).toEqual([{
+                path: "",
+                value: null,
+                kind: "instance",
+                code: "notnull",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue(null, instance({ of: Test, required: true }))).toEqual([{
+                path: "",
+                value: null,
+                kind: "instance",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue(null, instance({ of: Test, test: _ => false }))).toEqual([])
+        })
+        
+        @type({ id: "Test2" })
+        class Test2 {
+            
+            @string({ required: true, min: 1 })
+            name: string | null = null
+        }
+
+        it("yop.instance.Test2", () => {
+            expect(Yop.validateValue({}, instance())).toEqual([])
+            expect(Yop.validateValue({}, instance({ of: Test }))).toEqual([])
+            expect(Yop.validateValue({ name: "" }, instance({ of: Test }))).toEqual([])
+            expect(Yop.validateValue({ name: "a" }, instance({ of: Test2 }))).toEqual([])
+            expect(Yop.validateValue({ name: "a" }, instance({ of: "Test2" }))).toEqual([])
+            expect(Yop.validateValue({ name: "" }, instance({ of: Test2 }))).toEqual([{
+                path: "name",
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character"
+            }])
+            expect(Yop.validateValue({}, instance({ of: Test2 }))).toEqual([{
+                path: "name",
+                value: undefined,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue({ name: undefined }, instance({ of: Test2 }))).toEqual([{
+                path: "name",
+                value: undefined,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue({ name: null }, instance({ of: Test2 }))).toEqual([{
+                path: "name",
+                value: null,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue({ age: 2 }, instance({ of: Test2 }))).toEqual([{
+                path: "name",
+                value: undefined,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+        })
+        class Test3 {
+            
+            @string({ required: true, min: 1 })
+            name: string | null = null
+            
+            @number({ min: 1, test: context => context.value >= 10 || context.createError("No Joe is under 10", "name") })
+            age: number | null = null
+        }
+
+        it("yop.instance.Test3", () => {
+            expect(Yop.validateValue({}, instance())).toEqual([])
+            expect(Yop.validateValue({}, instance({ of: Test3 }))).toEqual([{
+                path: "name",
+                value: undefined,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue({ name: "Joe" }, instance({ of: Test3 }))).toEqual([])
+            // expect(Yop.validateValue({ name: "Joe", age: 2 }, instance({ of: Test3 }))).toEqual([{
+            //     path: "name",
+            //     value: "Joe",
+            //     kind: "string",
+            //     code: "test",
+            //     constraint: false,
+            //     message: "No Joe is under 10"
+            // }])
+        })
+
+        it("yop.instance.type", () => {
+            expect(Yop.validateValue("", instance())).toEqual([{
+                path: "",
+                value: "",
+                kind: "instance",
+                code: "type",
+                constraint: "object",
+                message: "Wrong value type (expected object)"
+            }])
+            expect(Yop.validateValue(0, instance())).toEqual([{
+                path: "",
+                value: 0,
+                kind: "instance",
+                code: "type",
+                constraint: "object",
+                message: "Wrong value type (expected object)"
+            }])
+            expect(Yop.validateValue([], instance())).toEqual([{
+                path: "",
+                value: [],
+                kind: "instance",
+                code: "type",
+                constraint: "object",
+                message: "Wrong value type (expected object)"
+            }])
+            expect(Yop.validateValue([], instance({ of: Test2 }))).toEqual([{
+                path: "",
+                value: [],
+                kind: "instance",
+                code: "type",
+                constraint: "object",
+                message: "Wrong value type (expected object)"
+            }])
+            expect(Yop.validateValue({ name: 2 }, instance({ of: Test2 }))).toEqual([{
+                path: "name",
+                value: 2,
                 kind: "string",
                 code: "type",
                 constraint: "string",

@@ -12,7 +12,7 @@ export const isNumber = <T extends number>(value: any): value is T => typeof val
 export const isString = <T extends string>(value: any): value is T => typeof value === "string"
 export const isObject = <T extends object>(value: any): value is T => value != null && !Array.isArray(value) && typeof value === "object"
 export const isFunction = <T extends Function>(value: any): value is T => typeof value === "function"
-export const isDate = <T extends Date>(value: any): value is T => value instanceof Date
+export const isDate = <T extends Date>(value: any): value is T => value instanceof Date && !isNaN(value.getTime())
 export const isFile = <T extends File>(value: any): value is T => value instanceof File
 export const isRegExp = (value: any): value is RegExp => value instanceof RegExp
 

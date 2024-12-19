@@ -17,18 +17,22 @@ export interface StringConstraints<Value extends StringValue, Parent> extends
     match?: ConstraintValue<NonNullable<Value>, RegExp, Parent>
 }
 
-
-export function validateString<Value extends StringValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: StringConstraints<Value, Parent>) {
+export function validateString<Value extends StringValue, Parent>(
+    context: InternalValidationContext<Value, Parent>,
+    constraints: StringConstraints<Value, Parent>,
+    defaultRegexp?: RegExp,
+    type?: string
+) {
     return (
         validateCommonConstraints(context, constraints) &&
-        validateTypeConstraint(context, isString, "string") &&
+        validateTypeConstraint(context, isString, type ?? "string") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.length >= min, (value, max) => value.length <= max) &&
-        validateConstraint(context, constraints.match, isRegExp, (value, constraint) => constraint.test(value), "match") &&
+        validateConstraint(context, constraints.match, isRegExp, (value, constraint) => constraint.test(value), "match", defaultRegexp) &&
         validateOneOfConstraint(context, constraints, isStringArray) &&
         validateTestConstraint(context, constraints)
     )
 }
 
-export function string<Value extends StringValue, Parent>(constraints: StringConstraints<Value, Parent>) {
-    return fieldValidationDecorator("string", constraints, validateString)
+export function string<Value extends StringValue, Parent>(constraints?: StringConstraints<Value, Parent>) {
+    return fieldValidationDecorator("string", constraints ?? {}, validateString)
 }

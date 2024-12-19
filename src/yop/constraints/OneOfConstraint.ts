@@ -8,12 +8,14 @@ export interface OneOfConstraint<Value, Parent = unknown> {
 export function validateOneOfConstraint<Value, OneOfType extends NoInfer<NonNullable<Value>>[], Parent>(
     context: InternalValidationContext<Value, Parent>,
     constraints: OneOfConstraint<Value, Parent>,
-    isConstraintValue: (value: any) => value is OneOfType) {
+    isConstraintValue: (value: any) => value is OneOfType,
+    equals?: (value1: NonNullable<Value>, value2: NonNullable<Value>) => boolean
+) {
     return validateConstraint(
         context as InternalValidationContext<NonNullable<Value>, Parent>,
         constraints.oneOf,
         isConstraintValue,
-        (value, constraint) => constraint.includes(value),
+        (value, array) => equals == null ? array.includes(value) : array.some((item) => equals(value, item)),
         "oneOf"
     )
 }

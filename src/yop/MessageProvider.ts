@@ -7,11 +7,20 @@ export interface MessageProvider {
     getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message?: string, path?: string): string
 }
 
-const listFormat = (locale: string) => {
+function formatOneOf(locale: string) {
     return (
         typeof (Intl as any).ListFormat === "function" ?
         new (Intl as any).ListFormat(locale, { type: "disjunction" }) :
         { format: (list: any[]) => list.join(", ") }
+    )
+}
+
+function format(value: any, numberFormat: Intl.NumberFormat, dateFormat: Intl.DateTimeFormat, listFormat: ReturnType<typeof formatOneOf>): string {
+    return (
+        typeof value === "number" ? numberFormat.format(value) :
+        value instanceof Date ? dateFormat.format(value) :
+        Array.isArray(value) ? listFormat.format(value.map(item => format(item, numberFormat, dateFormat, listFormat))) :
+        String(value)
     )
 }
 
@@ -21,17 +30,15 @@ export class MessageProvider_en_US implements MessageProvider {
 
     private numberFormat = new Intl.NumberFormat(this.locale)
     private dateFormat = new Intl.DateTimeFormat(this.locale)
-    private listFormat = listFormat(this.locale)
+    private listFormat = formatOneOf(this.locale)
 
-    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any): string {
+    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message?: string): string {
 
-        const plural = typeof constraint === "number" && constraint > 1 ? "s" : ""
-        constraint = (
-            typeof constraint === "number" ? this.numberFormat.format(constraint) :
-            constraint instanceof Date ? this.dateFormat.format(constraint) :
-            Array.isArray(constraint) ? this.listFormat.format(constraint) :
-            constraint
-        )
+        if (message != null)
+            return message
+
+        const plural = typeof constraint === "number" && (constraint > 1 || constraint === 0) ? "s" : ""
+        constraint = format(constraint, this.numberFormat, this.dateFormat, this.listFormat)
 
         switch (context.kind) {
         case "string":
@@ -88,24 +95,21 @@ export class MessageProvider_en_US implements MessageProvider {
     }
 }
 
-
 export class MessageProvider_fr_FR implements MessageProvider {
 
     locale = "fr-FR"
 
     private numberFormat = new Intl.NumberFormat(this.locale)
     private dateFormat = new Intl.DateTimeFormat(this.locale)
-    private listFormat = listFormat(this.locale)
+    private listFormat = formatOneOf(this.locale)
 
-    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any): string {
+    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message?: string): string {
+
+        if (message != null)
+            return message
 
         const plural = typeof constraint === "number" && constraint > 1 ? "s" : ""
-        constraint = (
-            typeof constraint === "number" ? this.numberFormat.format(constraint) :
-            constraint instanceof Date ? this.dateFormat.format(constraint) :
-            Array.isArray(constraint) ? this.listFormat.format(constraint) :
-            constraint
-        )
+        constraint = format(constraint, this.numberFormat, this.dateFormat, this.listFormat)
 
         switch (context.kind) {
         case "string":

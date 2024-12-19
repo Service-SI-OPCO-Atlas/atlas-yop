@@ -22,6 +22,6 @@ function validateBoolean<Value extends BooleanValue, Parent>(context: InternalVa
     )
 }
 
-export function boolean<Value extends BooleanValue, Parent>(constraints: BooleanConstraints<Value, Parent>) {
-    return fieldValidationDecorator("boolean", constraints, validateBoolean)
+export function boolean<Value extends BooleanValue, Parent>(constraints?: BooleanConstraints<Value, Parent>) {
+    return fieldValidationDecorator("boolean", constraints ?? {}, validateBoolean)
 }

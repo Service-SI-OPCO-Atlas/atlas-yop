@@ -16,12 +16,12 @@ export interface FileConstraints<Value extends FileValue, Parent> extends
 function validateFile<Value extends FileValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: FileConstraints<Value, Parent>) {
     return (
         validateCommonConstraints(context, constraints) &&
-        validateTypeConstraint(context, isFile, "date") &&
+        validateTypeConstraint(context, isFile, "file") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.size >= min, (value, max) => value.size <= max) &&
         validateTestConstraint(context, constraints)
     )
 }
 
-export function file<Value extends FileValue, Parent>(constraints: FileConstraints<Value, Parent>) {
-    return fieldValidationDecorator("file", constraints, validateFile)
+export function file<Value extends FileValue, Parent>(constraints?: FileConstraints<Value, Parent>) {
+    return fieldValidationDecorator("file", constraints ?? {}, validateFile)
 }

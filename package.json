@@ -40,6 +40,9 @@
     "test": "vitest --run",
     "prepublishOnly": "NODE_ENV=release tsc && vite build"
   },
+  "resolutions": {
+    "vite": "^6.0.3"
+  },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.25.9",
     "@types/node": "^22.10.2",

@@ -25,6 +25,6 @@ function validateNumber<Value extends NumberValue, Parent>(context: InternalVali
     )
 }
 
-export function number<Value extends NumberValue, Parent>(constraints: NumberConstraints<Value, Parent>) {
-    return fieldValidationDecorator("number", constraints, validateNumber)
+export function number<Value extends NumberValue, Parent>(constraints?: NumberConstraints<Value, Parent>) {
+    return fieldValidationDecorator("number", constraints ?? {}, validateNumber)
 }

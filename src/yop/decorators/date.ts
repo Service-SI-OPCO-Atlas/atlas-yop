@@ -20,11 +20,11 @@ function validateDate<Value extends DateValue, Parent>(context: InternalValidati
         validateCommonConstraints(context, constraints) &&
         validateTypeConstraint(context, isDate, "date") &&
         validateMinMaxConstraints(context, constraints, isDate, (value, min) => value >= min, (value, max) => value <= max) &&
-        validateOneOfConstraint(context, constraints, isDateArray) &&
+        validateOneOfConstraint(context, constraints, isDateArray, (date1, date2) => date1.getTime() === date2.getTime()) &&
         validateTestConstraint(context, constraints)
     )
 }
 
-export function date<Value extends DateValue, Parent>(constraints: DateConstraints<Value, Parent>) {
-    return fieldValidationDecorator("date", constraints, validateDate)
+export function date<Value extends DateValue, Parent>(constraints?: DateConstraints<Value, Parent>) {
+    return fieldValidationDecorator("date", constraints ?? {}, validateDate)
 }

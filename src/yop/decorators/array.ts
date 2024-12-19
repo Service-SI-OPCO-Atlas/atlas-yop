@@ -63,7 +63,7 @@ function validateArray<Value extends ArrayValue, Parent>(context: InternalValida
     return valid && validateTestConstraint(context, constraints)
 }
 
-export function array<Value extends ArrayValue, Parent>(constraints: ArrayConstraints<Value, Parent>) {
-    return fieldValidationDecorator("array", constraints, validateArray, traverseArray)
+export function array<Value extends ArrayValue, Parent>(constraints?: ArrayConstraints<Value, Parent>) {
+    return fieldValidationDecorator("array", constraints ?? ({} as ArrayConstraints<Value, Parent>), validateArray, traverseArray)
 }
 

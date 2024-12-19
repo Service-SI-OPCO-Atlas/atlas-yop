@@ -3,7 +3,7 @@ import { initTypeConstraints, InternalTypeConstraints } from "./decorators/type"
 import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
 import { Path, splitPath } from "./Path"
 import { Constructor } from "./types"
-import { InternalValidationContext, ValidationError } from "./ValidationContext"
+import { InternalValidationContext } from "./ValidationContext"
 
 (Symbol as any).metadata ??= Symbol.for("Symbol.metadata")
 
@@ -41,7 +41,7 @@ export class Yop {
 
         let constraints = schema[Symbol.metadata]?.[validationSymbol] as InternalTypeConstraints | undefined
         if (constraints == null)
-            return new Map<string | undefined, ValidationError>()
+            return []
     
         let context = new InternalValidationContext({
             yop: this,
@@ -54,12 +54,12 @@ export class Yop {
         for (const segment of segments) {
             [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
             if (constraints == null)
-                return new Map<string | undefined, ValidationError>()
+                return []
             context = context.createChildContext({ kind: constraints.kind, value, propertyOrIndex: segment })
         }
     
         constraints.validate(context, constraints)
-        return context.errors
+        return Array.from(context.errors.values())
     }
     static validate<RootClass>(schema: Constructor<RootClass>, value: any, path?: string | Path<RootClass>) {
         return Yop.init().validate(schema, value, path)

@@ -1,4 +1,4 @@
-import { CommonConstraints } from "./constraints/CommonConstraints"
+import { ContraintsParent, ContraintsValue, InternalCommonConstraints, Traverser, Validator } from "./constraints/CommonConstraints"
 import { initTypeConstraints, InternalTypeConstraints } from "./decorators/type"
 import { Path, splitPath } from "./Path"
 import { Constructor } from "./types"
@@ -7,31 +7,6 @@ import { InternalValidationContext, ValidationError } from "./ValidationContext"
 (Symbol as any).metadata ??= Symbol.for("Symbol.metadata")
 
 export const validationSymbol = Symbol('YopValidation')
-
-type ContraintsValue<Contraints> = Contraints extends CommonConstraints<infer Value, infer _Parent> ? Value : never
-type ContraintsParent<Contraints> = Contraints extends CommonConstraints<infer _Value, infer Parent> ? Parent : never
-
-type Validator<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>> =
-    (context: InternalValidationContext<Value, Parent>, constraints: Constraints) => boolean
-
-type Traverser<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>> =
-    ((context: InternalValidationContext<Value, Parent>, constraints: Constraints, propertyOrIndex: string | number) =>
-    readonly [InternalCommonConstraints | undefined, InternalValidationContext<unknown>])
-
-export interface InternalCommonConstraints extends CommonConstraints<unknown> {
-    /**
-     * The kind of the decorated value (eg: `string`, `number`, etc.)
-     */
-    kind: string
-    /**
-     * The method that validates the decorated value.
-     */
-    validate: Validator<this>
-    /**
-     * The method that returns the constraints and value of a nested field.
-     */
-    traverse?: Traverser<this>
-}
 
 export class Yop {
 

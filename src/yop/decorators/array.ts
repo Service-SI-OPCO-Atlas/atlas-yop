@@ -1,9 +1,9 @@
-import { CommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
+import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMaxConstraint, validateMinConstraint } from "../constraints/MinMaxConstraints"
 import { TestConstraints, validateTestConstraint } from "../constraints/TestConstraints"
 import { ArrayElementType, Constructor, isNumber } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator, InternalCommonConstraints, validationSymbol, Yop } from "../Yop"
+import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
 import { InternalTypeConstraints } from "./type"
 
 export type ArrayValue = any[] | null | undefined

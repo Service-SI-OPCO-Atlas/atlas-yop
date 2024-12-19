@@ -8,6 +8,16 @@ describe('test.yop', () => {
 
         it('string', () => {
 
+            expect(Yop.validateValue(undefined, string({ exists: true }))).toBeUndefined()
+            expect(Yop.validateValue(undefined, string({ defined: true }))).toEqual({
+                path: undefined,
+                value: undefined,
+                kind: 'string',
+                code: 'defined',
+                constraint: true,
+                message: 'defined'
+            })
+            expect(Yop.validateValue(undefined, string({ notnull: true }))).toBeUndefined()
             expect(Yop.validateValue(undefined, string({ required: true }))).toEqual({
                 path: undefined,
                 value: undefined,
@@ -15,6 +25,18 @@ describe('test.yop', () => {
                 code: 'required',
                 constraint: true,
                 message: 'required'
+            })
+            expect(Yop.validateValue(undefined, string({ min: 1, max: 1, oneOf: [], match: /\d+/, test: _ => false }))).toBeUndefined()
+            
+            expect(Yop.validateValue(null, string({ exists: true }))).toBeUndefined()
+            expect(Yop.validateValue(null, string({ defined: true }))).toBeUndefined()
+            expect(Yop.validateValue(null, string({ notnull: true }))).toEqual({
+                path: undefined,
+                value: null,
+                kind: 'string',
+                code: 'notnull',
+                constraint: true,
+                message: 'notnull'
             })
             expect(Yop.validateValue(null, string({ required: true }))).toEqual({
                 path: undefined,
@@ -24,14 +46,56 @@ describe('test.yop', () => {
                 constraint: true,
                 message: 'required'
             })
+            expect(Yop.validateValue(null, string({ min: 1, max: 1, oneOf: [], match: /\d+/, test: _ => false }))).toBeUndefined()
+            
+            expect(Yop.validateValue("", string({ exists: true }))).toBeUndefined()
+            expect(Yop.validateValue("", string({ defined: true }))).toBeUndefined()
+            expect(Yop.validateValue("", string({ notnull: true }))).toBeUndefined()
             expect(Yop.validateValue("", string({ required: true }))).toBeUndefined()
-            expect(Yop.validateValue("", string({ required: true, min: 1 }))).toEqual({
+            expect(Yop.validateValue("", string({ min: 0 }))).toBeUndefined()
+            expect(Yop.validateValue("", string({ min: 1 }))).toEqual({
                 path: undefined,
                 value: "",
                 kind: 'string',
                 code: 'min',
                 constraint: 1,
                 message: 'min'
+            })
+            expect(Yop.validateValue("", string({ match: /\d*/ }))).toBeUndefined()
+            expect(Yop.validateValue("", string({ match: /\d+/ }))).toEqual({
+                path: undefined,
+                value: "",
+                kind: 'string',
+                code: 'match',
+                constraint: /\d+/,
+                message: 'match'
+            })
+            expect(Yop.validateValue("", string({ oneOf: [] }))).toEqual({
+                path: undefined,
+                value: "",
+                kind: 'string',
+                code: 'oneOf',
+                constraint: [],
+                message: 'oneOf'
+            })
+            expect(Yop.validateValue("", string({ oneOf: [""] }))).toBeUndefined()
+            expect(Yop.validateValue("", string({ oneOf: ["", "bla"] }))).toBeUndefined()
+            expect(Yop.validateValue("", string({ oneOf: ["bla"] }))).toEqual({
+                path: undefined,
+                value: "",
+                kind: 'string',
+                code: 'oneOf',
+                constraint: ["bla"],
+                message: 'oneOf'
+            })
+            expect(Yop.validateValue("", string({ test: context => context.value === "" }))).toBeUndefined()
+            expect(Yop.validateValue("", string({ test: context => context.value === "blah" }))).toEqual({
+                path: undefined,
+                value: "",
+                kind: 'string',
+                code: 'test',
+                constraint: false,
+                message: 'test'
             })
 
         //     class Pet {

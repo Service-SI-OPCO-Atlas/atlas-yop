@@ -1,9 +1,9 @@
-import { CommonCodes, CommonConstraints } from "../constraints/CommonConstraints"
+import { CommonCodes, CommonConstraints, InternalCommonConstraints } from "../constraints/CommonConstraints"
 import { validateConstraint } from "../constraints/Constraint"
 import { TestConstraints, validateTestConstraint } from "../constraints/TestConstraints"
 import { Constructor, isBoolean } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
-import { InternalCommonConstraints, validationSymbol, Yop } from "../Yop"
+import { validationSymbol, Yop } from "../Yop"
 
 export interface TypeConstraints extends
     CommonConstraints<unknown>,

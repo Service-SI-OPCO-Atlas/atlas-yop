@@ -1,6 +1,6 @@
-import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
-import { MinMaxConstraints, validateMaxConstraint, validateMinConstraint } from "../constraints/MinMaxConstraints"
-import { TestConstraints, validateTestConstraint } from "../constraints/TestConstraints"
+import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
+import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { ArrayElementType, Constructor, isNumber } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
@@ -11,8 +11,7 @@ export type ArrayValue = any[] | null | undefined
 export interface ArrayConstraints<Value extends ArrayValue, Parent> extends
     CommonConstraints<Value, Parent>,
     MinMaxConstraints<Value, number, Parent>,
-    TestConstraints<Value, Parent>
-{
+    TestConstraint<Value, Parent> {
     of: (
         Constructor<ArrayElementType<Value>> |
         string |
@@ -44,9 +43,8 @@ function traverseArray<Value extends ArrayValue, Parent>(
 
 function validateArray<Value extends ArrayValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: ArrayConstraints<Value, Parent>) {
     if (!validateCommonConstraints(context, constraints) ||
-        !validateValueType(context, Array.isArray, "array") ||
-        !validateMinConstraint(context, constraints, isNumber, (value, constraint) => value.length >= constraint) ||
-        !validateMaxConstraint(context, constraints, isNumber, (value, constraint) => value.length <= constraint) ||
+        !validateTypeConstraint(context, Array.isArray, "array") ||
+        !validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.length >= min, (value, max) => value.length <= max) ||
         resolveOf(constraints) == null)
         return false
 

@@ -1,5 +1,5 @@
-import { CommonConstraints, validateCommonConstraints, validateValueType } from "../constraints/CommonConstraints"
-import { TestConstraints, validateTestConstraint } from "../constraints/TestConstraints"
+import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { Constructor, isObject } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
@@ -31,14 +31,13 @@ export type InstanceValue = object | null | undefined
 
 export interface InstanceConstraints<Value extends InstanceValue, Parent> extends
     CommonConstraints<Value, Parent>,
-    TestConstraints<Value, Parent>
-{
+    TestConstraint<Value, Parent> {
     of: Constructor<Value> | string
 }
 
 function validateInstance<Value extends InstanceValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>) {
     if (!validateCommonConstraints(context, constraints) ||
-        !validateValueType(context, isObject, "object") ||
+        !validateTypeConstraint(context, isObject, "object") ||
         !validateTestConstraint(context, constraints) ||
         ((constraints.of as any) = Yop.resolveClass(constraints.of)) == null)
         return false

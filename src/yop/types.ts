@@ -7,22 +7,16 @@ export type Constructor<Type> =
 
 export type ArrayElementType<ArrayType> = ArrayType extends Array<infer ElementType> ? ElementType : never
 
-export const isBoolean = (value: any): value is boolean => typeof value === "boolean"
-
-export const isNumber = (value: any): value is number => typeof value === "number" && !isNaN(value)
-
-export const isString = (value: any): value is string => typeof value === "string"
-
-export const isObject = (value: any): value is string => value != null && !Array.isArray(value) && typeof value === "object"
-
-export const isFunction = (value: any): value is Function => typeof value === "function"
-
-export const isDate = (value: any): value is Date => value instanceof Date
-
-export const isFile = (value: any): value is File => value instanceof File
-
+export const isBoolean = <T extends boolean>(value: any): value is T => typeof value === "boolean"
+export const isNumber = <T extends number>(value: any): value is T => typeof value === "number" && !isNaN(value)
+export const isString = <T extends string>(value: any): value is T => typeof value === "string"
+export const isObject = <T extends object>(value: any): value is T => value != null && !Array.isArray(value) && typeof value === "object"
+export const isFunction = <T extends Function>(value: any): value is T => typeof value === "function"
+export const isDate = <T extends Date>(value: any): value is T => value instanceof Date
+export const isFile = <T extends File>(value: any): value is T => value instanceof File
 export const isRegExp = (value: any): value is RegExp => value instanceof RegExp
 
-export const isStringArray = (value: any): value is Array<string> => Array.isArray(value) && value.every(item => typeof item === "string")
-
-export const isBooleanArray = (value: any) => Array.isArray(value) && value.every(item => typeof item === "boolean")
+export const isStringArray = <T extends string>(value: any): value is Array<T> => Array.isArray(value) && value.every(isString)
+export const isBooleanArray = <T extends boolean>(value: any): value is Array<T> => Array.isArray(value) && value.every(isBoolean)
+export const isNumberArray = <T extends number>(value: any): value is Array<T> => Array.isArray(value) && value.every(isNumber)
+export const isDateArray = <T extends Date>(value: any): value is Array<T> => Array.isArray(value) && value.every(isDate)

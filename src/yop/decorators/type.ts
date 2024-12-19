@@ -1,14 +1,13 @@
-import { CommonCodes, CommonConstraints, InternalCommonConstraints } from "../constraints/CommonConstraints"
+import { CommonConstraints, InternalCommonConstraints } from "../constraints/CommonConstraints"
 import { validateConstraint } from "../constraints/Constraint"
-import { TestConstraints, validateTestConstraint } from "../constraints/TestConstraints"
+import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { Constructor, isBoolean } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { validationSymbol, Yop } from "../Yop"
 
 export interface TypeConstraints extends
     CommonConstraints<unknown>,
-    TestConstraints<unknown>
-{
+    TestConstraint<unknown> {
     id?: string
 }
 
@@ -47,7 +46,7 @@ export function validateType<Value, Parent>(context: InternalValidationContext<V
         })
         
         valid = (
-            validateConstraint(fieldContext, fieldConstraints.exists, isBoolean, (_, constraint) => constraint !== true || fieldName in parent, CommonCodes.exists) &&
+            validateConstraint(fieldContext, fieldConstraints.exists, isBoolean, (_, constraint) => constraint !== true || fieldName in parent, "exists") &&
             fieldConstraints.validate(fieldContext, fieldConstraints) &&
             valid
         )

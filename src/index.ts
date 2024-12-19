@@ -1,6 +1,6 @@
 export * from "./yop/constraints/CommonConstraints"
 export * from "./yop/constraints/Constraint"
-export * from "./yop/constraints/TestConstraints"
+export * from "./yop/constraints/TestConstraint"
 export * from "./yop/constraints/CommonConstraints"
 
 export * from "./yop/decorators/array"

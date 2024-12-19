@@ -101,7 +101,7 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
             kind: this.kind,
             code,
             constraint,
-            message: message ?? code
+            message: this.yop.messageProvider.getMessage(this, code, constraint, message, errorPath),
         })
         return false
     }

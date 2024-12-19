@@ -1,5 +1,6 @@
 import { ContraintsParent, ContraintsValue, InternalCommonConstraints, Traverser, Validator } from "./constraints/CommonConstraints"
 import { initTypeConstraints, InternalTypeConstraints } from "./decorators/type"
+import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
 import { Path, splitPath } from "./Path"
 import { Constructor } from "./types"
 import { InternalValidationContext, ValidationError } from "./ValidationContext"
@@ -11,8 +12,15 @@ export const validationSymbol = Symbol('YopValidation')
 export class Yop {
 
     private static defaultInstance?: Yop
-
     private static classIds = new Map<string, Constructor<unknown>>()
+    
+    private static messageProviders = new Map<string, MessageProvider>()
+    static {
+        this.registerMessageProvider(new MessageProvider_en_US())
+        this.registerMessageProvider(new MessageProvider_fr_FR())
+    }
+
+    private locale = "en-US"
 
     static registerClass(id: string, constructor: Constructor<unknown>) {
         Yop.classIds.set(id, constructor)
@@ -73,9 +81,34 @@ export class Yop {
         constraints.validate(context, constraints)
         return context.errors.get(undefined)
     }
-
     static validateValue<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void) {
         return Yop.init().validateValue(value, decorator)
+    }
+
+    static registerMessageProvider(provider: MessageProvider) {
+        const locale = Intl.getCanonicalLocales(provider.locale)[0]
+        Yop.messageProviders.set(locale, provider)
+    }
+
+    getLocale() {
+        return this.locale
+    }
+    static getLocale() {
+        return Yop.init().locale
+    }
+    
+    setLocale(locale: string) {
+        locale = Intl.getCanonicalLocales(locale)[0]
+        if (!Yop.messageProviders.has(locale))
+            throw new Error(`No message provider for locale "${ locale }"`)
+        this.locale = locale
+    }
+    static setLocale(locale: string) {
+        Yop.init().setLocale(locale)
+    }
+
+    get messageProvider() {
+        return Yop.messageProviders.get(this.locale)!
     }
 
     static init(): Yop {

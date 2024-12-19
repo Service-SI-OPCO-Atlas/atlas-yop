@@ -1,30 +1,30 @@
-import { describe, expect, it } from 'vitest'
-import { string } from '../src/yop/decorators/string'
-import { Yop } from '../src/yop/Yop'
+import { describe, expect, it } from "vitest"
+import { string } from "../src/yop/decorators/string"
+import { Yop } from "../src/yop/Yop"
 
-describe('test.yop', () => {
+describe("test.yop", () => {
 
-    describe('test.string', () => {
+    describe("test.string", () => {
 
-        it('string', () => {
+        it("string", () => {
 
             expect(Yop.validateValue(undefined, string({ exists: true }))).toBeUndefined()
             expect(Yop.validateValue(undefined, string({ defined: true }))).toEqual({
                 path: undefined,
                 value: undefined,
-                kind: 'string',
-                code: 'defined',
+                kind: "string",
+                code: "defined",
                 constraint: true,
-                message: 'defined'
+                message: "Required field"
             })
             expect(Yop.validateValue(undefined, string({ notnull: true }))).toBeUndefined()
             expect(Yop.validateValue(undefined, string({ required: true }))).toEqual({
                 path: undefined,
                 value: undefined,
-                kind: 'string',
-                code: 'required',
+                kind: "string",
+                code: "required",
                 constraint: true,
-                message: 'required'
+                message: "Required field"
             })
             expect(Yop.validateValue(undefined, string({ min: 1, max: 1, oneOf: [], match: /\d+/, test: _ => false }))).toBeUndefined()
             
@@ -33,18 +33,18 @@ describe('test.yop', () => {
             expect(Yop.validateValue(null, string({ notnull: true }))).toEqual({
                 path: undefined,
                 value: null,
-                kind: 'string',
-                code: 'notnull',
+                kind: "string",
+                code: "notnull",
                 constraint: true,
-                message: 'notnull'
+                message: "Required field"
             })
             expect(Yop.validateValue(null, string({ required: true }))).toEqual({
                 path: undefined,
                 value: null,
-                kind: 'string',
-                code: 'required',
+                kind: "string",
+                code: "required",
                 constraint: true,
-                message: 'required'
+                message: "Required field"
             })
             expect(Yop.validateValue(null, string({ min: 1, max: 1, oneOf: [], match: /\d+/, test: _ => false }))).toBeUndefined()
             
@@ -56,46 +56,72 @@ describe('test.yop', () => {
             expect(Yop.validateValue("", string({ min: 1 }))).toEqual({
                 path: undefined,
                 value: "",
-                kind: 'string',
-                code: 'min',
+                kind: "string",
+                code: "min",
                 constraint: 1,
-                message: 'min'
+                message: "Minimum 1 character"
+            })
+            expect(Yop.validateValue("", string({ min: 2 }))).toEqual({
+                path: undefined,
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 2,
+                message: "Minimum 2 characters"
             })
             expect(Yop.validateValue("", string({ match: /\d*/ }))).toBeUndefined()
             expect(Yop.validateValue("", string({ match: /\d+/ }))).toEqual({
                 path: undefined,
                 value: "",
-                kind: 'string',
-                code: 'match',
+                kind: "string",
+                code: "match",
                 constraint: /\d+/,
-                message: 'match'
+                message: "Invalid format"
             })
             expect(Yop.validateValue("", string({ oneOf: [] }))).toEqual({
                 path: undefined,
                 value: "",
-                kind: 'string',
-                code: 'oneOf',
+                kind: "string",
+                code: "oneOf",
                 constraint: [],
-                message: 'oneOf'
+                message: "Must be one of: "
             })
             expect(Yop.validateValue("", string({ oneOf: [""] }))).toBeUndefined()
             expect(Yop.validateValue("", string({ oneOf: ["", "bla"] }))).toBeUndefined()
-            expect(Yop.validateValue("", string({ oneOf: ["bla"] }))).toEqual({
+            expect(Yop.validateValue("", string({ oneOf: ["bla", "blo", "bli"] }))).toEqual({
                 path: undefined,
                 value: "",
-                kind: 'string',
-                code: 'oneOf',
-                constraint: ["bla"],
-                message: 'oneOf'
+                kind: "string",
+                code: "oneOf",
+                constraint: ["bla", "blo", "bli"],
+                message: "Must be one of: bla, blo, or bli"
             })
             expect(Yop.validateValue("", string({ test: context => context.value === "" }))).toBeUndefined()
             expect(Yop.validateValue("", string({ test: context => context.value === "blah" }))).toEqual({
                 path: undefined,
                 value: "",
-                kind: 'string',
-                code: 'test',
+                kind: "string",
+                code: "test",
                 constraint: false,
-                message: 'test'
+                message: "Invalid value"
+            })
+
+            Yop.setLocale("fr-FR")
+            expect(Yop.validateValue("", string({ min: 1 }))).toEqual({
+                "code": "min",
+                "constraint": 1,
+                "kind": "string",
+                "message": "Minimum 1 caractère",
+                "path": undefined,
+                "value": "",
+            })
+            expect(Yop.validateValue("", string({ oneOf: ["bla", "blo", "bli"] }))).toEqual({
+                path: undefined,
+                value: "",
+                kind: "string",
+                code: "oneOf",
+                constraint: ["bla", "blo", "bli"],
+                message: "Doit être parmi : bla, blo ou bli"
             })
 
         //     class Pet {
@@ -126,7 +152,7 @@ describe('test.yop', () => {
         //             required: context => context.parent.firstName != null,
         //             // min: [2, "Le nom de famille doit avoir au moins un caratère"],
         //             min: [2, context => context.parent.firstName != null ? "Le nom de famille doit avoir au moins un caratère lorsque le prénom est renseigné" : undefined],
-        //             test: context => context.value === "fuck" || context.createError("Should be 'fuck'"),
+        //             test: context => context.value === "fuck" || context.createError("Should be "fuck""),
         //         })
         //         lastName: string | null = null
                 

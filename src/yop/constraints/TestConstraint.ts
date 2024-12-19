@@ -13,7 +13,7 @@ export class InternalTestValidationContext<Value, Parent> extends InternalValida
     }
 
     override createError(message: string, path?: string): false {
-        return super.createError(TestCodes.test, false, message, path)
+        return super.createError("test", false, message, path)
     }
 }
 
@@ -25,21 +25,17 @@ export type SingleTestConstraintTuple<Value, Parent = unknown> =
 export type MultipleTestConstraintTuple<Value, Parent = unknown> =
     readonly [TestConstraintType<Value, Parent>, MessageType<Value, Parent>, Group]
 
-export type TestConstraint<Value, Parent = unknown> =
+export type TestConstraintValue<Value, Parent = unknown> =
     TestConstraintType<Value, Parent> |
     SingleTestConstraintTuple<Value, Parent> |
     [MultipleTestConstraintTuple<Value, Parent>, ...MultipleTestConstraintTuple<Value, Parent>[]]
 
 
-export interface TestConstraints<Value, Parent = unknown> {
-    test?: TestConstraint<NonNullable<Value>, Parent>
+export interface TestConstraint<Value, Parent = unknown> {
+    test?: TestConstraintValue<NonNullable<Value>, Parent>
 }
 
-export enum TestCodes {
-    test = "test",
-}
-
-export function validateTestConstraint<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: TestConstraints<NonNullable<Value>, Parent>) {
+export function validateTestConstraint<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: TestConstraint<NonNullable<Value>, Parent>) {
     let message: MessageType<Value> | undefined = undefined
     let constraint = constraints.test
 
@@ -64,6 +60,6 @@ export function validateTestConstraint<Value, Parent>(context: InternalValidatio
 
     const valid = (constraint as (context: any) => boolean)(new InternalTestValidationContext(context))
     if (!valid && !context.errors.has(context.path))
-        context.createError(TestCodes.test, false, message)
+        context.createError("test", false, message)
     return valid
 }

@@ -79,7 +79,7 @@ export class Yop {
         })
         
         constraints.validate(context, constraints)
-        return context.errors.get(undefined)
+        return Array.from(context.errors.values())
     }
     static validateValue<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void) {
         return Yop.init().validateValue(value, decorator)

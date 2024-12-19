@@ -32,7 +32,7 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
     readonly kind: string
     readonly value: ValueType
     readonly parent: ParentType
-    readonly path: string | undefined
+    readonly path: string
     readonly root: unknown | undefined
     readonly userContext: unknown | undefined
     readonly group: Group | undefined
@@ -55,7 +55,7 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
         this.kind = props.kind
         this.value = props.value
         this.parent = props.parent
-        this.path = props.path
+        this.path = props.path ?? ""
         this.root = props.root
         this.userContext = props.userContext
         this.group = props.group
@@ -68,7 +68,7 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
         propertyOrIndex: string | number
     }) {
         const path = typeof props.propertyOrIndex === "number" ?
-            `${ this.path ?? "" }[${ props.propertyOrIndex }]` :
+            `${ this.path }[${ props.propertyOrIndex }]` :
             this.path ? `${ this.path }.${ props.propertyOrIndex }` : props.propertyOrIndex
 
         return new InternalValidationContext({

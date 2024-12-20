@@ -1,12 +1,24 @@
 import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
 import { InternalClassConstraints } from "./Metadata"
-import { splitPath } from "./Path"
 import { Constructor } from "./types"
 import { InternalValidationContext } from "./ValidationContext"
 
 (Symbol as any).metadata ??= Symbol.for("Symbol.metadata")
 
 export const validationSymbol = Symbol('YopValidation')
+
+function splitPath(path: string) {
+    const segments: (string | number)[] = []
+    for (const pathElement of path.split('.')) {
+        const bracketIndex = pathElement.indexOf('[')
+        const property = bracketIndex !== -1 ? pathElement.slice(0, bracketIndex) : pathElement
+        if (property !== "")
+            segments.push(property)
+        if (bracketIndex !== -1)
+            segments.push(parseInt(pathElement.slice(bracketIndex + 1, -1)))
+    }
+    return segments
+}
 
 export class Yop {
 

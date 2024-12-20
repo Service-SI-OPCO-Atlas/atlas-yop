@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { string } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
-import { array, boolean, classId, date, email, emailRegex, file, instance, number } from "../src"
+import { array, boolean, id, date, email, emailRegex, file, instance, number } from "../src"
 
 describe("yop", () => {
 
@@ -1079,7 +1079,7 @@ describe("yop", () => {
             }])
         })
 
-        @classId("Test")
+        @id("Test")
         class Test {
 
             @string({ required: true })
@@ -1207,7 +1207,7 @@ describe("yop", () => {
             expect(Yop.validate(null, instance({ of: Test, test: _ => false }))).toEqual([])
         })
         
-        @classId("Test2")
+        @id("Test2")
         class Test2 {
             
             @string({ required: true, min: 1 })

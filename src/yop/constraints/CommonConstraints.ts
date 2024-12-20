@@ -29,9 +29,9 @@ export type Validator<Constraints, Value = ContraintsValue<Constraints>, Parent 
 
 export type Traverser<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>> =
     ((context: InternalValidationContext<Value, Parent>, constraints: Constraints, propertyOrIndex: string | number) =>
-    readonly [InternalCommonConstraints | undefined, InternalValidationContext<unknown>])
+    readonly [InternalConstraints | undefined, InternalValidationContext<unknown>])
 
-export interface InternalCommonConstraints extends CommonConstraints<unknown> {
+export interface InternalConstraints {
     /**
      * The kind of the decorated value (eg: `string`, `number`, etc.)
      */
@@ -44,6 +44,10 @@ export interface InternalCommonConstraints extends CommonConstraints<unknown> {
      * The method that returns the constraints and value of a nested field.
      */
     traverse?: Traverser<this>
+}
+    
+
+export interface InternalCommonConstraints extends CommonConstraints<unknown>, InternalConstraints {
 }
 
 export function validateCommonConstraints<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: CommonConstraints<Value, Parent>) {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { string } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
-import { array, boolean, date, email, emailRegex, file, instance, number, type } from "../src"
+import { array, boolean, classId, date, email, emailRegex, file, instance, number } from "../src"
 
 describe("yop", () => {
 
@@ -1079,7 +1079,7 @@ describe("yop", () => {
             }])
         })
 
-        @type({ id: "Test" })
+        @classId("Test")
         class Test {
 
             @string({ required: true })
@@ -1207,7 +1207,7 @@ describe("yop", () => {
             expect(Yop.validateValue(null, instance({ of: Test, test: _ => false }))).toEqual([])
         })
         
-        @type({ id: "Test2" })
+        @classId("Test2")
         class Test2 {
             
             @string({ required: true, min: 1 })
@@ -1292,7 +1292,6 @@ describe("yop", () => {
             }])
         })
 
-        @type({ required: true })
         class Pet {
             @string({ required: true, min: 1 })
             name: string | null = null
@@ -1300,7 +1299,7 @@ describe("yop", () => {
 
         class Test4 extends Test3 {
 
-            @array({ of: Pet, required: true, min: 1 })
+            @array({ of: instance({ of: Pet, required: true }), required: true, min: 1 })
             pets: Pet[] | null = null
         }
 
@@ -1331,7 +1330,7 @@ describe("yop", () => {
             expect(Yop.validateValue({ name: "a", pets: [null] }, instance({ of: Test4 }))).toEqual([{
                 path: "pets[0]",
                 value: null,
-                kind: "class",
+                kind: "instance",
                 code: "required",
                 constraint: true,
                 message: "Required field"

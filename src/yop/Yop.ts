@@ -1,7 +1,6 @@
 import { ContraintsParent, ContraintsValue, InternalCommonConstraints, Traverser, Validator } from "./constraints/CommonConstraints"
-import { initTypeConstraints, InternalTypeConstraints } from "./decorators/type"
+import { initClassConstraints, InternalClassConstraints } from "./decorators/classId"
 import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
-import { Path, splitPath } from "./Path"
 import { Constructor } from "./types"
 import { InternalValidationContext } from "./ValidationContext"
 
@@ -36,37 +35,39 @@ export class Yop {
         return id
     }
 
-    validate<RootClass>(schema: Constructor<RootClass>, root: any, path?: string | Path<RootClass>) {
-        const segments = splitPath(path ?? "")
+    // validate<RootClass>(schema: Constructor<RootClass>, root: any, path?: string | Path<RootClass>) {
+    //     const segments = splitPath(path ?? "")
 
-        let constraints = schema[Symbol.metadata]?.[validationSymbol] as InternalTypeConstraints | undefined
-        if (constraints == null)
-            return []
+    //     let constraints = schema[Symbol.metadata]?.[validationSymbol] as InternalClassConstraints | undefined
+    //     if (constraints == null)
+    //         return []
     
-        let context = new InternalValidationContext({
-            yop: this,
-            kind: constraints.kind,
-            value: root,
-        })
-        let value = root
-        for (const segment of segments) {
-            [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
-            if (constraints == null)
-                return []
-            context = context.createChildContext({ kind: constraints.kind, value, key: segment })
-        }
+    //     let context = new InternalValidationContext({
+    //         yop: this,
+    //         kind: constraints.kind,
+    //         value: root,
+    //     })
+    //     let value = root
+    //     for (const segment of segments) {
+    //         [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
+    //         if (constraints == null)
+    //             return []
+    //         context = context.createChildContext({ kind: constraints.kind, value, key: segment })
+    //     }
     
-        constraints.validate(context, constraints)
-        return Array.from(context.errors.values())
-    }
-    static validate<RootClass>(schema: Constructor<RootClass>, value: any, path?: string | Path<RootClass>) {
-        return Yop.init().validate(schema, value, path)
-    }
+    //     constraints.validate(context, constraints)
+    //     return Array.from(context.errors.values())
+    // }
+    // static validate<RootClass>(schema: Constructor<RootClass>, value: any, path?: string | Path<RootClass>) {
+    //     return Yop.init().validate(schema, value, path)
+    // }
 
-    validateValue<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void) {
-        const metadata = { [validationSymbol]: {} as InternalTypeConstraints }
+    validateValue<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>, path?: string) => void) {
+        const metadata = { [validationSymbol]: {} as InternalClassConstraints }
         decorator(null, { metadata, name: "placeholder" } as any)
         const constraints = metadata[validationSymbol]!.fields!.placeholder
+        if (constraints == null)
+            return []
 
         const context = new InternalValidationContext<unknown>({
             yop: this,
@@ -121,7 +122,7 @@ export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Co
     traverse?: Traverser<Constraints>
 ) {
     return function decorateClassField(_: any, context: ClassFieldDecoratorContext<Parent, Value>) {
-        const classConstraints = initTypeConstraints(context.metadata)
+        const classConstraints = initClassConstraints(context.metadata)
         if (!Object.hasOwnProperty.bind(classConstraints)("fields"))
             classConstraints.fields = { ...classConstraints.fields }
 

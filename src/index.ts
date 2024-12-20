@@ -11,7 +11,7 @@ export * from "./yop/decorators/file"
 export * from "./yop/decorators/instance"
 export * from "./yop/decorators/number"
 export * from "./yop/decorators/string"
-export * from "./yop/decorators/type"
+export * from "./yop/decorators/classId"
 
 export * from "./yop/Path"
 export * from "./yop/types"

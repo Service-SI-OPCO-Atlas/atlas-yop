@@ -3,7 +3,7 @@ import { TestConstraint, validateTestConstraint } from "../constraints/TestConst
 import { Constructor, isObject } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
-import { InternalTypeConstraints, validateType } from "./type"
+import { InternalClassConstraints, validateClass } from "./classId"
 
 type ExcludeFromObject<T extends object | null | undefined, U extends object, M = { [K in keyof T]: T[K] }> =
     M extends object ?
@@ -42,8 +42,8 @@ function validateInstance<Value extends InstanceValue, Parent>(context: Internal
         ((constraints.of as any) = Yop.resolveClass(constraints.of)) == null)
         return false
 
-    const classConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol] as InternalTypeConstraints | undefined
-    return classConstraints == null || validateType(context, classConstraints)
+    const classConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol] as InternalClassConstraints | undefined
+    return classConstraints == null || validateClass(context, classConstraints)
 }
 
 export function instance<Value extends CheckValue<Value>, Parent>(constraints?: InstanceConstraints<Value, Parent>) {

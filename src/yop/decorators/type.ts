@@ -1,4 +1,4 @@
-import { CommonConstraints, InternalCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { validateConstraint } from "../constraints/Constraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { Constructor, isBoolean, isObject } from "../types"
@@ -16,10 +16,9 @@ export interface InternalTypeConstraints extends TypeConstraints, InternalCommon
 }
 
 export function initTypeConstraints(decoratorMetadata: DecoratorMetadata) {
-    const metadata = decoratorMetadata as unknown as { [validationSymbol]: InternalTypeConstraints }
-    
+    const metadata = decoratorMetadata as unknown as { [validationSymbol]: InternalTypeConstraints }    
     if (!Object.hasOwnProperty.bind(metadata)(validationSymbol))
-        metadata[validationSymbol] = { ...metadata[validationSymbol] }
+        metadata[validationSymbol] = { ...metadata[validationSymbol], fields: { ...metadata[validationSymbol]?.fields ?? {} }}
     
     const validation = metadata[validationSymbol]
     validation.validate ??= validateType
@@ -36,7 +35,8 @@ function traverseType(context: InternalValidationContext<any>, constraints: Inte
 }
 
 export function validateType<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InternalTypeConstraints) {
-    if (!validateTypeConstraint(context, isObject, "object"))
+    if (!validateCommonConstraints(context, constraints) ||
+        !validateTypeConstraint(context, isObject, "object"))
         return false
     
     const parent = context.value as Record<string, any>

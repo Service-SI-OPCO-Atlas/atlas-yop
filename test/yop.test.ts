@@ -1292,6 +1292,68 @@ describe("yop", () => {
             }])
         })
 
+        @type({ required: true })
+        class Pet {
+            @string({ required: true, min: 1 })
+            name: string | null = null
+        }
+
+        class Test4 extends Test3 {
+
+            @array({ of: Pet, required: true, min: 1 })
+            pets: Pet[] | null = null
+        }
+
+        it("yop.instance.Test4", () => {
+            expect(Yop.validateValue({}, instance({ of: Test4 }))).toEqual([{
+                path: "name",
+                value: undefined,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }, {
+                path: "pets",
+                value: undefined,
+                kind: "array",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue({ name: "a", pets: [] }, instance({ of: Test4 }))).toEqual([{
+                path: "pets",
+                value: [],
+                kind: "array",
+                code: "min",
+                constraint: 1,
+                message: "At least 1 element"
+            }])
+            expect(Yop.validateValue({ name: "a", pets: [null] }, instance({ of: Test4 }))).toEqual([{
+                path: "pets[0]",
+                value: null,
+                kind: "class",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue({ name: "a", pets: [{}] }, instance({ of: Test4 }))).toEqual([{
+                path: "pets[0].name",
+                value: undefined,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validateValue({ name: "a", pets: [{ name: "" }] }, instance({ of: Test4 }))).toEqual([{
+                path: "pets[0].name",
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character"
+            }])
+        })
+
         it("yop.instance.type", () => {
             expect(Yop.validateValue("", instance())).toEqual([{
                 path: "",

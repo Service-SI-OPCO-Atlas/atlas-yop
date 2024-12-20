@@ -1,7 +1,7 @@
 import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { InternalClassConstraints, validateClass } from "../Metadata"
-import { Constructor, isObject } from "../types"
+import { Constructor, isObject } from "../TypesUtil"
 import { InternalValidationContext } from "../ValidationContext"
 import { validationSymbol, Yop } from "../Yop"
 import { fieldValidationDecorator } from "../Metadata"

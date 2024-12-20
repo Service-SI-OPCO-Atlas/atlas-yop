@@ -1,5 +1,5 @@
 import { ConstraintValue, validateConstraint } from "./Constraint"
-import { isBoolean } from "../types"
+import { isBoolean } from "../TypesUtil"
 import { InternalValidationContext } from "../ValidationContext"
 
 export interface CommonConstraints<Value, Parent = unknown> {

@@ -15,6 +15,6 @@ export * from "./yop/decorators/id"
 
 export * from "./yop/MessageProvider"
 export * from "./yop/Metadata"
-export * from "./yop/types"
+export * from "./yop/TypesUtil"
 export * from "./yop/ValidationContext"
 export * from "./yop/Yop"

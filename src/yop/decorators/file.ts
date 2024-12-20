@@ -1,7 +1,7 @@
 import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
-import { isFile, isNumber } from "../types"
+import { isFile, isNumber } from "../TypesUtil"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Metadata"
 

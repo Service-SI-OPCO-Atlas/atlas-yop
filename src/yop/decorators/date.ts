@@ -2,7 +2,7 @@ import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } 
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
-import { isDate, isDateArray } from "../types"
+import { isDate, isDateArray } from "../TypesUtil"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Metadata"
 

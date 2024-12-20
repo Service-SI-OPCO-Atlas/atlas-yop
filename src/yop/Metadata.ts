@@ -1,6 +1,6 @@
 import { InternalConstraints, InternalCommonConstraints, validateTypeConstraint, ContraintsParent, ContraintsValue, Traverser, Validator } from "./constraints/CommonConstraints"
 import { validateConstraint } from "./constraints/Constraint"
-import { isBoolean, isObject } from "./types"
+import { isBoolean, isObject } from "./TypesUtil"
 import { InternalValidationContext } from "./ValidationContext"
 import { validationSymbol } from "./Yop"
 

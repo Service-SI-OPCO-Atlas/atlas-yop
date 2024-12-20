@@ -3,7 +3,7 @@ import { ConstraintValue, validateConstraint } from "../constraints/Constraint"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
-import { isNumber, isRegExp, isString, isStringArray } from "../types"
+import { isNumber, isRegExp, isString, isStringArray } from "../TypesUtil"
 import { InternalValidationContext, NonNullableContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Metadata"
 

@@ -1,6 +1,6 @@
 import { MessageType } from "./Constraint"
 import { Group, InternalValidationContext, ValidationContext } from "../ValidationContext"
-import { isFunction } from "../types"
+import { isFunction } from "../TypesUtil"
 
 export type TestConstraintType<Value, Parent = unknown> = ((context: ValidationContext<Value, Parent>) => string | boolean | undefined)
 

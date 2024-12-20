@@ -2,7 +2,7 @@ import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { InternalClassConstraints } from "../Metadata"
-import { ArrayElementType, Constructor, isNumber } from "../types"
+import { ArrayElementType, Constructor, isNumber } from "../TypesUtil"
 import { InternalValidationContext } from "../ValidationContext"
 import { validationSymbol, Yop } from "../Yop"
 import { fieldValidationDecorator } from "../Metadata"

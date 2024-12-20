@@ -1,6 +1,6 @@
 import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
 import { InternalClassConstraints } from "./Metadata"
-import { Constructor } from "./types"
+import { Constructor } from "./TypesUtil"
 import { InternalValidationContext } from "./ValidationContext"
 
 (Symbol as any).metadata ??= Symbol.for("Symbol.metadata")

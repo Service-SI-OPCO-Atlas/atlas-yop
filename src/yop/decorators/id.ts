@@ -1,4 +1,4 @@
-import { Constructor } from "../types"
+import { Constructor } from "../TypesUtil"
 import { Yop } from "../Yop"
 
 export function id<Type extends object, Class extends Constructor<Type>>(id: string) {

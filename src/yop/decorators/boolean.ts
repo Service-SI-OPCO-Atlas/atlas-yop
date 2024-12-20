@@ -1,7 +1,7 @@
 import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
-import { isBoolean, isBooleanArray } from "../types"
+import { isBoolean, isBooleanArray } from "../TypesUtil"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Metadata"
 

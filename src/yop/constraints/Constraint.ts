@@ -1,4 +1,4 @@
-import { isFunction } from "../types"
+import { isFunction } from "../TypesUtil"
 import { Group, InternalValidationContext, ValidationContext } from "../ValidationContext"
 
 export type ConstraintType<Value, ConstraintValue, Parent = unknown> = 

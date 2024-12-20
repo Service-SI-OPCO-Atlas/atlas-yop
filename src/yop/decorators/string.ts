@@ -4,7 +4,7 @@ import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/Min
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { isNumber, isRegExp, isString, isStringArray } from "../types"
-import { InternalValidationContext } from "../ValidationContext"
+import { InternalValidationContext, NonNullableContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Yop"
 
 export type StringValue = string | null | undefined
@@ -27,7 +27,7 @@ export function validateString<Value extends StringValue, Parent>(
         validateCommonConstraints(context, constraints) &&
         validateTypeConstraint(context, isString, type ?? "string") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.length >= min, (value, max) => value.length <= max) &&
-        validateConstraint(context, constraints.match, isRegExp, (value, constraint) => constraint.test(value), "match", defaultRegexp) &&
+        validateConstraint(context as NonNullableContext<Value, Parent>, constraints.match, isRegExp, (value, constraint) => constraint.test(value), "match", defaultRegexp) &&
         validateOneOfConstraint(context, constraints, isStringArray) &&
         validateTestConstraint(context, constraints)
     )

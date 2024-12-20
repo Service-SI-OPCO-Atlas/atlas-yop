@@ -2,25 +2,7 @@ import { MessageType } from "./Constraint"
 import { Group, InternalValidationContext, ValidationContext } from "../ValidationContext"
 import { isFunction } from "../types"
 
-export interface TestValidationContext<Value, Parent> extends ValidationContext<Value, Parent> {
-    createError(message: string, path?: string): false
-}
-
-export class InternalTestValidationContext<Value, Parent> extends InternalValidationContext<Value, Parent> implements TestValidationContext<Value, Parent> {
-
-    constructor(context: InternalValidationContext<Value, Parent>) {
-        super(context)
-    }
-
-    override createError(message: string, path?: string): false {
-        if (path != null && path !== this.path) {
-            // TODO
-        }
-        return super.createError("test", false, message, path)
-    }
-}
-
-export type TestConstraintType<Value, Parent = unknown> = ((context: TestValidationContext<Value, Parent>) => boolean)
+export type TestConstraintType<Value, Parent = unknown> = ((context: ValidationContext<Value, Parent>) => string | boolean | undefined)
 
 export type SingleTestConstraintTuple<Value, Parent = unknown> =
     readonly [TestConstraintType<Value, Parent>, MessageType<Value, Parent>, Group?]
@@ -61,9 +43,6 @@ export function validateTestConstraint<Value, Parent>(context: InternalValidatio
     if (isFunction(message))
         message = message(context)
 
-    const errorsCount = context.errors.size
-    const valid = (constraint as (context: any) => boolean)(new InternalTestValidationContext(context))
-    if (!valid && errorsCount === context.errors.size)
-        context.createError("test", false, message)
-    return valid
+    const result = (constraint as TestConstraintType<Value, Parent>)(context)
+    return result == null || result === true || context.createError("test", false, result === false ? message : result)
 }

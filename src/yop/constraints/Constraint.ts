@@ -22,7 +22,7 @@ export type ConstraintValue<Value, ConstraintValue, Parent = unknown> =
     [MultipleConstraintTuple<Value, ConstraintValue, Parent>, ...MultipleConstraintTuple<Value, ConstraintValue, Parent>[]]
 
 export function validateConstraint<Value, Constraint, Parent>(
-    context: InternalValidationContext<Value | null | undefined, Parent>,
+    context: InternalValidationContext<Value, Parent>,
     constraint: ConstraintValue<Value, Constraint, Parent> | undefined,
     isConstraintValue: (value: any) => value is Constraint,
     validate: (value: Value, constraintValue: NonNullable<Constraint>) => boolean,
@@ -45,12 +45,12 @@ export function validateConstraint<Value, Constraint, Parent>(
     }
 
     if (isFunction(message))
-        message = (message as (context: any) => string)(context)
+        message = (message as (context: InternalValidationContext<Value, Parent>) => string | undefined)(context)
     
     if (constraint == null && defaultConstraint != null)
         constraint = defaultConstraint
     if (isFunction(constraint))
-        constraint = (constraint as (context: any) => Constraint)(context)
+        constraint = (constraint as (context: InternalValidationContext<Value, Parent>) => Constraint)(context)
 
     return (
         constraint == null ||

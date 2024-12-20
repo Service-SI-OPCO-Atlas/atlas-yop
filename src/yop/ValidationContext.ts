@@ -20,7 +20,6 @@ export interface ValidationContext<ValueType, ParentType = unknown> {
     readonly root: unknown | undefined
     readonly userContext: unknown | undefined
 
-    createError(code: string, constraint: any, message?: string, path?: string): false
     getRoot<T>(): T
     getUserContext<T>(): T
 }
@@ -128,3 +127,6 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
         return this.userContext as T
     }
 }
+
+export type NonNullableContext<Value, Parent> = InternalValidationContext<NonNullable<Value>, Parent>
+

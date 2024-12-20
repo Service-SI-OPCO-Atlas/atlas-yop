@@ -11,73 +11,97 @@ export type ValidationError = {
     message: string
 }
 
-export interface ValidationContext<ValueType, ParentType = unknown> {
+export interface ValidationContext<Value, Parent = unknown> {
     
     readonly kind: string
-    readonly value: ValueType
-    readonly parent: ParentType
-    readonly path: string | undefined
-    readonly root: unknown | undefined
-    readonly userContext: unknown | undefined
 
-    getRoot<T>(): T
-    getUserContext<T>(): T
+    readonly value: Value
+    readonly key: string | number | undefined
+    readonly path: string
+
+    readonly parent: Parent
+    readonly parentContext: ValidationContext<Parent> | undefined
+
+    getRoot<T>(): T | undefined
+    readonly rootContext: ValidationContext<unknown> | undefined
+
+    getUserContext<T>(): T | undefined
 }
 
-export class InternalValidationContext<ValueType, ParentType = unknown> implements ValidationContext<ValueType, ParentType> {
+export const UndefinedParent = Object.freeze(Object.create(null))
+
+export class InternalValidationContext<Value, Parent = unknown> implements ValidationContext<Value, Parent> {
 
     readonly yop: Yop
-    readonly parentContext: InternalValidationContext<ParentType> | undefined
+
     readonly kind: string
-    readonly value: ValueType
-    readonly parent: ParentType
+
+    readonly value: Value
+    readonly key: string | number | undefined
     readonly path: string
-    readonly root: unknown | undefined
+
+    readonly parentContext: InternalValidationContext<Parent> | undefined
+    readonly rootContext: InternalValidationContext<unknown> | undefined
     readonly userContext: unknown | undefined
+
     readonly group: Group | undefined
     readonly errors: Map<string | undefined, ValidationError>
 
     constructor(props: {
         yop: Yop
         kind: string
-        value: ValueType
-        parent: ParentType
-        parentContext?: InternalValidationContext<ParentType> | undefined
-        path?: string | undefined
-        root?: unknown | undefined
+        value: Value
+        key?: string | number | undefined
+        parentContext?: InternalValidationContext<Parent> | undefined
+        rootContext?: InternalValidationContext<unknown> | undefined
         userContext?: unknown | undefined
         group?: Group
         errors?: Map<string | undefined, ValidationError>
     }) {
         this.yop = props.yop
-        this.parentContext = props.parentContext
         this.kind = props.kind
         this.value = props.value
-        this.parent = props.parent
-        this.path = props.path ?? ""
-        this.root = props.root
+        this.parentContext = props.parentContext
+        this.key = props.key
+        this.rootContext = props.rootContext
         this.userContext = props.userContext
         this.group = props.group
         this.errors = props.errors ?? new Map()
+
+        if (props.parentContext != null && props.key == null)
+            throw new Error("propertyOrIndex must be provided when parentContext is provided")
+
+        this.path = (
+            props.parentContext == null && props.key == null ? "" :
+            typeof props.key === "number" ? `${ props.parentContext?.path ?? "" }[${ props.key }]` :
+            props.parentContext?.path ? `${ props.parentContext.path }[${ props.key! }]` : props.key!
+        )
+    }
+
+    get parent() {
+        return this.parentContext?.value || UndefinedParent as Parent
+    }
+
+    getRoot<T>() {
+        return this.rootContext?.value as T | undefined
+    }
+
+    getUserContext<T>() {
+        return this.userContext as T | undefined
     }
 
     createChildContext(props: {
         kind: string
-        value: ValueType
-        propertyOrIndex: string | number
+        value: Value
+        key: string | number
     }) {
-        const path = typeof props.propertyOrIndex === "number" ?
-            `${ this.path }[${ props.propertyOrIndex }]` :
-            this.path ? `${ this.path }.${ props.propertyOrIndex }` : props.propertyOrIndex
-
         return new InternalValidationContext({
             yop: this.yop,
             kind: props.kind,
             value: props.value,
-            parent: this.value,
+            key: props.key,
             parentContext: this,
-            path,
-            root: this.root,
+            rootContext: this.rootContext ?? this,
             userContext: this.userContext,
             group: this.group,
             errors: this.errors,
@@ -92,20 +116,6 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
         return (Array.isArray(this.group) ? this.group.includes(group) : this.group === group)
     }
 
-    // getAtPath(path: string) {
-    //     const segments = splitPath(path)
-    //     if (segments.length === 0)
-    //         return this.root
-    //     let context: InternalValidationContext<unknown> = this
-    //     for (const segment of segments) {
-    //         const [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
-    //         if (constraints == null)
-    //             return undefined
-    //         context = context.createChildContext({ kind: constraints.kind, value, propertyOrIndex: segment })
-    //     }
-    //     return context
-    // }
-
     createError(code: string, constraint: any, message?: string, path?: string): false {
         const errorPath = path ?? this.path
         this.errors.set(errorPath, {
@@ -117,14 +127,6 @@ export class InternalValidationContext<ValueType, ParentType = unknown> implemen
             message: this.yop.messageProvider.getMessage(this, code, constraint, message, errorPath),
         })
         return false
-    }
-
-    getRoot<T>() {
-        return this.root as T
-    }
-
-    getUserContext<T>() {
-        return this.userContext as T
     }
 }
 

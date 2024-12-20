@@ -55,7 +55,7 @@ function validateArray<Value extends ArrayValue, Parent>(context: InternalValida
             const elementContext = context.createChildContext({
                 kind: elementConstraints.kind,
                 value: element,
-                propertyOrIndex: index,
+                key: index,
             })
             valid = elementConstraints.validate(elementContext, elementConstraints) && valid
         }    

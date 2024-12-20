@@ -47,15 +47,13 @@ export class Yop {
             yop: this,
             kind: constraints.kind,
             value: root,
-            parent: {},
-            root,
         })
         let value = root
         for (const segment of segments) {
             [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
             if (constraints == null)
                 return []
-            context = context.createChildContext({ kind: constraints.kind, value, propertyOrIndex: segment })
+            context = context.createChildContext({ kind: constraints.kind, value, key: segment })
         }
     
         constraints.validate(context, constraints)
@@ -73,9 +71,7 @@ export class Yop {
         const context = new InternalValidationContext<unknown>({
             yop: this,
             kind: constraints.kind,
-            value: value,
-            parent: {},
-            root: {},
+            value,
         })
         
         constraints.validate(context, constraints)

@@ -42,7 +42,7 @@ export function validateType<Value, Parent>(context: InternalValidationContext<V
         const fieldContext = context.createChildContext({
             kind: fieldConstraints.kind,
             value: parent[fieldName],
-            propertyOrIndex: fieldName,
+            key: fieldName,
         })
         
         valid = (

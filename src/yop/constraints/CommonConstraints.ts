@@ -29,7 +29,7 @@ export type Validator<Constraints, Value = ContraintsValue<Constraints>, Parent 
 
 export type Traverser<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>> =
     ((context: InternalValidationContext<Value, Parent>, constraints: Constraints, propertyOrIndex: string | number) =>
-    readonly [InternalConstraints | undefined, InternalValidationContext<unknown>])
+    readonly [InternalCommonConstraints | undefined, InternalValidationContext<unknown>])
 
 export interface InternalConstraints {
     /**

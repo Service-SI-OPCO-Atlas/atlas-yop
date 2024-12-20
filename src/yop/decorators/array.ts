@@ -33,7 +33,7 @@ function traverseArray<Value extends ArrayValue, Parent>(
     context: InternalValidationContext<Value, Parent>,
     constraints: ArrayConstraints<Value, Parent>,
     propertyOrIndex: string | number
-): [InternalClassConstraints | undefined, any] {
+): readonly [InternalCommonConstraints | undefined, any] {
     if (!Array.isArray(context.value) || typeof propertyOrIndex !== "number")
         return [undefined, undefined]
     const of = resolveOf(constraints)

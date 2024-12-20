@@ -1,4 +1,4 @@
-import { InternalCommonConstraints, InternalConstraints, Traverser, validateTypeConstraint, Validator } from "../constraints/CommonConstraints"
+import { InternalCommonConstraints, InternalConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { validateConstraint } from "../constraints/Constraint"
 import { Constructor, isBoolean, isObject } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
@@ -18,14 +18,14 @@ export function initClassConstraints(decoratorMetadata: DecoratorMetadata) {
         metadata[validationSymbol] = { ...metadata[validationSymbol], fields: { ...metadata[validationSymbol]?.fields ?? {} }}
     
     const validation = metadata[validationSymbol]
-    validation.validate ??= validateClass as Validator<InternalClassConstraints, never, never>
-    validation.traverse ??= traverseClass as Traverser<InternalClassConstraints, never, never>
+    validation.validate ??= validateClass
+    validation.traverse ??= traverseClass
     validation.kind ??= "class"
     return validation
 }
 
 function traverseClass(context: InternalValidationContext<unknown>, constraints: InternalClassConstraints, key: string | number)
-    : [InternalCommonConstraints | undefined, any] {
+    : readonly [InternalCommonConstraints | undefined, any] {
     if (context.value == null || typeof context.value !== "object" || typeof key !== "string")
         return [undefined, undefined]
     return [constraints.fields?.[key], (context.value as Record<string, any>)[key]]

@@ -1,6 +1,7 @@
 import { ContraintsParent, ContraintsValue, InternalCommonConstraints, Traverser, Validator } from "./constraints/CommonConstraints"
 import { initClassConstraints, InternalClassConstraints } from "./decorators/classId"
 import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
+import { splitPath } from "./Path"
 import { Constructor } from "./types"
 import { InternalValidationContext } from "./ValidationContext"
 
@@ -62,24 +63,33 @@ export class Yop {
     //     return Yop.init().validate(schema, value, path)
     // }
 
-    validate<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>, path?: string) => void) {
+    validate<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void, path?: string) {
         const metadata = { [validationSymbol]: {} as InternalClassConstraints }
         decorator(null, { metadata, name: "placeholder" } as any)
-        const constraints = metadata[validationSymbol]!.fields!.placeholder
+        
+        let constraints = metadata[validationSymbol]?.fields?.placeholder
         if (constraints == null)
             return []
 
-        const context = new InternalValidationContext<unknown>({
+        const segments = splitPath(path ?? "")
+        let context = new InternalValidationContext<unknown>({
             yop: this,
             kind: constraints.kind,
             value,
         })
+
+        for (const segment of segments) {
+            [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
+            if (constraints == null)
+                return []
+            context = context.createChildContext({ kind: constraints.kind, value, key: segment })
+        }
         
         constraints.validate(context, constraints)
         return Array.from(context.errors.values())
     }
-    static validate<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void) {
-        return Yop.init().validate(value, decorator)
+    static validate<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void, path?: string) {
+        return Yop.init().validate(value, decorator, path)
     }
 
     static registerMessageProvider(provider: MessageProvider) {

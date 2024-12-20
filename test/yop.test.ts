@@ -1351,6 +1351,39 @@ describe("yop", () => {
                 constraint: 1,
                 message: "Minimum 1 character"
             }])
+            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }))).toEqual([{
+                path: "name",
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character"
+            }, {
+                path: "pets[0].name",
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character"
+            }])
+            expect(Yop.validate({ name: "a", pets: [{ name: "" }] }, instance({ of: Test4 }), "name")).toEqual([])
+            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), "name")).toEqual([{
+                path: "name",
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character"
+            }])
+            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), "pets[0].name")).toEqual([{
+                path: "pets[0].name",
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character"
+            }])
+            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), "pets[1].name")).toEqual([])
         })
 
         it("yop.instance.type", () => {

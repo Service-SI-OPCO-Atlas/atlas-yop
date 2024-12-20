@@ -62,7 +62,7 @@ export class Yop {
     //     return Yop.init().validate(schema, value, path)
     // }
 
-    validateValue<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>, path?: string) => void) {
+    validate<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>, path?: string) => void) {
         const metadata = { [validationSymbol]: {} as InternalClassConstraints }
         decorator(null, { metadata, name: "placeholder" } as any)
         const constraints = metadata[validationSymbol]!.fields!.placeholder
@@ -78,8 +78,8 @@ export class Yop {
         constraints.validate(context, constraints)
         return Array.from(context.errors.values())
     }
-    static validateValue<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void) {
-        return Yop.init().validateValue(value, decorator)
+    static validate<Value>(value: any, decorator: (_: any, context: ClassFieldDecoratorContext<unknown, Value>) => void) {
+        return Yop.init().validate(value, decorator)
     }
 
     static registerMessageProvider(provider: MessageProvider) {

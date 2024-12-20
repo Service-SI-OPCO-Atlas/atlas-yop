@@ -4,7 +4,7 @@ import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfCo
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { isNumber, isNumberArray } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator } from "../Yop"
+import { fieldValidationDecorator } from "../Metadata"
 
 export type NumberValue = number | null | undefined
 

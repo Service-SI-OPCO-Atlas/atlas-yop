@@ -1,10 +1,11 @@
 import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
+import { InternalClassConstraints } from "../Metadata"
 import { ArrayElementType, Constructor, isNumber } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
-import { InternalClassConstraints } from "./classId"
+import { validationSymbol, Yop } from "../Yop"
+import { fieldValidationDecorator } from "../Metadata"
 
 export type ArrayValue = any[] | null | undefined
 

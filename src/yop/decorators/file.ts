@@ -3,7 +3,7 @@ import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/Min
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { isFile, isNumber } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator } from "../Yop"
+import { fieldValidationDecorator } from "../Metadata"
 
 export type FileValue = File | null | undefined
 

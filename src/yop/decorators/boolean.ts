@@ -3,7 +3,7 @@ import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfCo
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { isBoolean, isBooleanArray } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator } from "../Yop"
+import { fieldValidationDecorator } from "../Metadata"
 
 export type BooleanValue = boolean | null | undefined
 

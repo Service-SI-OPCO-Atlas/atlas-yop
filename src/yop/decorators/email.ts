@@ -1,6 +1,6 @@
 import { ConstraintValue } from "../constraints/Constraint"
 import { InternalValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator } from "../Yop"
+import { fieldValidationDecorator } from "../Metadata"
 import { StringConstraints, StringValue, validateString } from "./string"
 
 export interface EmailConstraints<Value extends StringValue, Parent> extends Omit<StringConstraints<Value, Parent>, "match"> {

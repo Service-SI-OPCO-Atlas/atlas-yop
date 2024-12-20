@@ -1,9 +1,10 @@
 import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
+import { InternalClassConstraints, validateClass } from "../Metadata"
 import { Constructor, isObject } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator, validationSymbol, Yop } from "../Yop"
-import { InternalClassConstraints, validateClass } from "./classId"
+import { validationSymbol, Yop } from "../Yop"
+import { fieldValidationDecorator } from "../Metadata"
 
 type ExcludeFromObject<T extends object | null | undefined, U extends object, M = { [K in keyof T]: T[K] }> =
     M extends object ?

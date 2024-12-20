@@ -4,7 +4,7 @@ import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfCo
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { isDate, isDateArray } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
-import { fieldValidationDecorator } from "../Yop"
+import { fieldValidationDecorator } from "../Metadata"
 
 export type DateValue = Date | null | undefined
 

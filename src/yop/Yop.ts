@@ -1,6 +1,5 @@
-import { ContraintsParent, ContraintsValue, InternalCommonConstraints, Traverser, Validator } from "./constraints/CommonConstraints"
-import { initClassConstraints, InternalClassConstraints } from "./decorators/classId"
 import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
+import { InternalClassConstraints } from "./Metadata"
 import { splitPath } from "./Path"
 import { Constructor } from "./types"
 import { InternalValidationContext } from "./ValidationContext"
@@ -125,22 +124,4 @@ export class Yop {
     }
 }
 
-export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>>(
-    kind: string,
-    constraints: Constraints,
-    validate: Validator<Constraints>,
-    traverse?: Traverser<Constraints>
-) {
-    return function decorateClassField(_: any, context: ClassFieldDecoratorContext<Parent, Value>) {
-        const classConstraints = initClassConstraints(context.metadata)
-        if (!Object.hasOwnProperty.bind(classConstraints)("fields"))
-            classConstraints.fields = { ...classConstraints.fields }
 
-        const fieldName = context.name as string
-        const fields = classConstraints.fields!        
-        if (!Object.hasOwnProperty.bind(fields)(fieldName))
-            fields[fieldName] = {} as InternalCommonConstraints
-        
-        Object.assign(fields[fieldName], { ...constraints, kind, validate, traverse })
-    }
-}

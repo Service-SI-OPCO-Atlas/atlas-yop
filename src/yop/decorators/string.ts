@@ -5,7 +5,7 @@ import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfCo
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { isNumber, isRegExp, isString, isStringArray } from "../types"
 import { InternalValidationContext, NonNullableContext } from "../ValidationContext"
-import { fieldValidationDecorator } from "../Yop"
+import { fieldValidationDecorator } from "../Metadata"
 
 export type StringValue = string | null | undefined
 

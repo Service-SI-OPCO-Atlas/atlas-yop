@@ -8,7 +8,7 @@ export interface InternalClassConstraints extends InternalConstraints {
     fields?: Record<string, InternalCommonConstraints>
 }
 
-function traverseClass(context: InternalValidationContext<unknown>, constraints: InternalClassConstraints, key: string | number)
+export function traverseClass(context: InternalValidationContext<unknown>, constraints: InternalClassConstraints, key: string | number)
     : readonly [InternalCommonConstraints | undefined, any] {
     if (context.value == null || typeof context.value !== "object" || typeof key !== "string")
         return [undefined, undefined]
@@ -49,7 +49,7 @@ export function initClassConstraints(decoratorMetadata: DecoratorMetadata) {
     return validation
 }
 
-export type ClassFieldDecorator<Value> = (_: unknown, context: ClassFieldDecoratorContext<unknown, Value>) => void
+export type ClassFieldDecorator<Value, Parent = unknown> = (_: unknown, context: ClassFieldDecoratorContext<Parent, Value>) => void
 
 export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>>(
     kind: string,
@@ -57,7 +57,7 @@ export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Co
     validate: Validator<Constraints>,
     traverse?: Traverser<Constraints>
 ) {
-    return function decorateClassField(_: any, context: ClassFieldDecoratorContext<Parent, Value>) {
+    return function decorateClassField(_: unknown, context: ClassFieldDecoratorContext<Parent, Value>) {
         const classConstraints = initClassConstraints(context.metadata)
         if (!Object.hasOwnProperty.bind(classConstraints)("fields"))
             classConstraints.fields = { ...classConstraints.fields }

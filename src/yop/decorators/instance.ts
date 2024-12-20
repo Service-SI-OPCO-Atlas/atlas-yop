@@ -26,7 +26,7 @@ type ExcludedObjects =
     Set<any> |
     Map<any, any>
 
-type CheckValue<Value extends object | null | undefined> = ExcludeFromObject<Value, ExcludedObjects>
+export type CheckClass<Value extends object | null | undefined> = ExcludeFromObject<Value, ExcludedObjects>
 
 export type InstanceValue = object | null | undefined
 
@@ -57,6 +57,6 @@ function validateInstance<Value extends InstanceValue, Parent>(context: Internal
     return classConstraints == null || validateClass(context, classConstraints)
 }
 
-export function instance<Value extends CheckValue<Value>, Parent>(constraints?: InstanceConstraints<Value, Parent>) {
+export function instance<Value extends CheckClass<Value>, Parent>(constraints?: InstanceConstraints<Value, Parent>) {
     return fieldValidationDecorator("instance", constraints ?? {} as InstanceConstraints<Value, Parent>, validateInstance, traverseInstance)
 }

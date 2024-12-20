@@ -49,6 +49,8 @@ export function initClassConstraints(decoratorMetadata: DecoratorMetadata) {
     return validation
 }
 
+export type ClassFieldDecorator<Value> = (_: unknown, context: ClassFieldDecoratorContext<unknown, Value>) => void
+
 export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>>(
     kind: string,
     constraints: Constraints,

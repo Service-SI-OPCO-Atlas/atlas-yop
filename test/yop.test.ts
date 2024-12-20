@@ -1079,6 +1079,27 @@ describe("yop", () => {
             }])
         })
 
+        @type({ id: "Test" })
+        class Test {
+
+            @string({ required: true })
+            name: string | null = null
+        }
+
+        it("yop.array.Test", () => {
+            expect(Yop.validateValue([], array({ of: Test }))).toEqual([])
+            expect(Yop.validateValue([], array({ of: "Test" }))).toEqual([])
+            expect(Yop.validateValue([{ name: "" }], array({ of: Test }))).toEqual([])
+            expect(Yop.validateValue([{}], array({ of: Test }))).toEqual([{
+                path: "[0].name",
+                value: undefined,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field",
+            }])
+        })
+
         it("yop.array.type", () => {
             expect(Yop.validateValue("", array())).toEqual([{
                 path: "",
@@ -1118,6 +1139,22 @@ describe("yop", () => {
                 code: "type",
                 constraint: "string",
                 message: "Wrong value type (expected string)"
+            }])
+            expect(Yop.validateValue([1], array({ of: Test }))).toEqual([{
+                path: "[0]",
+                value: 1,
+                kind: "class",
+                code: "type",
+                constraint: "object",
+                message: "Wrong value type (expected object)",
+            }])
+            expect(Yop.validateValue([1], array({ of: "Test" }))).toEqual([{
+                path: "[0]",
+                value: 1,
+                kind: "class",
+                code: "type",
+                constraint: "object",
+                message: "Wrong value type (expected object)",
             }])
         })
     })

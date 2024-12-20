@@ -74,7 +74,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         this.path = (
             props.parentContext == null && props.key == null ? "" :
             typeof props.key === "number" ? `${ props.parentContext?.path ?? "" }[${ props.key }]` :
-            props.parentContext?.path ? `${ props.parentContext.path }[${ props.key! }]` : props.key!
+            props.parentContext?.path ? `${ props.parentContext.path }.${ props.key! }` : props.key!
         )
     }
 

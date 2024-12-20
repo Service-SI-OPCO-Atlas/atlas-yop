@@ -1,7 +1,7 @@
-import { CommonConstraints, InternalCommonConstraints } from "../constraints/CommonConstraints"
+import { CommonConstraints, InternalCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { validateConstraint } from "../constraints/Constraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
-import { Constructor, isBoolean } from "../types"
+import { Constructor, isBoolean, isObject } from "../types"
 import { InternalValidationContext } from "../ValidationContext"
 import { validationSymbol, Yop } from "../Yop"
 
@@ -36,6 +36,9 @@ function traverseType(context: InternalValidationContext<any>, constraints: Inte
 }
 
 export function validateType<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InternalTypeConstraints) {
+    if (!validateTypeConstraint(context, isObject, "object"))
+        return false
+    
     const parent = context.value as Record<string, any>
     let valid = true
     for (const [fieldName, fieldConstraints] of Object.entries(constraints.fields!)) {

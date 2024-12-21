@@ -1583,6 +1583,8 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [], nicknames: ["foo", "bar"], diary: undefined }, instance({ of: Person }))).toEqual([])
+
+            const diary = new File([new ArrayBuffer(999)], "diary.txt", { type: "text/plain" })
             expect(Yop.validate({
                 firstName: "John",
                 lastName: "Doe",
@@ -1600,24 +1602,66 @@ describe("yop", () => {
                     diary: undefined,
                 },
                 friends: [{
+                    firstName: "Joe",
                     birthDate: new Date(2024, 11, 21),
-                    pets: [],
+                    pets: [{ name: "" }],
                     nicknames: ["foo", "bar"],
                     diary: undefined,
                 }, {
                     birthDate: new Date(2024, 11, 21),
                     pets: [],
                     nicknames: ["foo", "bar", "a"],
+                    friends: [{
+                        birthDate: new Date(2024, 11, 21),
+                        pets: [{ name: "", food: "Meat" }],
+                        nicknames: ["foo", "bar"],
+                        diary: undefined,
+                    }],
                     diary: undefined,
                 }],
-                diary: new File(new Array(1000), "diary.txt", { type: "text/plain" })
+                diary: diary
             }, instance({ of: Person }))).toEqual([{
+                path: "friends[0].lastName",
+                value: undefined,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }, {
+                path: "friends[0].pets[0].name",
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character"
+            }, {
+                path: "friends[0].pets[0].food",
+                value: undefined,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }, {
                 path: "friends[1].nicknames[2]",
                 value: "a",
                 kind: "string",
                 code: "min",
                 constraint: 2,
                 message: "Minimum 2 characters"
+            }, {
+                path: "friends[1].friends[0].pets[0].name",
+                value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character"
+            }, {
+                path: "diary",
+                value: diary,
+                kind: "file",
+                code: "min",
+                constraint: 1000,
+                message: "File must have a size of at least 1,000 bytes"
             }])
         })
     })

@@ -1430,6 +1430,198 @@ describe("yop", () => {
         })
     })
 
+    describe("yop.all", () => {
+        class Pet {
+            @string({ required: true, min: 1 })
+            name: string | null = null
+        }
+        
+        class Dog extends Pet {
+            @string({ required: true, min: 2 })
+            food: string | null = null
+        }
+
+        @id("Person")
+        class Person {
+
+            @string({
+                required: context => context.parent.lastName != null,
+                min: 2,
+                max: 20,
+                match: [/^[a-zA-Z]+$/, "First name must only contains letters"]
+            })
+            firstName: string | null = null
+            
+            @string({
+                required: context => context.parent.firstName != null,
+                min: [2, "Last name must be at least 2 characters long"],
+            })
+            lastName: string | null = null
+            
+            @email({ match: [, "Invalid email"] })                
+            email: string | null = null
+
+            @date({ required: true, min: new Date(1900, 0, 1), max: new Date })
+            birthDate: Date | null = null
+            
+            @number({ min: 0, max: 150 })                
+            age: number | null = null
+
+            @string({ oneOf: ["green", "yellow"] })
+            color: "blue" | "green" | "yellow" | null = null
+
+            @array({
+                of: string({ required: true, min: 2, max: 20 }),
+                required: true,
+                min: 2,
+            })
+            nicknames: string[] = null as any
+
+            @array({ of: Dog, required: true })
+            pets: Pet[] = null as any
+
+            @boolean({ oneOf: [[true], "Should be true"] })
+            friendly: boolean | null = null
+
+            @instance({ of: "Person", required: context => context.parent.friendly === true })
+            bestFriend: Person | null = null
+
+            @array({
+                of: instance({ of: "Person", required: true }),
+                required: context => context.parent.friendly === true,
+                min: context => context.parent.friendly === true ? 2 : 0,
+            })
+            friends: Person[] = null as any
+
+            @file({ exists: true, min: context => (context.parent.age ?? 0) >= 30 ? 1000 : 0 })
+            diary: File | null = null
+        }
+
+        it("yop.all.Person", () => {
+            expect(Yop.validate(undefined, instance({ of: Person }))).toEqual([])
+            expect(Yop.validate(null, instance({ of: Person }))).toEqual([])
+            expect(Yop.validate(1, instance({ of: Person }))).toEqual([{
+                path: "",
+                value: 1,
+                kind: "instance",
+                code: "type",
+                constraint: "object",
+                message: "Wrong value type (expected object)"
+            }])
+            expect(Yop.validate({}, instance({ of: Person }))).toEqual([{
+                path: "birthDate",
+                value: undefined,
+                kind: "date",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }, {
+                path: "nicknames",
+                value: undefined,
+                kind: "array",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }, {
+                path: "pets",
+                value: undefined,
+                kind: "array",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }, {
+                path: "diary",
+                value: undefined,
+                kind: "file",
+                code: "exists",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validate({ birthDate: new Date(2024, 11, 21) }, instance({ of: Person }))).toEqual([{
+                path: "nicknames",
+                value: undefined,
+                kind: "array",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }, {
+                path: "pets",
+                value: undefined,
+                kind: "array",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }, {
+                path: "diary",
+                value: undefined,
+                kind: "file",
+                code: "exists",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [] }, instance({ of: Person }))).toEqual([{
+                path: "nicknames",
+                value: undefined,
+                kind: "array",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }, {
+                path: "diary",
+                value: undefined,
+                kind: "file",
+                code: "exists",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [], nicknames: ["foo", "bar"] }, instance({ of: Person }))).toEqual([{
+                path: "diary",
+                value: undefined,
+                kind: "file",
+                code: "exists",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [], nicknames: ["foo", "bar"], diary: undefined }, instance({ of: Person }))).toEqual([])
+            expect(Yop.validate({
+                firstName: "John",
+                lastName: "Doe",
+                email: "jd@jd.com",
+                birthDate: new Date(2024, 11, 21),
+                age: 30,
+                color: "green",
+                nicknames: ["johnny", "jd"],
+                pets: [{ name: "Rex", food: "Meat" }],
+                friendly: true,
+                bestFriend: {
+                    birthDate: new Date(2024, 11, 21),
+                    pets: [],
+                    nicknames: ["foo", "bar"],
+                    diary: undefined,
+                },
+                friends: [{
+                    birthDate: new Date(2024, 11, 21),
+                    pets: [],
+                    nicknames: ["foo", "bar"],
+                    diary: undefined,
+                }, {
+                    birthDate: new Date(2024, 11, 21),
+                    pets: [],
+                    nicknames: ["foo", "bar", "a"],
+                    diary: undefined,
+                }],
+                diary: new File(new Array(1000), "diary.txt", { type: "text/plain" })
+            }, instance({ of: Person }))).toEqual([{
+                path: "friends[1].nicknames[2]",
+                value: "a",
+                kind: "string",
+                code: "min",
+                constraint: 2,
+                message: "Minimum 2 characters"
+            }])
+        })
+    })
+
     describe("yop.locale", () => {
 
         it("yop.locale.set", () => {
@@ -1470,91 +1662,3 @@ describe("yop", () => {
         })
     })
 })
-
-        //     class Pet {
-        //         @string({ required: true, min: 1 })
-        //         name: string | null = null
-        //     }
-            
-        //     class Dog extends Pet {
-        //         @string({ required: true, min: 2 })
-        //         food: string | null = null
-        //     }
-
-        //     @type({ id: "Person" })
-        //     class Person {
-
-        //         @string({ exists: true })
-        //         dummy: string | null = null
-
-        //         @string({
-        //             required: context => context.parent.email != null,
-        //             min: 2,
-        //             max: 20,
-        //             match: /^[a-zA-Z_]+$/
-        //         })
-        //         firstName: string | null = null
-                
-        //         @string({
-        //             required: context => context.parent.firstName != null,
-        //             // min: [2, "Le nom de famille doit avoir au moins un caratère"],
-        //             min: [2, context => context.parent.firstName != null ? "Le nom de famille doit avoir au moins un caratère lorsque le prénom est renseigné" : undefined],
-        //             test: context => context.value === "fuck" || context.createError("Should be "fuck""),
-        //         })
-        //         lastName: string | null = null
-                
-        //         @email({ required: true, match: [, "Invalid email"] })                
-        //         email: string | null = null
-                
-        //         @number({ required: false, min: _context => 18, max: 100 })                
-        //         age: number | null = null
-
-        //         @boolean({ required: true, oneOf: [[true], "Doit être vrai"] })
-        //         female: boolean | null = null
-
-        //         @string({ required: true, oneOf: ["male", "female"] })
-        //         gender: "male" | "female" | "other" | null = null
-
-        //         @date({ required: true, min: new Date(1900, 0, 1) })
-        //         birthDate: Date | null = null
-
-        //         @array({ of: Dog, required: _context => true })
-        //         pets: Pet[] = null as any
-
-        //         @array({
-        //             required: true,
-        //             min: 2,
-        //             of: string({ required: true, min: 2, max: 20 }),
-        //         })
-        //         names: string[] = null as any
-
-        //         @instance({
-        //             of: "Person",
-        //             required: true,
-        //         })
-        //         friend: Person | null = null
-
-        //         @array({
-        //             required: true,
-        //             of: instance({ of: "Person", required: true })
-        //         })
-        //         friends: Person[] = null as any
-
-        //         @file({ required: true })
-        //         doc: File | null = null
-        //     }
-
-        //     console.log("validate", Yop.validate(Person, {
-        //         dummy: undefined,
-        //         firstName: "12345678901234567890",
-        //         lastName: "azerty",
-        //         email: "test",
-        //         female: false,
-        //         gender: "other",
-        //         age: 12,
-        //         birthDate: new Date(1899, 0, 1),
-        //         friend: null, //new Person(),
-        //         pets: [{ name: "a", food: "b" }],
-        //         names: ["ab", null, "c"],
-        //         friends: [{ firstName: "a", lastName: "b" }, null]
-        //     }))

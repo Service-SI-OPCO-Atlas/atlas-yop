@@ -1,8 +1,8 @@
-import { ConstraintValue, validateConstraint } from "./Constraint"
+import { Constraint, validateConstraint } from "./Constraint"
 import { InternalValidationContext } from "../ValidationContext"
 
 export interface OneOfConstraint<Value, Parent = unknown> {
-    oneOf?: ConstraintValue<NonNullable<Value>, NoInfer<NonNullable<Value>>[], Parent>
+    oneOf?: Constraint<NonNullable<Value>, NoInfer<NonNullable<Value>>[], Parent>
 }
 
 export function validateOneOfConstraint<Value, OneOfType extends NoInfer<NonNullable<Value>>[], Parent>(

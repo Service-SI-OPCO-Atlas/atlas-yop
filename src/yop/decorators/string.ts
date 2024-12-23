@@ -1,5 +1,5 @@
 import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
-import { ConstraintValue, validateConstraint } from "../constraints/Constraint"
+import { Constraint, validateConstraint } from "../constraints/Constraint"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
@@ -14,7 +14,7 @@ export interface StringConstraints<Value extends StringValue, Parent> extends
     MinMaxConstraints<Value, number, Parent>,
     OneOfConstraint<Value, Parent>,
     TestConstraint<Value, Parent> {
-    match?: ConstraintValue<NonNullable<Value>, RegExp, Parent>
+    match?: Constraint<NonNullable<Value>, RegExp, Parent>
 }
 
 export function validateString<Value extends StringValue, Parent>(

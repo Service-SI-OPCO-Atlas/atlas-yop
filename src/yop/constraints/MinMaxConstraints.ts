@@ -1,9 +1,9 @@
-import { ConstraintValue, validateConstraint } from "./Constraint"
+import { Constraint, validateConstraint } from "./Constraint"
 import { InternalValidationContext } from "../ValidationContext"
 
 export interface MinMaxConstraints<Value, MinMax, Parent = unknown> {
-    min?: ConstraintValue<NonNullable<Value>, MinMax, Parent>
-    max?: ConstraintValue<NonNullable<Value>, MinMax, Parent>
+    min?: Constraint<NonNullable<Value>, MinMax, Parent>
+    max?: Constraint<NonNullable<Value>, MinMax, Parent>
 }
 
 export function validateMinMaxConstraints<Value, MinMax, Parent>(

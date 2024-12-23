@@ -1,48 +1,26 @@
-import { MessageType } from "./Constraint"
-import { Group, InternalValidationContext, ValidationContext } from "../ValidationContext"
-import { isFunction } from "../TypesUtil"
-
-export type TestConstraintType<Value, Parent = unknown> = ((context: ValidationContext<Value, Parent>) => string | boolean | undefined)
-
-export type SingleTestConstraintTuple<Value, Parent = unknown> =
-    readonly [TestConstraintType<Value, Parent>, MessageType<Value, Parent>, Group?]
-
-export type MultipleTestConstraintTuple<Value, Parent = unknown> =
-    readonly [TestConstraintType<Value, Parent>, MessageType<Value, Parent>, Group]
-
-export type TestConstraintValue<Value, Parent = unknown> =
-    TestConstraintType<Value, Parent> |
-    SingleTestConstraintTuple<Value, Parent> |
-    [MultipleTestConstraintTuple<Value, Parent>, ...MultipleTestConstraintTuple<Value, Parent>[]]
-
+import { InternalValidationContext, Level } from "../ValidationContext"
+import { ConstraintFunction, ConstraintMessage } from "./Constraint"
 
 export interface TestConstraint<Value, Parent = unknown> {
-    test?: TestConstraintValue<NonNullable<Value>, Parent>
+    test?: ConstraintFunction<NonNullable<Value>, ConstraintMessage, Parent>
 }
 
-export function validateTestConstraint<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: TestConstraint<NonNullable<Value>, Parent>) {
-    let message: MessageType<Value> | undefined = undefined
-    let constraint = constraints.test
+export function validateTestConstraint<Value, Parent>(
+    context: InternalValidationContext<Value, Parent>,
+    constraints: TestConstraint<Value, Parent>
+) {
+    let constraint = constraints.test?.(context as InternalValidationContext<NonNullable<Value>, Parent>)
+    let message: ConstraintMessage = undefined
+    let level: Level = "error"
 
-    if (constraint != null && !isFunction(constraint)) {
-        if (Array.isArray(constraint)) {
-            const [maybeConstraint, maybeMessage, _maybeGroup] = constraint
-            if (maybeConstraint == null || isFunction(maybeConstraint)) {
-                constraint = maybeConstraint
-                message = maybeMessage as unknown as MessageType<Value> | undefined
-            }
-            else if (Array.isArray(maybeConstraint)) {
-                // TODO: array of tuples with groups
-            }
-        }
+    if (Array.isArray(constraint)) {
+        const [maybeConstraint, maybeMessage, maybeLevel, _maybeGroup] = constraint
+        constraint = maybeConstraint
+        message = maybeMessage
+        level = (maybeLevel as unknown as Level) ?? "error"
     }
-    
-    if (!isFunction(constraint))
+
+    if (constraint == null || constraint === true)
         return true
-
-    if (isFunction(message))
-        message = message(context)
-
-    const result = (constraint as TestConstraintType<Value, Parent>)(context)
-    return result == null || result === true || context.createError("test", false, result === false ? message : result)
+    return context.createStatus("test", false, constraint === false ? message : constraint, level)
 }

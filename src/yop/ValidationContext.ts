@@ -1,9 +1,11 @@
 import { Yop } from "./Yop"
 
 export type Group = string | ((string | undefined)[])
+export type Level = "info" | "warning" | "error"
 
-export type ValidationError = {
-    path?: string
+export type ValidationStatus = {
+    level: Level
+    path: string
     value: any
     kind: string
     code: string
@@ -45,7 +47,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
     readonly userContext: unknown | undefined
 
     readonly group: Group | undefined
-    readonly errors: Map<string | undefined, ValidationError>
+    readonly errors: Map<string | undefined, ValidationStatus>
 
     constructor(props: {
         yop: Yop
@@ -56,7 +58,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         rootContext?: InternalValidationContext<unknown> | undefined
         userContext?: unknown | undefined
         group?: Group
-        errors?: Map<string | undefined, ValidationError>
+        errors?: Map<string | undefined, ValidationStatus>
     }) {
         this.yop = props.yop
         this.kind = props.kind
@@ -116,15 +118,15 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         return (Array.isArray(this.group) ? this.group.includes(group) : this.group === group)
     }
 
-    createError(code: string, constraint: any, message?: string, path?: string): false {
-        const errorPath = path ?? this.path
-        this.errors.set(errorPath, {
-            path: errorPath,
+    createStatus(code: string, constraint: any, message?: string, level: ValidationStatus["level"] = "error"): false {
+        this.errors.set(this.path, {
+            level,
+            path: this.path,
             value: this.value,
             kind: this.kind,
             code,
             constraint,
-            message: this.yop.messageProvider.getMessage(this, code, constraint, message, errorPath),
+            message: this.yop.messageProvider.getMessage(this, code, constraint, message, this.path),
         })
         return false
     }

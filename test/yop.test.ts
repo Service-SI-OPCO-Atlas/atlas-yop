@@ -10,6 +10,7 @@ describe("yop", () => {
         it("yop.string.undefined", () => {
             expect(Yop.validate(undefined, string({ exists: true }))).toEqual([])
             expect(Yop.validate(undefined, string({ defined: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "string",
@@ -19,6 +20,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(undefined, string({ notnull: true }))).toEqual([])
             expect(Yop.validate(undefined, string({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "string",
@@ -33,6 +35,7 @@ describe("yop", () => {
             expect(Yop.validate(null, string({ exists: true }))).toEqual([])
             expect(Yop.validate(null, string({ defined: true }))).toEqual([])
             expect(Yop.validate(null, string({ notnull: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "string",
@@ -41,6 +44,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate(null, string({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "string",
@@ -58,6 +62,7 @@ describe("yop", () => {
             expect(Yop.validate("", string({ required: true }))).toEqual([])
             expect(Yop.validate("", string({ min: 0 }))).toEqual([])
             expect(Yop.validate("", string({ min: 1 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "string",
@@ -66,6 +71,7 @@ describe("yop", () => {
                 message: "Minimum 1 character"
             }])
             expect(Yop.validate("", string({ min: 2 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "string",
@@ -75,6 +81,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate("", string({ match: /\d*/ }))).toEqual([])
             expect(Yop.validate("", string({ match: /\d+/ }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "string",
@@ -83,6 +90,7 @@ describe("yop", () => {
                 message: "Invalid format"
             }])
             expect(Yop.validate("", string({ oneOf: [] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "string",
@@ -93,6 +101,7 @@ describe("yop", () => {
             expect(Yop.validate("", string({ oneOf: [""] }))).toEqual([])
             expect(Yop.validate("", string({ oneOf: ["", "a"] }))).toEqual([])
             expect(Yop.validate("", string({ oneOf: ["a", "b", "c"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "string",
@@ -102,6 +111,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate("", string({ test: context => context.value === "" }))).toEqual([])
             expect(Yop.validate("", string({ test: context => context.value === "a" }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "string",
@@ -119,6 +129,7 @@ describe("yop", () => {
             expect(Yop.validate("abc", string({ min: 0 }))).toEqual([])
             expect(Yop.validate("abc", string({ min: 3 }))).toEqual([])
             expect(Yop.validate("abc", string({ min: 4 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -127,6 +138,7 @@ describe("yop", () => {
                 message: "Minimum 4 characters"
             }])
             expect(Yop.validate("abc", string({ min: [4, "Should be 4 or more characters"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -135,6 +147,7 @@ describe("yop", () => {
                 message: "Should be 4 or more characters"
             }])
             expect(Yop.validate("abc", string({ max: 0 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -143,6 +156,7 @@ describe("yop", () => {
                 message: "Maximum 0 characters"
             }])
             expect(Yop.validate("abc", string({ max: 2 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -152,6 +166,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate("abc", string({ max: 3 }))).toEqual([])
             expect(Yop.validate("abc", string({ min: 4, max: 2 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -161,6 +176,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate("abc", string({ match: /\w*/ }))).toEqual([])
             expect(Yop.validate("abc", string({ match: /\d+/ }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -169,6 +185,7 @@ describe("yop", () => {
                 message: "Invalid format"
             }])
             expect(Yop.validate("abc", string({ match: [/\d+/, "Should be a number"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -177,6 +194,7 @@ describe("yop", () => {
                 message: "Should be a number"
             }])
             expect(Yop.validate("abc", string({ oneOf: [] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -187,6 +205,7 @@ describe("yop", () => {
             expect(Yop.validate("abc", string({ oneOf: ["abc"] }))).toEqual([])
             expect(Yop.validate("abc", string({ oneOf: ["abc", "def"] }))).toEqual([])
             expect(Yop.validate("abc", string({ oneOf: ["a", "b", "c"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -195,6 +214,7 @@ describe("yop", () => {
                 message: "Must be one of: a, b, or c"
             }])
             expect(Yop.validate("abc", string({ oneOf: [["a", "b", "c"], "Should be one of the first alphabetical characters"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -204,6 +224,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate("abc", string({ test: context => context.value === "abc" }))).toEqual([])
             expect(Yop.validate("abc", string({ test: context => context.value === "a" }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -211,7 +232,8 @@ describe("yop", () => {
                 constraint: false,
                 message: "Invalid value"
             }])
-            expect(Yop.validate("abc", string({ test: [context => context.value === "a", "Should be 'a'"] }))).toEqual([{
+            expect(Yop.validate("abc", string({ test: context => [context.value === "a", "Should be 'a'"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -220,6 +242,7 @@ describe("yop", () => {
                 message: "Should be 'a'"
             }])
             expect(Yop.validate("abc", string({ test: context => context.value === "a" || "Should be 'a'" }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -228,6 +251,7 @@ describe("yop", () => {
                 message: "Should be 'a'"
             }])
             expect(Yop.validate("abc", string({ test: context => { return context.value === "a" ? undefined :  "Should be 'a'" }}))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "string",
@@ -239,6 +263,7 @@ describe("yop", () => {
 
         it("yop.string.type", () => {
             expect(Yop.validate(0, string())).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "string",
@@ -247,6 +272,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected string)"
             }])
             expect(Yop.validate(true, string())).toEqual([{
+                level: "error",
                 path: "",
                 value: true,
                 kind: "string",
@@ -261,6 +287,7 @@ describe("yop", () => {
         it("yop.email.*", () => {
             expect(Yop.validate("abc@abc.com", email())).toEqual([])
             expect(Yop.validate("", email())).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "email",
@@ -269,6 +296,7 @@ describe("yop", () => {
                 message: "Invalid format"
             }])
             expect(Yop.validate("abc", email())).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "email",
@@ -276,7 +304,8 @@ describe("yop", () => {
                 constraint: emailRegex,
                 message: "Invalid format"
             }])
-            expect(Yop.validate("abc", email({ match: [, context => `'${ context.value }' doesn't look like an email` ] }))).toEqual([{
+            expect(Yop.validate("abc", email({ match: context => [, `'${ context.value }' doesn't look like an email` ] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "abc",
                 kind: "email",
@@ -288,6 +317,7 @@ describe("yop", () => {
         
         it("yop.email.type", () => {
             expect(Yop.validate(0, email())).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "email",
@@ -296,6 +326,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected email)"
             }])
             expect(Yop.validate(true, email())).toEqual([{
+                level: "error",
                 path: "",
                 value: true,
                 kind: "email",
@@ -311,6 +342,7 @@ describe("yop", () => {
         it("yop.number.undefined", () => {
             expect(Yop.validate(undefined, number({ exists: true }))).toEqual([])
             expect(Yop.validate(undefined, number({ defined: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "number",
@@ -320,6 +352,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(undefined, number({ notnull: true }))).toEqual([])
             expect(Yop.validate(undefined, number({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "number",
@@ -334,6 +367,7 @@ describe("yop", () => {
             expect(Yop.validate(null, number({ exists: true }))).toEqual([])
             expect(Yop.validate(null, number({ defined: true }))).toEqual([])
             expect(Yop.validate(null, number({ notnull: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "number",
@@ -342,6 +376,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate(null, number({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "number",
@@ -354,6 +389,7 @@ describe("yop", () => {
 
         it("yop.number.NaN", () => {
             expect(Yop.validate(NaN, number())).toEqual([{
+                level: "error",
                 path: "",
                 value: NaN,
                 kind: "number",
@@ -371,6 +407,7 @@ describe("yop", () => {
             expect(Yop.validate(0, number({ min: -1 }))).toEqual([])
             expect(Yop.validate(0, number({ min: 0 }))).toEqual([])
             expect(Yop.validate(0, number({ min: 1 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "number",
@@ -379,6 +416,7 @@ describe("yop", () => {
                 message: "Must be greater or equal to 1"
             }])
             expect(Yop.validate(0, number({ min: [1, "Should be a positive number"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "number",
@@ -387,6 +425,7 @@ describe("yop", () => {
                 message: "Should be a positive number"
             }])
             expect(Yop.validate(0, number({ min: 2 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "number",
@@ -395,6 +434,7 @@ describe("yop", () => {
                 message: "Must be greater or equal to 2"
             }])
             expect(Yop.validate(0, number({ max: -1 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "number",
@@ -405,6 +445,7 @@ describe("yop", () => {
             expect(Yop.validate(0, number({ max: 0 }))).toEqual([])
             expect(Yop.validate(0, number({ max: 1 }))).toEqual([])
             expect(Yop.validate(0, number({ oneOf: [] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "number",
@@ -415,6 +456,7 @@ describe("yop", () => {
             expect(Yop.validate(0, number({ oneOf: [0] }))).toEqual([])
             expect(Yop.validate(0, number({ oneOf: [0, 1] }))).toEqual([])
             expect(Yop.validate(0, number({ oneOf: [1, 2, 3] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "number",
@@ -423,6 +465,7 @@ describe("yop", () => {
                 message: "Must be one of: 1, 2, or 3"
             }])
             expect(Yop.validate(0, number({ oneOf: [[1, 2, 3], "Should be between 1 and 3"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "number",
@@ -432,6 +475,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(0, number({ test: context => context.value === 0 }))).toEqual([])
             expect(Yop.validate(0, number({ test: context => context.value === 1 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "number",
@@ -439,7 +483,8 @@ describe("yop", () => {
                 constraint: false,
                 message: "Invalid value"
             }])
-            expect(Yop.validate(0, number({ test: [context => context.value === 1, "Should be 1"] }))).toEqual([{
+            expect(Yop.validate(0, number({ test: context => [context.value === 1, "Should be 1"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "number",
@@ -457,6 +502,7 @@ describe("yop", () => {
             expect(Yop.validate(123, number({ min: 0 }))).toEqual([])
             expect(Yop.validate(123, number({ min: 123 }))).toEqual([])
             expect(Yop.validate(123, number({ min: 124 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 123,
                 kind: "number",
@@ -465,6 +511,7 @@ describe("yop", () => {
                 message: "Must be greater or equal to 124"
             }])
             expect(Yop.validate(123, number({ max: 0 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 123,
                 kind: "number",
@@ -474,6 +521,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(123, number({ max: 123 }))).toEqual([])
             expect(Yop.validate(123, number({ min: 124, max: 1 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 123,
                 kind: "number",
@@ -482,6 +530,7 @@ describe("yop", () => {
                 message: "Must be greater or equal to 124"
             }])
             expect(Yop.validate(123, number({ oneOf: [] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 123,
                 kind: "number",
@@ -492,6 +541,7 @@ describe("yop", () => {
             expect(Yop.validate(123, number({ oneOf: [123] }))).toEqual([])
             expect(Yop.validate(123, number({ oneOf: [123, 124] }))).toEqual([])
             expect(Yop.validate(123, number({ oneOf: [1, 2, 3] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 123,
                 kind: "number",
@@ -501,6 +551,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(123, number({ test: context => context.value === 123 }))).toEqual([])
             expect(Yop.validate(123, number({ test: context => context.value === 1 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 123,
                 kind: "number",
@@ -508,7 +559,8 @@ describe("yop", () => {
                 constraint: false,
                 message: "Invalid value"
             }])
-            expect(Yop.validate(123, number({ test: [context => context.value === 1, "Should be 1"] }))).toEqual([{
+            expect(Yop.validate(123, number({ test: context => [context.value === 1, "Should be 1"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 123,
                 kind: "number",
@@ -520,6 +572,7 @@ describe("yop", () => {
 
         it("yop.number.type", () => {
             expect(Yop.validate("", number())).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "number",
@@ -528,6 +581,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected number)"
             }])
             expect(Yop.validate(true, number())).toEqual([{
+                level: "error",
                 path: "",
                 value: true,
                 kind: "number",
@@ -543,6 +597,7 @@ describe("yop", () => {
         it("yop.boolean.undefined", () => {
             expect(Yop.validate(undefined, boolean({ exists: true }))).toEqual([])
             expect(Yop.validate(undefined, boolean({ defined: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "boolean",
@@ -552,6 +607,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(undefined, boolean({ notnull: true }))).toEqual([])
             expect(Yop.validate(undefined, boolean({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "boolean",
@@ -566,6 +622,7 @@ describe("yop", () => {
             expect(Yop.validate(null, boolean({ exists: true }))).toEqual([])
             expect(Yop.validate(null, boolean({ defined: true }))).toEqual([])
             expect(Yop.validate(null, boolean({ notnull: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "boolean",
@@ -574,6 +631,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate(null, boolean({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "boolean",
@@ -589,6 +647,7 @@ describe("yop", () => {
             expect(Yop.validate(true, boolean({ oneOf: [true] }))).toEqual([])
             expect(Yop.validate(true, boolean({ oneOf: [true, false] }))).toEqual([])
             expect(Yop.validate(true, boolean({ oneOf: [false] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: true,
                 kind: "boolean",
@@ -597,6 +656,7 @@ describe("yop", () => {
                 message: "Must be one of: false"
             }])
             expect(Yop.validate(true, boolean({ oneOf: [[false], "Should be false"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: true,
                 kind: "boolean",
@@ -604,7 +664,8 @@ describe("yop", () => {
                 constraint: [false],
                 message: "Should be false"
             }])
-            expect(Yop.validate(true, boolean({ test: [context => !context.value, "Should be false"] }))).toEqual([{
+            expect(Yop.validate(true, boolean({ test: context => [!context.value, "Should be false"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: true,
                 kind: "boolean",
@@ -619,6 +680,7 @@ describe("yop", () => {
             expect(Yop.validate(false, boolean({ oneOf: [false] }))).toEqual([])
             expect(Yop.validate(false, boolean({ oneOf: [true, false] }))).toEqual([])
             expect(Yop.validate(false, boolean({ oneOf: [true] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: false,
                 kind: "boolean",
@@ -627,6 +689,7 @@ describe("yop", () => {
                 message: "Must be one of: true"
             }])
             expect(Yop.validate(false, boolean({ oneOf: [[true], "Should be true"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: false,
                 kind: "boolean",
@@ -634,7 +697,8 @@ describe("yop", () => {
                 constraint: [true],
                 message: "Should be true"
             }])
-            expect(Yop.validate(false, boolean({ test: [context => context.value, "Should be true"] }))).toEqual([{
+            expect(Yop.validate(false, boolean({ test: context => [context.value, "Should be true"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: false,
                 kind: "boolean",
@@ -646,6 +710,7 @@ describe("yop", () => {
 
         it("yop.boolean.type", () => {
             expect(Yop.validate("", boolean())).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "boolean",
@@ -654,6 +719,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected boolean)"
             }])
             expect(Yop.validate(0, boolean())).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "boolean",
@@ -669,6 +735,7 @@ describe("yop", () => {
         it("yop.date.undefined", () => {
             expect(Yop.validate(undefined, date({ exists: true }))).toEqual([])
             expect(Yop.validate(undefined, date({ defined: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "date",
@@ -678,6 +745,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(undefined, date({ notnull: true }))).toEqual([])
             expect(Yop.validate(undefined, date({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "date",
@@ -692,6 +760,7 @@ describe("yop", () => {
             expect(Yop.validate(null, date({ exists: true }))).toEqual([])
             expect(Yop.validate(null, date({ defined: true }))).toEqual([])
             expect(Yop.validate(null, date({ notnull: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "date",
@@ -700,6 +769,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate(null, date({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "date",
@@ -719,6 +789,7 @@ describe("yop", () => {
             expect(Yop.validate(testDate, date({ min: testDate }))).toEqual([])
             expect(Yop.validate(testDate, date({ min: beforeDate }))).toEqual([])
             expect(Yop.validate(testDate, date({ min: afterDate }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testDate,
                 kind: "date",
@@ -729,6 +800,7 @@ describe("yop", () => {
             expect(Yop.validate(testDate, date({ max: testDate }))).toEqual([])
             expect(Yop.validate(testDate, date({ max: afterDate }))).toEqual([])
             expect(Yop.validate(testDate, date({ max: beforeDate }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testDate,
                 kind: "date",
@@ -737,6 +809,7 @@ describe("yop", () => {
                 message: "Date must be less or equal to 12/18/2024"
             }])
             expect(Yop.validate(testDate, date({ min: afterDate, max: beforeDate }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testDate,
                 kind: "date",
@@ -745,6 +818,7 @@ describe("yop", () => {
                 message: "Date must be greater or equal to 12/20/2024"
             }])
             expect(Yop.validate(testDate, date({ min: [afterDate, "Too late!"], max: beforeDate }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testDate,
                 kind: "date",
@@ -756,6 +830,7 @@ describe("yop", () => {
             expect(Yop.validate(testDate, date({ oneOf: [new Date(2024, 11, 19)] }))).toEqual([])
             expect(Yop.validate(testDate, date({ oneOf: [beforeDate, testDate, afterDate] }))).toEqual([])
             expect(Yop.validate(testDate, date({ oneOf: [beforeDate, afterDate] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testDate,
                 kind: "date",
@@ -764,6 +839,7 @@ describe("yop", () => {
                 message: "Must be one of: 12/18/2024 or 12/20/2024"
             }])
             expect(Yop.validate(testDate, date({ oneOf: [[beforeDate, afterDate], "Too early or too late!"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testDate,
                 kind: "date",
@@ -772,6 +848,7 @@ describe("yop", () => {
                 message: "Too early or too late!"
             }])
             expect(Yop.validate(testDate, date({ test: context => context.value.getFullYear() === 2025 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testDate,
                 kind: "date",
@@ -779,7 +856,8 @@ describe("yop", () => {
                 constraint: false,
                 message: "Invalid value"
             }])
-            expect(Yop.validate(testDate, date({ test: [context => context.value.getFullYear() === 2025, "Should be in 2025!"] }))).toEqual([{
+            expect(Yop.validate(testDate, date({ test: context => [context.value.getFullYear() === 2025, "Should be in 2025!"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testDate,
                 kind: "date",
@@ -787,10 +865,11 @@ describe("yop", () => {
                 constraint: false,
                 message: "Should be in 2025!"
             }])
-            expect(Yop.validate(testDate, date({ test: [
-                context => context.value.getFullYear() === 2025,
-                context => `Should be in 2025 not in ${ context.value.getFullYear() }!`
+            expect(Yop.validate(testDate, date({ test: context => [
+                context.value.getFullYear() === 2025,
+                `Should be in 2025 not in ${ context.value.getFullYear() }!`
             ]}))).toEqual([{
+                level: "error",
                 path: "",
                 value: testDate,
                 kind: "date",
@@ -802,6 +881,7 @@ describe("yop", () => {
 
         it("yop.date.type", () => {
             expect(Yop.validate("", date())).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "date",
@@ -810,6 +890,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected date)"
             }])
             expect(Yop.validate(0, date())).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "date",
@@ -818,6 +899,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected date)"
             }])
             expect(Yop.validate(new Date("invalid"), date())).toEqual([{
+                level: "error",
                 path: "",
                 value: new Date("invalid"),
                 kind: "date",
@@ -833,6 +915,7 @@ describe("yop", () => {
         it("yop.file.undefined", () => {
             expect(Yop.validate(undefined, file({ exists: true }))).toEqual([])
             expect(Yop.validate(undefined, file({ defined: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "file",
@@ -842,6 +925,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(undefined, file({ notnull: true }))).toEqual([])
             expect(Yop.validate(undefined, file({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "file",
@@ -856,6 +940,7 @@ describe("yop", () => {
             expect(Yop.validate(null, file({ exists: true }))).toEqual([])
             expect(Yop.validate(null, file({ defined: true }))).toEqual([])
             expect(Yop.validate(null, file({ notnull: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "file",
@@ -864,6 +949,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate(null, file({ required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "file",
@@ -881,6 +967,7 @@ describe("yop", () => {
             expect(Yop.validate(testFile, file({ min: 0 }))).toEqual([])
             expect(Yop.validate(testFile, file({ min: 1 }))).toEqual([])
             expect(Yop.validate(testFile, file({ min: 2 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testFile,
                 kind: "file",
@@ -891,6 +978,7 @@ describe("yop", () => {
             expect(Yop.validate(testFile, file({ max: 1 }))).toEqual([])
             expect(Yop.validate(testFile, file({ max: 2 }))).toEqual([])
             expect(Yop.validate(testFile, file({ max: 0 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testFile,
                 kind: "file",
@@ -899,6 +987,7 @@ describe("yop", () => {
                 message: "File must have a size of at most 0 bytes"
             }])
             expect(Yop.validate(testFile, file({ min: 2, max: 0 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testFile,
                 kind: "file",
@@ -908,6 +997,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(testFile, file({ test: context => context.value.size === 1 }))).toEqual([])
             expect(Yop.validate(testFile, file({ test: context => context.value.size === 2 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testFile,
                 kind: "file",
@@ -915,7 +1005,8 @@ describe("yop", () => {
                 constraint: false,
                 message: "Invalid value"
             }])
-            expect(Yop.validate(testFile, file({ test: [context => context.value.size === 2, "File must have exactly 2 bytes"] }))).toEqual([{
+            expect(Yop.validate(testFile, file({ test: context => [context.value.size === 2, "File must have exactly 2 bytes"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testFile,
                 kind: "file",
@@ -924,6 +1015,7 @@ describe("yop", () => {
                 message: "File must have exactly 2 bytes"
             }])
             expect(Yop.validate(testFile, file({ test: context => context.value.size === 2 || "File must have exactly 2 bytes" }))).toEqual([{
+                level: "error",
                 path: "",
                 value: testFile,
                 kind: "file",
@@ -935,6 +1027,7 @@ describe("yop", () => {
 
         it("yop.file.type", () => {
             expect(Yop.validate("", file())).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "file",
@@ -943,6 +1036,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected file)"
             }])
             expect(Yop.validate(0, file())).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "file",
@@ -958,6 +1052,7 @@ describe("yop", () => {
         it("yop.array.undefined", () => {
             expect(Yop.validate(undefined, array({ of: string(), exists: true }))).toEqual([])
             expect(Yop.validate(undefined, array({ of: string(), defined: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "array",
@@ -967,6 +1062,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(undefined, array({ of: string(), notnull: true }))).toEqual([])
             expect(Yop.validate(undefined, array({ of: string(), required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "array",
@@ -981,6 +1077,7 @@ describe("yop", () => {
             expect(Yop.validate(null, array({ of: string(), exists: true }))).toEqual([])
             expect(Yop.validate(null, array({ of: string(), defined: true }))).toEqual([])
             expect(Yop.validate(null, array({ of: string(), notnull: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "array",
@@ -989,6 +1086,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate(null, array({ of: string(), required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "array",
@@ -1003,6 +1101,7 @@ describe("yop", () => {
             expect(Yop.validate([], array())).toEqual([])
             expect(Yop.validate([], array({ of: string(), min: 0 }))).toEqual([])
             expect(Yop.validate([], array({ of: string(), min: 1 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: [],
                 kind: "array",
@@ -1014,6 +1113,7 @@ describe("yop", () => {
             expect(Yop.validate([], array({ of: string(), max: 1 }))).toEqual([])
             expect(Yop.validate([""], array({ of: string(), max: 1 }))).toEqual([])
             expect(Yop.validate([""], array({ of: string(), max: 0 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: [""],
                 kind: "array",
@@ -1022,6 +1122,7 @@ describe("yop", () => {
                 message: "At most 0 elements"
             }])
             expect(Yop.validate([""], array({ of: string(), max: [0, "Should be empty"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: [""],
                 kind: "array",
@@ -1030,6 +1131,7 @@ describe("yop", () => {
                 message: "Should be empty"
             }])
             expect(Yop.validate([""], array({ of: string(), min: 2, max: 0 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: [""],
                 kind: "array",
@@ -1038,6 +1140,7 @@ describe("yop", () => {
                 message: "At least 2 elements"
             }])
             expect(Yop.validate([""], array({ of: string({ min: 1 }), min: 1 }))).toEqual([{
+                level: "error",
                 path: "[0]",
                 value: "",
                 kind: "string",
@@ -1046,6 +1149,7 @@ describe("yop", () => {
                 message: "Minimum 1 character"
             }])
             expect(Yop.validate([""], array({ of: string({ min: 1 }), min: 2 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: [""],
                 kind: "array",
@@ -1055,6 +1159,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(["a", "b", "c"], array({ of: string({ min: 1 }), min: 2 }))).toEqual([])
             expect(Yop.validate(["ab", "c", "de"], array({ of: string({ max: 1 }), min: 2 }))).toEqual([{
+                level: "error",
                 path: "[0]",
                 value: "ab",
                 kind: "string",
@@ -1062,6 +1167,7 @@ describe("yop", () => {
                 constraint: 1,
                 message: "Maximum 1 character"
             }, {
+                level: "error",
                 path: "[2]",
                 value: "de",
                 kind: "string",
@@ -1070,6 +1176,7 @@ describe("yop", () => {
                 message: "Maximum 1 character"
             }])
             expect(Yop.validate(["ab", "c", "de"], array({ of: string({ max: 1 }), max: 2 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: ["ab", "c", "de"],
                 kind: "array",
@@ -1091,6 +1198,7 @@ describe("yop", () => {
             expect(Yop.validate([], array({ of: "Test" }))).toEqual([])
             expect(Yop.validate([{ name: "" }], array({ of: Test }))).toEqual([])
             expect(Yop.validate([{}], array({ of: Test }))).toEqual([{
+                level: "error",
                 path: "[0].name",
                 value: undefined,
                 kind: "string",
@@ -1102,6 +1210,7 @@ describe("yop", () => {
 
         it("yop.array.type", () => {
             expect(Yop.validate("", array())).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "array",
@@ -1110,6 +1219,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected array)"
             }])
             expect(Yop.validate(0, array())).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "array",
@@ -1118,6 +1228,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected array)"
             }])
             expect(Yop.validate([1], array({ of: string() }))).toEqual([{
+                level: "error",
                 path: "[0]",
                 value: 1,
                 kind: "string",
@@ -1126,6 +1237,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected string)"
             }])
             expect(Yop.validate([1, true], array({ of: string() }))).toEqual([{
+                level: "error",
                 path: "[0]",
                 value: 1,
                 kind: "string",
@@ -1133,6 +1245,7 @@ describe("yop", () => {
                 constraint: "string",
                 message: "Wrong value type (expected string)"
             }, {
+                level: "error",
                 path: "[1]",
                 value: true,
                 kind: "string",
@@ -1141,6 +1254,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected string)"
             }])
             expect(Yop.validate([1], array({ of: Test }))).toEqual([{
+                level: "error",
                 path: "[0]",
                 value: 1,
                 kind: "class",
@@ -1149,6 +1263,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected object)",
             }])
             expect(Yop.validate([1], array({ of: "Test" }))).toEqual([{
+                level: "error",
                 path: "[0]",
                 value: 1,
                 kind: "class",
@@ -1166,6 +1281,7 @@ describe("yop", () => {
         it("yop.instance.undefined", () => {
             expect(Yop.validate(undefined, instance({ of: Test, exists: true }))).toEqual([])
             expect(Yop.validate(undefined, instance({ of: Test, defined: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "instance",
@@ -1175,6 +1291,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate(undefined, instance({ of: Test, notnull: true }))).toEqual([])
             expect(Yop.validate(undefined, instance({ of: Test, required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: undefined,
                 kind: "instance",
@@ -1189,6 +1306,7 @@ describe("yop", () => {
             expect(Yop.validate(null, instance({ of: Test, exists: true }))).toEqual([])
             expect(Yop.validate(null, instance({ of: Test, defined: true }))).toEqual([])
             expect(Yop.validate(null, instance({ of: Test, notnull: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "instance",
@@ -1197,6 +1315,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate(null, instance({ of: Test, required: true }))).toEqual([{
+                level: "error",
                 path: "",
                 value: null,
                 kind: "instance",
@@ -1221,6 +1340,7 @@ describe("yop", () => {
             expect(Yop.validate({ name: "a" }, instance({ of: Test2 }))).toEqual([])
             expect(Yop.validate({ name: "a" }, instance({ of: "Test2" }))).toEqual([])
             expect(Yop.validate({ name: "" }, instance({ of: Test2 }))).toEqual([{
+                level: "error",
                 path: "name",
                 value: "",
                 kind: "string",
@@ -1229,6 +1349,7 @@ describe("yop", () => {
                 message: "Minimum 1 character"
             }])
             expect(Yop.validate({}, instance({ of: Test2 }))).toEqual([{
+                level: "error",
                 path: "name",
                 value: undefined,
                 kind: "string",
@@ -1237,6 +1358,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ name: undefined }, instance({ of: Test2 }))).toEqual([{
+                level: "error",
                 path: "name",
                 value: undefined,
                 kind: "string",
@@ -1245,6 +1367,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ name: null }, instance({ of: Test2 }))).toEqual([{
+                level: "error",
                 path: "name",
                 value: null,
                 kind: "string",
@@ -1253,6 +1376,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ age: 2 }, instance({ of: Test2 }))).toEqual([{
+                level: "error",
                 path: "name",
                 value: undefined,
                 kind: "string",
@@ -1267,13 +1391,14 @@ describe("yop", () => {
             @string({ required: true, min: 1 })
             name: string | null = null
             
-            @number({ min: 1, test: [context => context.parent.name !== "Joe" || context.value >= 10, "No Joe is under 10"] })
+            @number({ min: 1, test: context => [context.parent.name !== "Joe" || context.value >= 10, "No Joe is under 10"] })
             age: number | null = null
         }
 
         it("yop.instance.Test3", () => {
             expect(Yop.validate({}, instance())).toEqual([])
             expect(Yop.validate({}, instance({ of: Test3 }))).toEqual([{
+                level: "error",
                 path: "name",
                 value: undefined,
                 kind: "string",
@@ -1283,6 +1408,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate({ name: "Joe" }, instance({ of: Test3 }))).toEqual([])
             expect(Yop.validate({ name: "Joe", age: 2 }, instance({ of: Test3 }))).toEqual([{
+                level: "error",
                 path: "age",
                 value: 2,
                 kind: "number",
@@ -1305,6 +1431,7 @@ describe("yop", () => {
 
         it("yop.instance.Test4", () => {
             expect(Yop.validate({}, instance({ of: Test4 }))).toEqual([{
+                level: "error",
                 path: "name",
                 value: undefined,
                 kind: "string",
@@ -1312,6 +1439,7 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }, {
+                level: "error",
                 path: "pets",
                 value: undefined,
                 kind: "array",
@@ -1320,6 +1448,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ name: "a", pets: [] }, instance({ of: Test4 }))).toEqual([{
+                level: "error",
                 path: "pets",
                 value: [],
                 kind: "array",
@@ -1328,6 +1457,7 @@ describe("yop", () => {
                 message: "At least 1 element"
             }])
             expect(Yop.validate({ name: "a", pets: [null] }, instance({ of: Test4 }))).toEqual([{
+                level: "error",
                 path: "pets[0]",
                 value: null,
                 kind: "instance",
@@ -1336,6 +1466,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ name: "a", pets: [{}] }, instance({ of: Test4 }))).toEqual([{
+                level: "error",
                 path: "pets[0].name",
                 value: undefined,
                 kind: "string",
@@ -1344,6 +1475,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ name: "a", pets: [{ name: "" }] }, instance({ of: Test4 }))).toEqual([{
+                level: "error",
                 path: "pets[0].name",
                 value: "",
                 kind: "string",
@@ -1352,6 +1484,7 @@ describe("yop", () => {
                 message: "Minimum 1 character"
             }])
             expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }))).toEqual([{
+                level: "error",
                 path: "name",
                 value: "",
                 kind: "string",
@@ -1359,6 +1492,7 @@ describe("yop", () => {
                 constraint: 1,
                 message: "Minimum 1 character"
             }, {
+                level: "error",
                 path: "pets[0].name",
                 value: "",
                 kind: "string",
@@ -1368,6 +1502,7 @@ describe("yop", () => {
             }])
             expect(Yop.validate({ name: "a", pets: [{ name: "" }] }, instance({ of: Test4 }), "name")).toEqual([])
             expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), "name")).toEqual([{
+                level: "error",
                 path: "name",
                 value: "",
                 kind: "string",
@@ -1376,6 +1511,7 @@ describe("yop", () => {
                 message: "Minimum 1 character"
             }])
             expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), "pets[0].name")).toEqual([{
+                level: "error",
                 path: "pets[0].name",
                 value: "",
                 kind: "string",
@@ -1388,6 +1524,7 @@ describe("yop", () => {
 
         it("yop.instance.type", () => {
             expect(Yop.validate("", instance())).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "instance",
@@ -1396,6 +1533,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected object)"
             }])
             expect(Yop.validate(0, instance())).toEqual([{
+                level: "error",
                 path: "",
                 value: 0,
                 kind: "instance",
@@ -1404,6 +1542,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected object)"
             }])
             expect(Yop.validate([], instance())).toEqual([{
+                level: "error",
                 path: "",
                 value: [],
                 kind: "instance",
@@ -1412,6 +1551,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected object)"
             }])
             expect(Yop.validate([], instance({ of: Test2 }))).toEqual([{
+                level: "error",
                 path: "",
                 value: [],
                 kind: "instance",
@@ -1420,6 +1560,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected object)"
             }])
             expect(Yop.validate({ name: 2 }, instance({ of: Test2 }))).toEqual([{
+                level: "error",
                 path: "name",
                 value: 2,
                 kind: "string",
@@ -1464,7 +1605,7 @@ describe("yop", () => {
             @date({ required: true, min: new Date(1900, 0, 1), max: new Date })
             birthDate: Date | null = null
             
-            @number({ min: 0, max: 150 })                
+            @number({ min: context => [0, `Should be inferred from birthDate but ${ context.value } doesn't look good`, "warning"], max: 150 })                
             age: number | null = null
 
             @string({ oneOf: ["green", "yellow"] })
@@ -1501,6 +1642,7 @@ describe("yop", () => {
             expect(Yop.validate(undefined, instance({ of: Person }))).toEqual([])
             expect(Yop.validate(null, instance({ of: Person }))).toEqual([])
             expect(Yop.validate(1, instance({ of: Person }))).toEqual([{
+                level: "error",
                 path: "",
                 value: 1,
                 kind: "instance",
@@ -1509,6 +1651,7 @@ describe("yop", () => {
                 message: "Wrong value type (expected object)"
             }])
             expect(Yop.validate({}, instance({ of: Person }))).toEqual([{
+                level: "error",
                 path: "birthDate",
                 value: undefined,
                 kind: "date",
@@ -1516,6 +1659,7 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }, {
+                level: "error",
                 path: "nicknames",
                 value: undefined,
                 kind: "array",
@@ -1523,6 +1667,7 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }, {
+                level: "error",
                 path: "pets",
                 value: undefined,
                 kind: "array",
@@ -1530,6 +1675,7 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }, {
+                level: "error",
                 path: "diary",
                 value: undefined,
                 kind: "file",
@@ -1538,6 +1684,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ birthDate: new Date(2024, 11, 21) }, instance({ of: Person }))).toEqual([{
+                level: "error",
                 path: "nicknames",
                 value: undefined,
                 kind: "array",
@@ -1545,6 +1692,7 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }, {
+                level: "error",
                 path: "pets",
                 value: undefined,
                 kind: "array",
@@ -1552,6 +1700,7 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }, {
+                level: "error",
                 path: "diary",
                 value: undefined,
                 kind: "file",
@@ -1560,6 +1709,7 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [] }, instance({ of: Person }))).toEqual([{
+                level: "error",
                 path: "nicknames",
                 value: undefined,
                 kind: "array",
@@ -1567,6 +1717,7 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }, {
+                level: "error",
                 path: "diary",
                 value: undefined,
                 kind: "file",
@@ -1575,12 +1726,22 @@ describe("yop", () => {
                 message: "Required field"
             }])
             expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [], nicknames: ["foo", "bar"] }, instance({ of: Person }))).toEqual([{
+                level: "error",
                 path: "diary",
                 value: undefined,
                 kind: "file",
                 code: "exists",
                 constraint: true,
                 message: "Required field"
+            }])
+            expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [], nicknames: ["foo", "bar"], diary: undefined, age: -1 }, instance({ of: Person }))).toEqual([{
+                level: "warning",
+                path: "age",
+                value: -1,
+                kind: "number",
+                code: "min",
+                constraint: 0,
+                message: "Should be inferred from birthDate but -1 doesn't look good"
             }])
             expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [], nicknames: ["foo", "bar"], diary: undefined }, instance({ of: Person }))).toEqual([])
 
@@ -1621,6 +1782,7 @@ describe("yop", () => {
                 }],
                 diary: diary
             }, instance({ of: Person }))).toEqual([{
+                level: "error",
                 path: "friends[0].lastName",
                 value: undefined,
                 kind: "string",
@@ -1628,6 +1790,7 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }, {
+                level: "error",
                 path: "friends[0].pets[0].name",
                 value: "",
                 kind: "string",
@@ -1635,6 +1798,7 @@ describe("yop", () => {
                 constraint: 1,
                 message: "Minimum 1 character"
             }, {
+                level: "error",
                 path: "friends[0].pets[0].food",
                 value: undefined,
                 kind: "string",
@@ -1642,6 +1806,7 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }, {
+                level: "error",
                 path: "friends[1].nicknames[2]",
                 value: "a",
                 kind: "string",
@@ -1649,6 +1814,7 @@ describe("yop", () => {
                 constraint: 2,
                 message: "Minimum 2 characters"
             }, {
+                level: "error",
                 path: "friends[1].friends[0].pets[0].name",
                 value: "",
                 kind: "string",
@@ -1656,6 +1822,7 @@ describe("yop", () => {
                 constraint: 1,
                 message: "Minimum 1 character"
             }, {
+                level: "error",
                 path: "diary",
                 value: diary,
                 kind: "file",
@@ -1671,14 +1838,16 @@ describe("yop", () => {
         it("yop.locale.set", () => {
             Yop.setLocale("fr-FR")
             expect(Yop.validate("", string({ min: 1 }))).toEqual([{
-                code: "min",
-                constraint: 1,
-                kind: "string",
-                message: "Minimum 1 caractère",
+                level: "error",
                 path: "",
                 value: "",
+                code: "min",
+                kind: "string",
+                constraint: 1,
+                message: "Minimum 1 caractère",
             }])
             expect(Yop.validate("", string({ oneOf: ["a", "b", "c"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "string",
@@ -1688,14 +1857,16 @@ describe("yop", () => {
             }])
             Yop.setLocale("en-US")
             expect(Yop.validate("", string({ min: 1 }))).toEqual([{
-                code: "min",
-                constraint: 1,
-                kind: "string",
-                message: "Minimum 1 character",
+                level: "error",
                 path: "",
                 value: "",
+                kind: "string",
+                code: "min",
+                constraint: 1,
+                message: "Minimum 1 character",
             }])
             expect(Yop.validate("", string({ oneOf: ["a", "b", "c"] }))).toEqual([{
+                level: "error",
                 path: "",
                 value: "",
                 kind: "string",

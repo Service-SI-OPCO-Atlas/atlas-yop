@@ -1,61 +1,62 @@
 import { isFunction } from "../TypesUtil"
-import { Group, InternalValidationContext, ValidationContext } from "../ValidationContext"
+import { Group, InternalValidationContext, Level, ValidationContext } from "../ValidationContext"
 
-export type ConstraintType<Value, ConstraintValue, Parent = unknown> = 
-    ConstraintValue |
-    ((context: ValidationContext<Value, Parent>) => ConstraintValue)
+export type ConstraintMessage = any
+export type ConstraintValue<ConstraintType> = ConstraintType | readonly [ConstraintType, ConstraintMessage, Level?, Group?]
+export type ConstraintFunction<Value, ConstraintType, Parent = unknown> = ((context: ValidationContext<Value, Parent>) => ConstraintValue<ConstraintType>)
 
-export type MessageType<Value, Parent = unknown> =
-    string |
-    undefined |
-    ((context: ValidationContext<Value, Parent>) => string | undefined)
+// export type MessageFunction<Value, ConstraintValue, Parent = unknown> =
+//     ((context: ValidationContext<Value, Parent>, constraint: ConstraintValue) => string | undefined)
+// export type MessageType<Value, ConstraintValue, Parent = unknown> = string | undefined | MessageFunction<Value, ConstraintValue, Parent>
 
-export type SingleConstraintTuple<Value, ConstraintValue, Parent = unknown> =
-    readonly [ConstraintType<Value, ConstraintValue, Parent>, MessageType<Value, Parent>, Group?]
+// export type SingleConstraintTuple<Value, ConstraintValue, Parent = unknown> =
+//     readonly [ConstraintType<Value, ConstraintValue, Parent>, MessageType<Value, Parent>, (Level | undefined)?, Group?]
 
-export type MultipleConstraintTuple<Value, ConstraintValue, Parent = unknown> =
-    readonly [ConstraintType<Value, ConstraintValue, Parent>, MessageType<Value, Parent>, Group]
+// export type MultipleConstraintTuple<Value, ConstraintValue, Parent = unknown> =
+//     readonly [ConstraintType<Value, ConstraintValue, Parent>, MessageType<Value, Parent>, Level | undefined, Group]
 
-export type ConstraintValue<Value, ConstraintValue, Parent = unknown> =
-    ConstraintType<Value, ConstraintValue, Parent> |
-    SingleConstraintTuple<Value, ConstraintValue, Parent> |
-    [MultipleConstraintTuple<Value, ConstraintValue, Parent>, ...MultipleConstraintTuple<Value, ConstraintValue, Parent>[]]
+export type Constraint<Value, ConstraintType, Parent = unknown> =
+    ConstraintValue<ConstraintType> |
+    ConstraintFunction<Value, ConstraintType, Parent>
+    // [MultipleConstraintTuple<Value, ConstraintValue, Parent>, ...MultipleConstraintTuple<Value, ConstraintValue, Parent>[]]
 
-export function validateConstraint<Value, Constraint, Parent>(
+export function validateConstraint<Value, ConstraintType, Parent>(
     context: InternalValidationContext<Value, Parent>,
-    constraint: ConstraintValue<Value, Constraint, Parent> | undefined,
-    isConstraintValue: (value: any) => value is Constraint,
-    validate: (value: Value, constraintValue: NonNullable<Constraint>) => boolean,
+    constraint: Constraint<Value, ConstraintType, Parent> | undefined,
+    isConstraintType: (value: any) => value is ConstraintType,
+    validate: (value: Value, constraintValue: NonNullable<ConstraintType>) => boolean,
     errorCode: string,
-    defaultConstraint?: ConstraintValue<Value, Constraint, Parent>
+    defaultConstraint?: ConstraintType
 ) {
-    let message: MessageType<Value> | undefined = undefined
+    let message: ConstraintMessage = undefined
+    let level: Level = "error"
 
-    if (constraint != null && !isConstraintValue(constraint)) {
+    if (isFunction(constraint))
+        constraint = (constraint as ConstraintFunction<Value, ConstraintType>)(context)
+
+    if (constraint != null && !isConstraintType(constraint)) {
         if (Array.isArray(constraint)) {
-            const [maybeConstraint, maybeMessage, _maybeGroup] = constraint
-            if (maybeConstraint == null || isConstraintValue(maybeConstraint)) {
+            const [maybeConstraint, maybeMessage, maybeLevel, _maybeGroup] = constraint
+            if (maybeConstraint == null || isConstraintType(maybeConstraint)) {
                 constraint = maybeConstraint
-                message = maybeMessage as unknown as MessageType<Value> | undefined
+                message = maybeMessage
+                level = (maybeLevel as unknown as Level) ?? "error"
             }
             else if (Array.isArray(maybeConstraint)) {
                 // TODO: array of tuples with groups
             }
         }
+        else {
+            constraint = undefined
+        }
     }
-
-    if (isFunction(message))
-        message = (message as (context: InternalValidationContext<Value, Parent>) => string | undefined)(context)
     
     if (constraint == null && defaultConstraint != null)
         constraint = defaultConstraint
-    if (isFunction(constraint))
-        constraint = (constraint as (context: InternalValidationContext<Value, Parent>) => Constraint)(context)
 
     return (
         constraint == null ||
-        validate(context.value as Value, constraint as NonNullable<Constraint>) ||
-        context.createError(errorCode, constraint, message) // false
+        validate(context.value as Value, constraint as NonNullable<ConstraintType>) ||
+        context.createStatus(errorCode, constraint, message as string, level) // false
     )
 }
-    

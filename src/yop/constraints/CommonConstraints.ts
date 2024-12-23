@@ -1,4 +1,4 @@
-import { ConstraintValue, validateConstraint } from "./Constraint"
+import { Constraint, validateConstraint } from "./Constraint"
 import { isBoolean } from "../TypesUtil"
 import { InternalValidationContext } from "../ValidationContext"
 
@@ -6,19 +6,19 @@ export interface CommonConstraints<Value, Parent = unknown> {
     /**
      * If `true`, the property must be present in the parent object (ie: `"prop" in obj` is true).
      */
-    exists?: ConstraintValue<Value | null | undefined, boolean, Parent>
+    exists?: Constraint<Value | null | undefined, boolean, Parent>
     /**
      * If `true`, the value must not be `undefined`.
      */
-    defined?: ConstraintValue<Value | null | undefined, boolean, Parent>
+    defined?: Constraint<Value | null | undefined, boolean, Parent>
     /**
      * If `true`, the value must not be `null`.
      */
-    notnull?: ConstraintValue<Value | null | undefined, boolean, Parent>
+    notnull?: Constraint<Value | null | undefined, boolean, Parent>
     /**
      * If `true`, the the value must not be `undefined` or `null`.
      */
-    required?: ConstraintValue<Value | null | undefined, boolean, Parent>
+    required?: Constraint<Value | null | undefined, boolean, Parent>
 }
 
 export type ContraintsValue<Contraints> = Contraints extends CommonConstraints<infer Value, infer _Parent> ? Value : never
@@ -59,5 +59,5 @@ export function validateCommonConstraints<Value, Parent>(context: InternalValida
 }
 
 export function validateTypeConstraint(context: InternalValidationContext<any>, checkType: (value: any) => boolean, expectedType: string) {
-    return context.value != null && (checkType(context.value) || context.createError("type", expectedType))
+    return context.value != null && (checkType(context.value) || context.createStatus("type", expectedType))
 }

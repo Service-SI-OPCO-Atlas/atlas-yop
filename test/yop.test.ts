@@ -1835,7 +1835,6 @@ describe("yop", () => {
 
     describe("yop.async", () => {
 
-
         it("yop.async.test", async () => {
             const asyncTest = (value: string) => new Promise<boolean>((resolve, reject) => {
                 setTimeout(() => {
@@ -1866,17 +1865,17 @@ describe("yop", () => {
                 test: context => [asyncTest(context.value).then(_value => "Seems to be good!"), "Pending..."]
             }))?.[0]?.constraint).resolves.toEqual("Seems to be good!")
 
-            // expect(Yop.validate("ab", string({
-            //     test: context => [asyncTest(context.value), "Pending...", "info"]
-            // }))).toSatisfy((value: ValidationStatus[]) =>
-            //     value[0].level === "info" &&
-            //     value[0].path === "" &&
-            //     value[0].value === "ab" &&
-            //     value[0].kind === "string" &&
-            //     value[0].code === "test" &&
-            //     isPromise(value[0].constraint) &&
-            //     value[0].message === "Pending..."
-            // )
+            expect(Yop.validate("ab", string({
+                test: context => [asyncTest(context.value).catch(_ => undefined), "Pending...", "info"]
+            }))).toSatisfy((value: ValidationStatus[]) =>
+                value[0].level === "info" &&
+                value[0].path === "" &&
+                value[0].value === "ab" &&
+                value[0].kind === "string" &&
+                value[0].code === "test" &&
+                isPromise(value[0].constraint) &&
+                value[0].message === "Pending..."
+            )
 
             await expect(Yop.validate("ab", string({
                 test: context => [asyncTest(context.value).catch(_reason => { throw "This is really bad!" }), "Pending..."]

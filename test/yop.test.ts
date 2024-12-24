@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { string } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
-import { array, boolean, id, date, email, emailRegex, file, instance, number } from "../src"
+import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise } from "../src"
 
 describe("yop", () => {
 
@@ -1830,6 +1830,57 @@ describe("yop", () => {
                 constraint: 1000,
                 message: "File must have a size of at least 1,000 bytes"
             }])
+        })
+    })
+
+    describe("yop.async", () => {
+
+
+        it("yop.async.test", async () => {
+            const asyncTest = (value: string) => new Promise<boolean>((resolve, reject) => {
+                setTimeout(() => {
+                    if (value === "abc")
+                        resolve(true)
+                    else
+                        reject("Something went wrong")
+                }, 100)
+            })
+
+            expect(Yop.validate("abc", string({
+                test: context => [asyncTest(context.value), "Pending..."]
+            }))).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "info" &&
+                statuses[0].path === "" &&
+                statuses[0].value === "abc" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Pending..."
+            )
+            await expect(Yop.validate("abc", string({
+                test: context => [asyncTest(context.value), "Pending..."]
+            }))?.[0]?.constraint).resolves.toEqual(true)
+
+            await expect(Yop.validate("abc", string({
+                test: context => [asyncTest(context.value).then(_value => "Seems to be good!"), "Pending..."]
+            }))?.[0]?.constraint).resolves.toEqual("Seems to be good!")
+
+            // expect(Yop.validate("ab", string({
+            //     test: context => [asyncTest(context.value), "Pending...", "info"]
+            // }))).toSatisfy((value: ValidationStatus[]) =>
+            //     value[0].level === "info" &&
+            //     value[0].path === "" &&
+            //     value[0].value === "ab" &&
+            //     value[0].kind === "string" &&
+            //     value[0].code === "test" &&
+            //     isPromise(value[0].constraint) &&
+            //     value[0].message === "Pending..."
+            // )
+
+            await expect(Yop.validate("ab", string({
+                test: context => [asyncTest(context.value).catch(_reason => { throw "This is really bad!" }), "Pending..."]
+            }))?.[0]?.constraint).rejects.toEqual("This is really bad!")
         })
     })
 

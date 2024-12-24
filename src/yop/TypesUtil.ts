@@ -21,3 +21,8 @@ export const isStringArray = <T extends string>(value: any): value is Array<T> =
 export const isBooleanArray = <T extends boolean>(value: any): value is Array<T> => Array.isArray(value) && value.every(isBoolean)
 export const isNumberArray = <T extends number>(value: any): value is Array<T> => Array.isArray(value) && value.every(isNumber)
 export const isDateArray = <T extends Date>(value: any): value is Array<T> => Array.isArray(value) && value.every(isDate)
+
+export const isPromise = <T>(value: any): value is Promise<T> => (
+    "then" in value && typeof value["then"] === "function" &&
+    "catch" in value && typeof value["catch"] === "function"
+)

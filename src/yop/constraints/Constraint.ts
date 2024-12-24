@@ -1,16 +1,9 @@
 import { isFunction } from "../TypesUtil"
 import { Group, InternalValidationContext, Level, ValidationContext } from "../ValidationContext"
 
-export type ConstraintMessage = any
+export type ConstraintMessage = string | (() => any)
 export type ConstraintValue<ConstraintType> = ConstraintType | readonly [ConstraintType, ConstraintMessage, Level?, Group?]
 export type ConstraintFunction<Value, ConstraintType, Parent = unknown> = ((context: ValidationContext<Value, Parent>) => ConstraintValue<ConstraintType>)
-
-// export type MessageFunction<Value, ConstraintValue, Parent = unknown> =
-//     ((context: ValidationContext<Value, Parent>, constraint: ConstraintValue) => string | undefined)
-// export type MessageType<Value, ConstraintValue, Parent = unknown> = string | undefined | MessageFunction<Value, ConstraintValue, Parent>
-
-// export type SingleConstraintTuple<Value, ConstraintValue, Parent = unknown> =
-//     readonly [ConstraintType<Value, ConstraintValue, Parent>, MessageType<Value, Parent>, (Level | undefined)?, Group?]
 
 // export type MultipleConstraintTuple<Value, ConstraintValue, Parent = unknown> =
 //     readonly [ConstraintType<Value, ConstraintValue, Parent>, MessageType<Value, Parent>, Level | undefined, Group]
@@ -28,7 +21,7 @@ export function validateConstraint<Value, ConstraintType, Parent>(
     errorCode: string,
     defaultConstraint?: ConstraintType
 ) {
-    let message: ConstraintMessage = undefined
+    let message: ConstraintMessage | undefined = undefined
     let level: Level = "error"
 
     if (isFunction(constraint))

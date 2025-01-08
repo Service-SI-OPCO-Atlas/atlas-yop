@@ -23,6 +23,8 @@ export const isNumberArray = <T extends number>(value: any): value is Array<T> =
 export const isDateArray = <T extends Date>(value: any): value is Array<T> => Array.isArray(value) && value.every(isDate)
 
 export const isPromise = <T>(value: any): value is Promise<T> => (
+    value != null &&
+    typeof value === "object" &&
     "then" in value && typeof value["then"] === "function" &&
     "catch" in value && typeof value["catch"] === "function"
 )

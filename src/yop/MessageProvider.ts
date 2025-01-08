@@ -1,10 +1,10 @@
-import { InternalValidationContext } from "./ValidationContext";
+import { InternalValidationContext, Level } from "./ValidationContext";
 
 export interface MessageProvider {
 
     readonly locale: string
 
-    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message?: string, path?: string): string
+    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: string | undefined, level: Level): string
 }
 
 function formatOneOf(locale: string) {
@@ -32,7 +32,7 @@ export class MessageProvider_en_US implements MessageProvider {
     private dateFormat = new Intl.DateTimeFormat(this.locale)
     private listFormat = formatOneOf(this.locale)
 
-    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message?: string): string {
+    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: string | undefined, level: Level): string {
 
         if (message != null)
             return message
@@ -81,7 +81,7 @@ export class MessageProvider_en_US implements MessageProvider {
         case "type":
             return `Wrong value type (expected ${ constraint })`
         case "test":
-            return "Invalid value"
+            return level === "pending" ? "Pending..." : level === "unavailable" ? "Service unavailable" : "Invalid value"
         case "oneOf":
             return `Must be one of: ${ constraint }`
         case "exists":
@@ -103,7 +103,7 @@ export class MessageProvider_fr_FR implements MessageProvider {
     private dateFormat = new Intl.DateTimeFormat(this.locale)
     private listFormat = formatOneOf(this.locale)
 
-    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message?: string): string {
+    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: string | undefined, level: Level): string {
 
         if (message != null)
             return message
@@ -152,7 +152,7 @@ export class MessageProvider_fr_FR implements MessageProvider {
         case "type":
             return `Valeur du mauvais type (${ constraint } attendu)`
         case "test":
-            return "Valeur incorrecte"
+            return level === "pending" ? "En cours..." : level === "unavailable" ? "Service indisponible" : "Valeur incorrecte"
         case "oneOf":
             return `Doit être parmi : ${ constraint }`
         case "exists":

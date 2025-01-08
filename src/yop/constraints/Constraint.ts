@@ -1,7 +1,7 @@
 import { isFunction } from "../TypesUtil"
 import { Group, InternalValidationContext, Level, ValidationContext } from "../ValidationContext"
 
-export type ConstraintMessage = string | (() => any)
+export type ConstraintMessage = string
 export type ConstraintValue<ConstraintType> = ConstraintType | readonly [ConstraintType, ConstraintMessage, Level?, Group?]
 export type ConstraintFunction<Value, ConstraintType, Parent = unknown> = ((context: ValidationContext<Value, Parent>) => ConstraintValue<ConstraintType>)
 
@@ -50,6 +50,6 @@ export function validateConstraint<Value, ConstraintType, Parent>(
     return (
         constraint == null ||
         validate(context.value as Value, constraint as NonNullable<ConstraintType>) ||
-        context.createStatus(errorCode, constraint, message as string, level) // false
+        context.setStatus(errorCode, constraint, message, level) == null
     )
 }

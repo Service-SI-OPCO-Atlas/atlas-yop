@@ -1,11 +1,18 @@
 import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
 import { ClassFieldDecorator, InternalClassConstraints } from "./Metadata"
 import { Constructor } from "./TypesUtil"
-import { InternalValidationContext } from "./ValidationContext"
+import { InternalValidationContext, ValidationStatus } from "./ValidationContext"
 
 (Symbol as any).metadata ??= Symbol.for("Symbol.metadata")
 
 export const validationSymbol = Symbol('YopValidation')
+
+export type AsyncValidationStatus = {
+    status?: ValidationStatus | undefined
+    dependencies: unknown
+    getDependencies: (context: InternalValidationContext<unknown>) => unknown
+    shouldRevalidate: (previous: unknown, current: unknown, status: ValidationStatus | undefined) => boolean
+}
 
 export class Yop {
 
@@ -19,6 +26,8 @@ export class Yop {
     }
 
     private locale = "en-US"
+    
+    readonly asyncStatuses = new Map<string, AsyncValidationStatus>()
 
     static registerClass(id: string, constructor: Constructor<unknown>) {
         Yop.classIds.set(id, constructor)
@@ -57,7 +66,7 @@ export class Yop {
         }
         
         constraints.validate(context, constraints)
-        return Array.from(context.errors.values())
+        return Array.from(context.statuses.values())
     }
     static validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, path?: string) {
         return Yop.init().validate(value, decorator, path)

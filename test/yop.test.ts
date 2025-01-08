@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { string } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
-import { array, boolean, id, date, email, emailRegex, file, instance, number } from "../src"
+import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, extendedPromise } from "../src"
 
 describe("yop", () => {
 
@@ -1835,174 +1835,293 @@ describe("yop", () => {
 
     describe("yop.async", () => {
 
-        it("yop.async.test", async () => {
+        it("yop.async.simple", async () => {
+            const constraint = string({ test: context => [
+                fetch("https://www.purgomalum.com/service/containsprofanity?add=cde&text=" + context.value)
+                .then(response => {
+                    if (!response.ok)
+                        throw `Error ${ response.status }: ${ response.statusText }`
+                    return response.text()
+                })
+                .then(response => response !== "true" || "Contains inappropriate content"),
+                "Checking for inappropriate content..."
+            ]})
+            const yop = new Yop()
+            let statuses = yop.validate("abc", constraint)
+            
+            expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "pending" &&
+                statuses[0].path === "" &&
+                statuses[0].value === "abc" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Checking for inappropriate content..."
+            )
+            expect(yop.asyncStatuses.get("")?.status).toEqual(statuses[0])
+            await statuses[0].constraint
+            expect(yop.asyncStatuses.get("")?.status).toBeUndefined()
+            expect(yop.validate("abc", constraint)).toEqual([])
 
-            const yop2 = new Yop()
-            const statuses2 = yop2.validate("fick", string({ test: context => //[
-                fetch("https://www.purgomalum.com/service/containsprofanity?text=" + context.value)
-                    .then(response => {
-                        if (!response.ok)
-                            throw `Error ${ response.status }: ${ response.statusText }`
-                        return response.text()
-                    })
-                    .then(response => response === "true" ? "Contains inappropriate content" : ["Seems to be good", "info"]),
-                // extendedPromise({
-                //     promise: fetch("https://www.purgomalum.com/service/containsprofanity?text=" + context.value)
-                //         .then(response => {
-                //             if (!response.ok)
-                //                 throw response.statusText
-                //             return response.text()
-                //         })
-                //         .then(response => response === "true" ? "Contains inappropriate content" : undefined),
-                //     getDependencies: context => context.value,
-                //     shouldRevalidate: (previous, current, status) => status?.level != "unavailable" && previous != current,
-                // }),
-                /*"Pending..."
-            ]*/}))
-            console.log(statuses2)
-            console.log(yop2.asyncStatuses)
+            statuses = yop.validate("bcd", constraint)
+            expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "pending" &&
+                statuses[0].path === "" &&
+                statuses[0].value === "bcd" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Checking for inappropriate content..."
+            )
+            expect(yop.asyncStatuses.get("")?.status).toEqual(statuses[0])
+            await statuses[0].constraint
+            expect(yop.asyncStatuses.get("")?.status).toBeUndefined()
+            expect(yop.validate("bcd", constraint)).toEqual([])
 
-            await statuses2[0].constraint
+            statuses = yop.validate("cde", constraint)
+            expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "pending" &&
+                statuses[0].path === "" &&
+                statuses[0].value === "cde" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Checking for inappropriate content..."
+            )
+            expect(yop.asyncStatuses.get("")?.status).toEqual(statuses[0])
+            await statuses[0].constraint
+            expect(yop.asyncStatuses.get("")?.status).toEqual({
+                level: "error",
+                path: "",
+                value: "cde",
+                kind: "string",
+                code: "test",
+                constraint: false,
+                message: "Contains inappropriate content"
+            })
+            expect(yop.validate("cde", constraint)).toEqual([{
+                level: "error",
+                path: "",
+                value: "cde",
+                kind: "string",
+                code: "test",
+                constraint: false,
+                message: "Contains inappropriate content"
+            }])
+        })
 
-            console.log(yop2.asyncStatuses)
+        it("yop.async.unavailable1", async () => {
+            const constraint = string({ test: context =>
+                fetch("https://www.purgomalum.com/service/cont****fanity?add=cde&text=" + context.value)
+                .then(response => {
+                    if (!response.ok)
+                        throw `Error ${ response.status }: ${ response.statusText }`
+                    return response.text()
+                })
+                .then(response => response !== "true" || "Contains inappropriate content"),
+            })
+            const yop = new Yop()
+            let statuses = yop.validate("abc", constraint)
+            
+            expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "pending" &&
+                statuses[0].path === "" &&
+                statuses[0].value === "abc" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Pending..."
+            )
+            expect(yop.asyncStatuses.get("")?.status).toEqual(statuses[0])
+            await statuses[0].constraint
+            expect(yop.asyncStatuses.get("")?.status).toEqual({
+                level: "unavailable",
+                path: "",
+                value: "abc",
+                kind: "string",
+                code: "test",
+                constraint: false,
+                message: "Error 404: Not Found"
+            })
+            expect(yop.validate("abc", constraint)).toEqual([{
+                level: "unavailable",
+                path: "",
+                value: "abc",
+                kind: "string",
+                code: "test",
+                constraint: false,
+                message: "Error 404: Not Found"
+            }])
+        })
 
-            // const asyncTest = (value: string) => new Promise<boolean>((resolve, reject) => {
-            //     setTimeout(() => {
-            //         if (value === "abc")
-            //             resolve(true)
-            //         else
-            //             reject("Something went wrong")
-            //     }, 100)
-            // })
+        it("yop.async.unavailable2", async () => {
+            const constraint = string({ test: context =>
+                fetch("https://www.pur****lum.com/service/containsprofanity?add=cde&text=" + context.value)
+                .then(response => {
+                    if (!response.ok)
+                        throw `Error ${ response.status }: ${ response.statusText }`
+                    return response.text()
+                })
+                .then(response => response !== "true" || "Contains inappropriate content"),
+            })
+            const yop = new Yop()
+            let statuses = yop.validate("abc", constraint)
+            
+            expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "pending" &&
+                statuses[0].path === "" &&
+                statuses[0].value === "abc" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Pending..."
+            )
+            expect(yop.asyncStatuses.get("")?.status).toEqual(statuses[0])
+            await statuses[0].constraint
+            expect(yop.asyncStatuses.get("")?.status).toEqual({
+                level: "unavailable",
+                path: "",
+                value: "abc",
+                kind: "string",
+                code: "test",
+                constraint: false,
+                message: "TypeError: fetch failed"
+            })
+            expect(yop.validate("abc", constraint)).toEqual([{
+                level: "unavailable",
+                path: "",
+                value: "abc",
+                kind: "string",
+                code: "test",
+                constraint: false,
+                message: "TypeError: fetch failed"
+            }])
+        })
 
-            // const yop = new Yop()
-            // let statuses = yop.validate("abc", string({ test: context => [asyncTest(context.value), "Pending..."] }))
-            // expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
-            //     statuses.length === 1 &&
-            //     statuses[0].level === "info" &&
-            //     statuses[0].path === "" &&
-            //     statuses[0].value === "abc" &&
-            //     statuses[0].kind === "string" &&
-            //     statuses[0].code === "test" &&
-            //     isPromise(statuses[0].constraint) &&
-            //     statuses[0].message === "Pending..."
-            // )
-            // console.log(yop.asyncStatuses)
-            // await statuses?.[0]?.constraint
-            // console.log(yop.asyncStatuses)
+        it("yop.async.extended", async () => {
 
-            // statuses = yop.validate("abc", string({ test: context => [asyncTest(context.value), "Pending..."] }))
-            // expect(statuses).toEqual([])
-            // console.log(yop.asyncStatuses)
+            class Test {
+                
+                @string({ test: context => [
+                    extendedPromise({
+                        promise: fetch(`https://www.purgomalum.com/service/containsprofanity?add=cde&text=${ context.value }+${ context.parent.nickname ?? "" }`)
+                            .then(response => {
+                                if (!response.ok)
+                                    throw `Error ${ response.status }: ${ response.statusText }`
+                                return response.text()
+                            })
+                            .then(response => response !== "true" || "Contains inappropriate content"),
+                        getDependencies: context => [context.value, context.parent.nickname],
+                        shouldRevalidate: (previous, current, status) => status?.level !== "unavailable" && (previous[0] !== current[0] || previous[1] !== current[1]),
+                    }),
+                    "Checking for inappropriate content..."
+                ]})
+                name: string | null = null
 
-            // statuses = yop.validate("ab", string({ test: context => [asyncTest(context.value), "Pending..."] }))
-            // expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
-            //     statuses.length === 1 &&
-            //     statuses[0].level === "info" &&
-            //     statuses[0].path === "" &&
-            //     statuses[0].value === "ab" &&
-            //     statuses[0].kind === "string" &&
-            //     statuses[0].code === "test" &&
-            //     isPromise(statuses[0].constraint) &&
-            //     statuses[0].message === "Pending..."
-            // )
-            // console.log(yop.asyncStatuses)
-            // await expect(statuses[0].constraint).rejects.toEqual("Something went wrong")
-            // console.log(yop.asyncStatuses)
+                nickname: string | null = null
 
-            // statuses = yop.validate("ab", string({ test: context => [asyncTest(context.value), "Pending..."] }))
-            // expect(statuses).toEqual([{
-            //     level: "fatal",
-            //     path: "",
-            //     value: "ab",
-            //     kind: "string",
-            //     code: "test",
-            //     constraint: false,
-            //     message: "Something went wrong"
-            // }])
-            // console.log(yop.asyncStatuses)
+                age: number | null = null
+            }
 
-            // statuses = yop.validate("ab", string({ test: context => [asyncTest(context.value), "Pending..."] }))
-            // expect(statuses).toEqual([{
-            //     level: "fatal",
-            //     path: "",
-            //     value: "ab",
-            //     kind: "string",
-            //     code: "test",
-            //     constraint: false,
-            //     message: "Something went wrong"
-            // }])
-            // console.log(yop.asyncStatuses)
+            const yop = new Yop()
+            expect(yop.validate({}, instance({ of: Test }))).toEqual([])
 
+            const test: Test = {
+                name: "abc",
+                nickname: "foo",
+                age: 30
+            }
+            
+            let statuses = yop.validate(test, instance({ of: Test }))
+            expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "pending" &&
+                statuses[0].path === "name" &&
+                statuses[0].value === "abc" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Checking for inappropriate content..."
+            )
+            expect(yop.asyncStatuses.get("name")?.status).toEqual(statuses[0])
+            await statuses[0].constraint
+            expect(yop.asyncStatuses.get("name")?.status).toBeUndefined()
+            expect(yop.validate(test, instance({ of: Test }))).toEqual([])
 
+            test.age = 31
+            expect(yop.validate(test, instance({ of: Test }))).toEqual([])
 
-            // console.log(await (await fetch("https://api.ipify.org/?format=json")).json())
+            test.nickname = "bar"
+            statuses = yop.validate(test, instance({ of: Test }))
+            expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "pending" &&
+                statuses[0].path === "name" &&
+                statuses[0].value === "abc" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Checking for inappropriate content..."
+            )
+            expect(yop.asyncStatuses.get("name")?.status).toEqual(statuses[0])
+            await statuses[0].constraint
+            expect(yop.asyncStatuses.get("name")?.status).toBeUndefined()
+            expect(yop.validate(test, instance({ of: Test }))).toEqual([])
 
-            // await statuses?.[0]?.constraint
-            // console.log(yop.asyncStatuses)
+            test.name = "bcd"
+            statuses = yop.validate(test, instance({ of: Test }))
+            expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "pending" &&
+                statuses[0].path === "name" &&
+                statuses[0].value === "bcd" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Checking for inappropriate content..."
+            )
+            expect(yop.asyncStatuses.get("name")?.status).toEqual(statuses[0])
+            await statuses[0].constraint
+            expect(yop.asyncStatuses.get("name")?.status).toBeUndefined()
+            expect(yop.validate(test, instance({ of: Test }))).toEqual([])
 
-            // expect(Yop.validate("abc", string({
-            //     test: context => [asyncTest(context.value), "Pending..."]
-            // }))).toSatisfy((statuses: ValidationStatus[]) =>
-            //     statuses.length === 1 &&
-            //     statuses[0].level === "info" &&
-            //     statuses[0].path === "" &&
-            //     statuses[0].value === "abc" &&
-            //     statuses[0].kind === "string" &&
-            //     statuses[0].code === "test" &&
-            //     isPromise(statuses[0].constraint) &&
-            //     statuses[0].message === "Pending..."
-            // )
-            // await expect(Yop.validate("abc", string({
-            //     test: context => [asyncTest(context.value), "Pending..."]
-            // }))?.[0]?.constraint).resolves.toEqual(true)
-
-            // await expect(Yop.validate("abc", string({
-            //     test: context => [asyncTest(context.value).then(_value => "Seems to be good!"), "Pending..."]
-            // }))?.[0]?.constraint).resolves.toEqual("Seems to be good!")
-
-            // expect(Yop.validate("ab", string({
-            //     test: context => [asyncTest(context.value).catch(_ => undefined), "Pending...", "info"]
-            // }))).toSatisfy((value: ValidationStatus[]) =>
-            //     value[0].level === "info" &&
-            //     value[0].path === "" &&
-            //     value[0].value === "ab" &&
-            //     value[0].kind === "string" &&
-            //     value[0].code === "test" &&
-            //     isPromise(value[0].constraint) &&
-            //     value[0].message === "Pending..."
-            // )
-
-            // await expect(Yop.validate("ab", string({
-            //     test: context => [asyncTest(context.value).catch(_reason => { throw "This is really bad!" }), "Pending..."]
-            // }))?.[0]?.constraint).rejects.toEqual("This is really bad!")
-            // expect(yop.asyncStatuses).toSatisfy((statuses: ValidationStatus[]) =>
-            //     statuses.length === 1 &&
-            //     statuses[0].level === "info" &&
-            //     statuses[0].path === "" &&
-            //     statuses[0].value === "abc" &&
-            //     statuses[0].kind === "string" &&
-            //     statuses[0].code === "test" &&
-            //     isPromise(statuses[0].constraint) &&
-            //     statuses[0].message === "Pending..."
-            // )
-
-
-            // expect(yop.validate("ab", string({
-            //     test: context => [asyncTest(context.value).catch(_ => undefined), "Pending...", "info"]
-            // }))).toSatisfy((value: ValidationStatus[]) =>
-            //     value[0].level === "info" &&
-            //     value[0].path === "" &&
-            //     value[0].value === "ab" &&
-            //     value[0].kind === "string" &&
-            //     value[0].code === "test" &&
-            //     isPromise(value[0].constraint) &&
-            //     value[0].message === "Pending..."
-            // )
-            // await expect(yop.validate("ab", string({
-            //     test: context => [asyncTest(context.value).catch(_reason => { throw "This is really bad!" }), "Pending..."]
-            // }))?.[0]?.constraint).rejects.toEqual("This is really bad!")
-            // console.log(yop.asyncStatuses)
+            test.name = "cde"
+            statuses = yop.validate(test, instance({ of: Test }))
+            expect(statuses).toSatisfy((statuses: ValidationStatus[]) =>
+                statuses.length === 1 &&
+                statuses[0].level === "pending" &&
+                statuses[0].path === "name" &&
+                statuses[0].value === "cde" &&
+                statuses[0].kind === "string" &&
+                statuses[0].code === "test" &&
+                isPromise(statuses[0].constraint) &&
+                statuses[0].message === "Checking for inappropriate content..."
+            )
+            expect(yop.asyncStatuses.get("name")?.status).toEqual(statuses[0])
+            await statuses[0].constraint
+            expect(yop.asyncStatuses.get("name")?.status).toEqual({
+                level: "error",
+                path: "name",
+                value: "cde",
+                kind: "string",
+                code: "test",
+                constraint: false,
+                message: "Contains inappropriate content"
+            })
+            expect(yop.validate(test, instance({ of: Test }))).toEqual([{
+                level: "error",
+                path: "name",
+                value: "cde",
+                kind: "string",
+                code: "test",
+                constraint: false,
+                message: "Contains inappropriate content"
+            }])
         })
     })
 

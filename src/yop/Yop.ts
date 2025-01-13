@@ -1,7 +1,7 @@
 import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
 import { ClassFieldDecorator, InternalClassConstraints } from "./Metadata"
 import { Constructor } from "./TypesUtil"
-import { InternalValidationContext, ValidationStatus } from "./ValidationContext"
+import { Group, InternalValidationContext, ValidationStatus } from "./ValidationContext"
 
 (Symbol as any).metadata ??= Symbol.for("Symbol.metadata")
 
@@ -43,18 +43,19 @@ export class Yop {
         return id
     }
 
-    validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, path?: string) {
+    validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options?: { path?: string, groups?: Group }) {
         const metadata = { [validationSymbol]: {} as InternalClassConstraints }
-        decorator(null, { metadata, name: "placeholder" } as any)
-        
+        decorator(null, { metadata, name: "placeholder" } as any)        
         let constraints = metadata[validationSymbol]?.fields?.placeholder
+        
         if (constraints == null)
             return []
 
-        const segments = splitPath(path ?? "")
+        const segments = splitPath(options?.path ?? "")
         let context = new InternalValidationContext<unknown>({
             yop: this,
             kind: constraints.kind,
+            groups: options?.groups,
             value,
         })
 
@@ -68,8 +69,8 @@ export class Yop {
         constraints.validate(context, constraints)
         return Array.from(context.statuses.values())
     }
-    static validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, path?: string) {
-        return Yop.init().validate(value, decorator, path)
+    static validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options?: { path?: string, groups?: Group }) {
+        return Yop.init().validate(value, decorator, options)
     }
 
     static registerMessageProvider(provider: MessageProvider) {

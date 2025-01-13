@@ -29,7 +29,7 @@ export function validateClass(context: InternalValidationContext<unknown>, const
         })
         
         valid = (
-            validateConstraint(fieldContext, fieldConstraints.exists, isBoolean, (_, constraint) => constraint !== true || fieldName in parent, "exists") &&
+            validateConstraint(fieldContext, fieldConstraints, "exists", isBoolean, (_, constraint) => constraint !== true || fieldName in parent) &&
             fieldConstraints.validate(fieldContext, fieldConstraints) &&
             valid
         )
@@ -54,6 +54,7 @@ export type ClassFieldDecorator<Value, Parent = unknown> = (_: unknown, context:
 export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>>(
     kind: string,
     constraints: Constraints,
+    groups: Record<string, Constraints> | undefined,
     validate: Validator<Constraints>,
     traverse?: Traverser<Constraints>
 ) {
@@ -67,7 +68,7 @@ export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Co
         if (!Object.hasOwnProperty.bind(fields)(fieldName))
             fields[fieldName] = {} as InternalCommonConstraints
 
-        Object.assign(fields[fieldName], { ...constraints, kind, validate, traverse })
+        Object.assign(fields[fieldName], { ...constraints, groups, kind, validate, traverse })
     }
 }
 

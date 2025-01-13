@@ -25,6 +25,6 @@ function validateDate<Value extends DateValue, Parent>(context: InternalValidati
     )
 }
 
-export function date<Value extends DateValue, Parent>(constraints?: DateConstraints<Value, Parent>) {
-    return fieldValidationDecorator("date", constraints ?? {}, validateDate)
+export function date<Value extends DateValue, Parent>(constraints?: DateConstraints<Value, Parent>, groups?: Record<string, DateConstraints<Value, Parent>>) {
+    return fieldValidationDecorator("date", constraints ?? {}, groups, validateDate)
 }

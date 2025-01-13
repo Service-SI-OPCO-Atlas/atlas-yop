@@ -1500,8 +1500,8 @@ describe("yop", () => {
                 constraint: 1,
                 message: "Minimum 1 character"
             }])
-            expect(Yop.validate({ name: "a", pets: [{ name: "" }] }, instance({ of: Test4 }), "name")).toEqual([])
-            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), "name")).toEqual([{
+            expect(Yop.validate({ name: "a", pets: [{ name: "" }] }, instance({ of: Test4 }), { path: "name" })).toEqual([])
+            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), { path: "name" })).toEqual([{
                 level: "error",
                 path: "name",
                 value: "",
@@ -1510,7 +1510,7 @@ describe("yop", () => {
                 constraint: 1,
                 message: "Minimum 1 character"
             }])
-            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), "pets[0].name")).toEqual([{
+            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), { path: "pets[0].name" })).toEqual([{
                 level: "error",
                 path: "pets[0].name",
                 value: "",
@@ -1519,7 +1519,7 @@ describe("yop", () => {
                 constraint: 1,
                 message: "Minimum 1 character"
             }])
-            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), "pets[1].name")).toEqual([])
+            expect(Yop.validate({ name: "", pets: [{ name: "" }] }, instance({ of: Test4 }), { path: "pets[1].name" })).toEqual([])
         })
 
         it("yop.instance.type", () => {
@@ -2122,6 +2122,76 @@ describe("yop", () => {
                 constraint: false,
                 message: "Contains inappropriate content"
             }])
+        })
+    })
+
+    describe("yop.groups", () => {
+
+        it("yop.groups.1", () => {
+
+            const recap = "recap"
+            class Test {
+                
+                @string(
+                    { required: true, min: 1 },
+                    { [recap]: { test: context => (context.parent.age ?? 0) > context.value.length } }
+                )
+                name: string | null = null
+                
+                @number({ min: 1 })
+                age: number | null = null
+            }
+
+            expect(Yop.validate(null, instance({ of: Test }), { groups: [undefined, recap] })).toEqual([])
+
+            const enforce = "enforce"
+
+            expect(Yop.validate(
+                null,
+                string({ defined: true }, { [enforce]: { required: true } }),
+            )).toEqual([])
+
+            expect(Yop.validate(
+                null,
+                string({ defined: true }, { [enforce]: { required: true } }),
+                { groups: enforce }
+            )).toEqual([{
+                level: "error",
+                path: "",
+                value: null,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+
+            expect(Yop.validate(
+                null,
+                string({ defined: true }, { [enforce]: { required: true } }),
+                { groups: [undefined, enforce] }
+            )).toEqual([{
+                level: "error",
+                path: "",
+                value: null,
+                kind: "string",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+
+            // expect(Yop.validate(
+            //     null,
+            //     string({ defined: true }, { [enforce]: { required: true } }),
+            //     { group: [undefined, enforce] }
+            // )).toEqual([{
+            //     level: "error",
+            //     path: "",
+            //     value: null,
+            //     kind: "string",
+            //     code: "required",
+            //     constraint: true,
+            //     message: "Required field"
+            // }])
         })
     })
 

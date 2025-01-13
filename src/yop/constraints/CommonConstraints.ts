@@ -44,6 +44,8 @@ export interface InternalConstraints {
      * The method that returns the constraints and value of a nested field.
      */
     traverse?: Traverser<this>
+
+    groups?: Record<string, this>
 }
     
 
@@ -52,9 +54,9 @@ export interface InternalCommonConstraints extends CommonConstraints<unknown>, I
 
 export function validateCommonConstraints<Value, Parent>(context: InternalValidationContext<Value, Parent>, constraints: CommonConstraints<Value, Parent>) {
     return (
-        validateConstraint(context, constraints.defined, isBoolean, (value, constraint) => constraint !== true || value !== undefined, "defined") &&
-        validateConstraint(context, constraints.notnull, isBoolean, (value, constraint) => constraint !== true || value !== null, "notnull") &&
-        validateConstraint(context, constraints.required, isBoolean, (value, constraint) => constraint !== true || value != null, "required")
+        validateConstraint(context, constraints, "defined", isBoolean, (value, constraint) => constraint !== true || value !== undefined) &&
+        validateConstraint(context, constraints, "notnull", isBoolean, (value, constraint) => constraint !== true || value !== null) &&
+        validateConstraint(context, constraints, "required", isBoolean, (value, constraint) => constraint !== true || value != null)
     )
 }
 

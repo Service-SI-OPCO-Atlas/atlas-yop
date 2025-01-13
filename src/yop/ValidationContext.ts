@@ -46,7 +46,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
     readonly rootContext: InternalValidationContext<unknown> | undefined
     readonly userContext: unknown | undefined
 
-    readonly group: Group | undefined
+    readonly groups: Group | undefined
     readonly statuses: Map<string | undefined, ValidationStatus>
 
     constructor(props: {
@@ -57,7 +57,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         parentContext?: InternalValidationContext<Parent> | undefined
         rootContext?: InternalValidationContext<unknown> | undefined
         userContext?: unknown | undefined
-        group?: Group
+        groups?: Group
         statuses?: Map<string | undefined, ValidationStatus>
     }) {
         this.yop = props.yop
@@ -67,7 +67,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         this.key = props.key
         this.rootContext = props.rootContext
         this.userContext = props.userContext
-        this.group = props.group
+        this.groups = props.groups
         this.statuses = props.statuses ?? new Map()
 
         if (props.parentContext != null && props.key == null)
@@ -105,17 +105,17 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
             parentContext: this,
             rootContext: this.rootContext ?? this,
             userContext: this.userContext,
-            group: this.group,
+            groups: this.groups,
             statuses: this.statuses,
         })
     }
 
     matchGroup(group: Group | undefined) {
         if (group == null)
-            return this.group == null || (Array.isArray(this.group) && this.group.includes(undefined))
+            return this.groups == null || (Array.isArray(this.groups) && this.groups.includes(undefined))
         if (Array.isArray(group))
-            return Array.isArray(this.group) ? group.some(g => (this.group as (string | undefined)[]).includes(g)) : group.includes(this.group)
-        return (Array.isArray(this.group) ? this.group.includes(group) : this.group === group)
+            return Array.isArray(this.groups) ? group.some(g => (this.groups as (string | undefined)[]).includes(g)) : group.includes(this.groups)
+        return (Array.isArray(this.groups) ? this.groups.includes(group) : this.groups === group)
     }
 
     createStatus(code: string, constraint: any, message?: string, level: Level = "error"): ValidationStatus {
@@ -137,7 +137,5 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
     }
 }
 
-export function nonNullableContext<Value, Parent>(context: InternalValidationContext<Value, Parent>) {
-    return context as InternalValidationContext<NonNullable<Value>, Parent>
-}
+export type ValuedContext<Value, Parent> = InternalValidationContext<NonNullable<Value>, Parent>
 

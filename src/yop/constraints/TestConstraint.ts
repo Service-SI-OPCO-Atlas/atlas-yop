@@ -36,6 +36,22 @@ export function validateTestConstraint<Value, Parent>(
     context: InternalValidationContext<Value, Parent>,
     constraints: TestConstraint<Value, Parent>
 ) {
+    if (context.groups == null)
+        return _validateTestConstraint(context, constraints)
+
+    const groups = Array.isArray(context.groups) ? context.groups : [context.groups]
+    for (const group of groups) {
+        const constraint = (group == null ? constraints.test : (constraints as any).groups?.[group]?.test)
+        if (!_validateTestConstraint(context, { test: constraint }))
+            return false
+    }
+    return true
+}
+
+function _validateTestConstraint<Value, Parent>(
+    context: InternalValidationContext<Value, Parent>,
+    constraints: TestConstraint<Value, Parent>
+) {
     const asyncStatus = context.yop.asyncStatuses.get(context.path)
     if (asyncStatus != null) {
         const previous = asyncStatus.dependencies

@@ -4,7 +4,7 @@ import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/Min
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { isNumber, isRegExp, isString, isStringArray } from "../TypesUtil"
-import { InternalValidationContext, nonNullableContext } from "../ValidationContext"
+import { InternalValidationContext, ValuedContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Metadata"
 
 export type StringValue = string | null | undefined
@@ -27,12 +27,12 @@ export function validateString<Value extends StringValue, Parent>(
         validateCommonConstraints(context, constraints) &&
         validateTypeConstraint(context, isString, type ?? "string") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.length >= min, (value, max) => value.length <= max) &&
-        validateConstraint(nonNullableContext(context), constraints.match, isRegExp, (value, constraint) => constraint.test(value), "match", defaultRegexp) &&
+        validateConstraint(context as ValuedContext<Value, Parent>, constraints, "match", isRegExp, (value, constraint) => constraint.test(value), defaultRegexp) &&
         validateOneOfConstraint(context, constraints, isStringArray) &&
         validateTestConstraint(context, constraints)
     )
 }
 
-export function string<Value extends StringValue, Parent>(constraints?: StringConstraints<Value, Parent>) {
-    return fieldValidationDecorator("string", constraints ?? {}, validateString)
+export function string<Value extends StringValue, Parent>(constraints?: StringConstraints<Value, Parent>, groups?: Record<string, StringConstraints<Value, Parent>>) {
+    return fieldValidationDecorator("string", constraints ?? {}, groups, validateString)
 }

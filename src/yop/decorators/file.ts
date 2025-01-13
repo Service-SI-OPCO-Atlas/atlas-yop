@@ -22,6 +22,6 @@ function validateFile<Value extends FileValue, Parent>(context: InternalValidati
     )
 }
 
-export function file<Value extends FileValue, Parent>(constraints?: FileConstraints<Value, Parent>) {
-    return fieldValidationDecorator("file", constraints ?? {}, validateFile)
+export function file<Value extends FileValue, Parent>(constraints?: FileConstraints<Value, Parent>, groups?: Record<string, FileConstraints<Value, Parent>>) {
+    return fieldValidationDecorator("file", constraints ?? {}, groups, validateFile)
 }

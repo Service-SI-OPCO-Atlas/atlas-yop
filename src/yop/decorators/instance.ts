@@ -57,6 +57,6 @@ function validateInstance<Value extends InstanceValue, Parent>(context: Internal
     return classConstraints == null || validateClass(context, classConstraints)
 }
 
-export function instance<Value extends CheckClass<Value>, Parent>(constraints?: InstanceConstraints<Value, Parent>) {
-    return fieldValidationDecorator("instance", constraints ?? {} as InstanceConstraints<Value, Parent>, validateInstance, traverseInstance)
+export function instance<Value extends CheckClass<Value>, Parent>(constraints?: InstanceConstraints<Value, Parent>, groups?: Record<string, InstanceConstraints<Value, Parent>>) {
+    return fieldValidationDecorator("instance", constraints ?? {} as InstanceConstraints<Value, Parent>, groups, validateInstance, traverseInstance)
 }

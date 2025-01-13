@@ -13,6 +13,6 @@ export function validateEmail<Value extends StringValue, Parent>(context: Intern
     return validateString(context, constraints as StringConstraints<Value, Parent>, emailRegex, "email")
 }
 
-export function email<Value extends StringValue, Parent>(constraints?: EmailConstraints<Value, Parent>) {
-    return fieldValidationDecorator("email", constraints ?? {}, validateEmail)
+export function email<Value extends StringValue, Parent>(constraints?: EmailConstraints<Value, Parent>, groups?: Record<string, EmailConstraints<Value, Parent>>) {
+    return fieldValidationDecorator("email", constraints ?? {}, groups, validateEmail)
 }

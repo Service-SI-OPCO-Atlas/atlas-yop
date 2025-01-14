@@ -38,10 +38,7 @@ export function validateClass(context: InternalValidationContext<unknown>, const
         )
     }
 
-    if (valid && constraints.test != null)
-        validateTestConstraint(context, constraints)
-
-    return valid
+    return valid && validateTestConstraint(context, constraints)
 }
 
 export function initClassConstraints(decoratorMetadata: DecoratorMetadata) {

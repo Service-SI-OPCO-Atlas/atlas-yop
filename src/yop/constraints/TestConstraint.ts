@@ -38,6 +38,9 @@ export function validateTestConstraint<Value, Parent>(
     context: InternalValidationContext<Value, Parent>,
     constraints: TestConstraint<Value, Parent>
 ) {
+    if (constraints.test == null)
+        return true
+    
     if (context.groups == null)
         return _validateTestConstraint(context, constraints)
 

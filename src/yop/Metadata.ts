@@ -1,10 +1,12 @@
 import { InternalConstraints, InternalCommonConstraints, validateTypeConstraint, ContraintsParent, ContraintsValue, Traverser, Validator } from "./constraints/CommonConstraints"
 import { validateConstraint } from "./constraints/Constraint"
+import { TestConstraintFunction, validateTestConstraint } from "./constraints/TestConstraint"
 import { isBoolean, isObject } from "./TypesUtil"
 import { InternalValidationContext } from "./ValidationContext"
 import { validationSymbol } from "./Yop"
 
-export interface InternalClassConstraints extends InternalConstraints {
+export interface InternalClassConstraints<Class = any> extends InternalConstraints {
+    test?: TestConstraintFunction<Class>
     fields?: Record<string, InternalCommonConstraints>
 }
 
@@ -16,11 +18,12 @@ export function traverseClass(context: InternalValidationContext<unknown>, const
 }
 
 export function validateClass(context: InternalValidationContext<unknown>, constraints: InternalClassConstraints) {
-    if (!validateTypeConstraint(context, isObject, "object"))
+    if (context.value == null || !validateTypeConstraint(context, isObject, "object"))
         return false
     
-    const parent = context.value as Record<string, any>
     let valid = true
+
+    const parent = context.value as Record<string, any>
     for (const [fieldName, fieldConstraints] of Object.entries(constraints.fields!)) {
         const fieldContext = context.createChildContext({
             kind: fieldConstraints.kind,
@@ -34,6 +37,10 @@ export function validateClass(context: InternalValidationContext<unknown>, const
             valid
         )
     }
+
+    if (valid && constraints.test != null)
+        validateTestConstraint(context, constraints)
+
     return valid
 }
 

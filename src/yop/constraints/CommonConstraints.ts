@@ -61,5 +61,5 @@ export function validateCommonConstraints<Value, Parent>(context: InternalValida
 }
 
 export function validateTypeConstraint(context: InternalValidationContext<any>, checkType: (value: any) => boolean, expectedType: string) {
-    return context.value != null && (checkType(context.value) || context.setStatus("type", expectedType) == null)
+    return checkType(context.value) || context.setStatus("type", expectedType) == null
 }

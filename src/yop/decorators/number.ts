@@ -16,8 +16,11 @@ export interface NumberConstraints<Value extends NumberValue, Parent> extends
 }
 
 function validateNumber<Value extends NumberValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: NumberConstraints<Value, Parent>) {
+    if (!validateCommonConstraints(context, constraints))
+        return false
+    if (context.value == null)
+        return true
     return (
-        validateCommonConstraints(context, constraints) &&
         validateTypeConstraint(context, isNumber, "number") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value >= min, (value, max) => value <= max) &&
         validateOneOfConstraint(context, constraints, isNumberArray) &&

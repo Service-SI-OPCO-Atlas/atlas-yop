@@ -47,8 +47,11 @@ function traverseInstance<Value extends InstanceValue, Parent>(context: Internal
 }
 
 function validateInstance<Value extends InstanceValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>) {
-    if (!validateCommonConstraints(context, constraints) ||
-        !validateTypeConstraint(context, isObject, "object") ||
+    if (!validateCommonConstraints(context, constraints))
+        return false
+    if (context.value == null)
+        return true
+    if (!validateTypeConstraint(context, isObject, "object") ||
         !validateTestConstraint(context, constraints) ||
         ((constraints.of as any) = Yop.resolveClass(constraints.of)) == null)
         return false

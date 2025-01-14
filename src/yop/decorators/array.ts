@@ -43,14 +43,18 @@ function traverseArray<Value extends ArrayValue, Parent>(
 }
 
 function validateArray<Value extends ArrayValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: ArrayConstraints<Value, Parent>) {
-    if (!validateCommonConstraints(context, constraints) ||
-        !validateTypeConstraint(context, Array.isArray, "array") ||
+    if (!validateCommonConstraints(context, constraints))
+        return false
+    if (context.value == null)
+        return true
+    if (!validateTypeConstraint(context, Array.isArray, "array") ||
         !validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.length >= min, (value, max) => value.length <= max) ||
         resolveOf(constraints) == null)
         return false
 
-    const elementConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol] as InternalCommonConstraints | undefined
     let valid = true
+    
+    const elementConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol] as InternalCommonConstraints | undefined
     if (elementConstraints != null) {
         for (const [index, element] of context.value!.entries()) {
             const elementContext = context.createChildContext({
@@ -61,6 +65,7 @@ function validateArray<Value extends ArrayValue, Parent>(context: InternalValida
             valid = elementConstraints.validate(elementContext, elementConstraints) && valid
         }    
     }
+    
     return valid && validateTestConstraint(context, constraints)
 }
 

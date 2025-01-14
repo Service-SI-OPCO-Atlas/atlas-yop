@@ -1,5 +1,5 @@
 
-export type Constructor<Type> =
+export type Constructor<Type = unknown> =
     Type extends unknown ? abstract new (...args: any) => NonNullable<Type> | StringConstructor | BooleanConstructor | NumberConstructor :
     [Type] extends [string | null | undefined] ? StringConstructor :
     [Type] extends [boolean | null | undefined] ? BooleanConstructor :

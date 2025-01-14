@@ -21,12 +21,14 @@ const isExtendedPromise = (value: any): value is ExtendedTestConstraintPromise<a
     return isFunction(value.getDependencies) && isFunction(value.shouldRevalidate) && isPromise(value.promise)
 }
 
+export type TestConstraintFunction<Value, Parent = unknown> = ConstraintFunction<
+    NonNullable<Value>,
+    TestConstraintMessage | Promise<TestConstraintMessage> | ExtendedTestConstraintPromise<NonNullable<Value>, Parent>,
+    Parent
+>
+
 export interface TestConstraint<Value, Parent = unknown> {
-    test?: ConstraintFunction<
-        NonNullable<Value>,
-        TestConstraintMessage | Promise<TestConstraintMessage> | ExtendedTestConstraintPromise<NonNullable<Value>, Parent>,
-        Parent
-    >
+    test?: TestConstraintFunction<Value, Parent>
 }
 
 const defaultGetDependencies = (context: InternalValidationContext<unknown>) => context.value

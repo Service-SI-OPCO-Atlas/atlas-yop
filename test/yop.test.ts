@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { string } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
 import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, extendedPromise } from "../src"
+import { test } from "../src/yop/decorators/test"
 
 describe("yop", () => {
 
@@ -1583,6 +1584,7 @@ describe("yop", () => {
         }
 
         @id("Person")
+        @test(context => context.value.pets.length === 0 && context.value.nicknames.length === 2 ? "Nobody should have two nicknames and no pets!" : true)
         class Person {
 
             @string({
@@ -1743,7 +1745,17 @@ describe("yop", () => {
                 constraint: 0,
                 message: "Should be inferred from birthDate but -1 doesn't look good"
             }])
-            expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [], nicknames: ["foo", "bar"], diary: undefined }, instance({ of: Person }))).toEqual([])
+            const value = { birthDate: new Date(2024, 11, 21), pets: [], nicknames: ["foo", "bar"], diary: undefined }
+            expect(Yop.validate(value, instance({ of: Person }))).toEqual([{
+                level: "error",
+                path: "",
+                value: value,
+                kind: "instance",
+                code: "test",
+                constraint: false,
+                message: "Nobody should have two nicknames and no pets!"
+            }])
+            expect(Yop.validate({ birthDate: new Date(2024, 11, 21), pets: [], nicknames: ["foo", "bar", "bor"], diary: undefined }, instance({ of: Person }))).toEqual([])
 
             const diary = new File([new ArrayBuffer(999)], "diary.txt", { type: "text/plain" })
             expect(Yop.validate({
@@ -1759,7 +1771,7 @@ describe("yop", () => {
                 bestFriend: {
                     birthDate: new Date(2024, 11, 21),
                     pets: [],
-                    nicknames: ["foo", "bar"],
+                    nicknames: ["foo", "bar", "bir"],
                     diary: undefined,
                 },
                 friends: [{
@@ -2178,20 +2190,6 @@ describe("yop", () => {
                 constraint: true,
                 message: "Required field"
             }])
-
-            // expect(Yop.validate(
-            //     null,
-            //     string({ defined: true }, { [enforce]: { required: true } }),
-            //     { group: [undefined, enforce] }
-            // )).toEqual([{
-            //     level: "error",
-            //     path: "",
-            //     value: null,
-            //     kind: "string",
-            //     code: "required",
-            //     constraint: true,
-            //     message: "Required field"
-            // }])
         })
     })
 

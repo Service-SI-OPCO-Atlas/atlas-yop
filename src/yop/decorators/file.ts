@@ -14,8 +14,11 @@ export interface FileConstraints<Value extends FileValue, Parent> extends
 }
 
 function validateFile<Value extends FileValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: FileConstraints<Value, Parent>) {
+    if (!validateCommonConstraints(context, constraints))
+        return false
+    if (context.value == null)
+        return true
     return (
-        validateCommonConstraints(context, constraints) &&
         validateTypeConstraint(context, isFile, "file") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.size >= min, (value, max) => value.size <= max) &&
         validateTestConstraint(context, constraints)

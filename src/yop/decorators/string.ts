@@ -23,8 +23,11 @@ export function validateString<Value extends StringValue, Parent>(
     defaultRegexp?: RegExp,
     type?: string
 ) {
+    if (!validateCommonConstraints(context, constraints))
+        return false
+    if (context.value == null)
+        return true
     return (
-        validateCommonConstraints(context, constraints) &&
         validateTypeConstraint(context, isString, type ?? "string") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.length >= min, (value, max) => value.length <= max) &&
         validateConstraint(context as ValuedContext<Value, Parent>, constraints, "match", isRegExp, (value, constraint) => constraint.test(value), defaultRegexp) &&

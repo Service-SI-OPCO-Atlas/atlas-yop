@@ -16,8 +16,11 @@ export interface DateConstraints<Value extends DateValue, Parent> extends
 }
 
 function validateDate<Value extends DateValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: DateConstraints<Value, Parent>) {
+    if (!validateCommonConstraints(context, constraints))
+        return false
+    if (context.value == null)
+        return true
     return (
-        validateCommonConstraints(context, constraints) &&
         validateTypeConstraint(context, isDate, "date") &&
         validateMinMaxConstraints(context, constraints, isDate, (value, min) => value >= min, (value, max) => value <= max) &&
         validateOneOfConstraint(context, constraints, isDateArray, (date1, date2) => date1.getTime() === date2.getTime()) &&

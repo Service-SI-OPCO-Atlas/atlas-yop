@@ -3,6 +3,7 @@ import { string } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
 import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, extendedPromise } from "../src"
 import { test } from "../src/yop/decorators/test"
+import { time, timeRegex } from "../src/yop/decorators/time"
 
 describe("yop", () => {
 
@@ -283,6 +284,7 @@ describe("yop", () => {
             }])
         })
     })
+
     describe("yop.email", () => {
 
         it("yop.email.*", () => {
@@ -334,6 +336,53 @@ describe("yop", () => {
                 code: "type",
                 constraint: "email",
                 message: "Wrong value type (expected email)"
+            }])
+        })
+    })
+    
+    describe("yop.time", () => {
+
+        it("yop.time.*", () => {
+            expect(Yop.validate("00:00", time())).toEqual([])
+            expect(Yop.validate("00:00:00.000", time())).toEqual([])
+            expect(Yop.validate("23:59:59.999", time())).toEqual([])
+            expect(Yop.validate("", time())).toEqual([{
+                level: "error",
+                path: "",
+                value: "",
+                kind: "time",
+                code: "match",
+                constraint: timeRegex,
+                message: "Invalid format"
+            }])
+            expect(Yop.validate("24:00", time())).toEqual([{
+                level: "error",
+                path: "",
+                value: "24:00",
+                kind: "time",
+                code: "match",
+                constraint: timeRegex,
+                message: "Invalid format"
+            }])
+            expect(Yop.validate("01:59", time({ min: "01:00", max: "02:00" }))).toEqual([])
+            expect(Yop.validate("01:59", time({ min: "2", max: "02:00" }))).toEqual([])
+            expect(Yop.validate("00:59", time({ min: "01:00", max: "02:00" }))).toEqual([{
+                level: "error",
+                path: "",
+                value: "00:59",
+                kind: "time",
+                code: "min",
+                constraint: "01:00",
+                message: "Must be after or equal to 01:00"
+            }])
+            expect(Yop.validate("02:01", time({ min: "01:00", max: "02:00" }))).toEqual([{
+                level: "error",
+                path: "",
+                value: "02:01",
+                kind: "time",
+                code: "max",
+                constraint: "02:00",
+                message: "Must be before or equal to 02:00"
             }])
         })
     })

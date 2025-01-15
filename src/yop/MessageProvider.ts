@@ -49,6 +49,13 @@ export class MessageProvider_en_US implements MessageProvider {
                     case "match": return "Invalid format"
                 }
                 break
+            case "time":
+                switch (code) {
+                    case "min": return `Must be after or equal to ${ constraint }`
+                    case "max": return `Must be before or equal to ${ constraint }`
+                    case "match": return "Invalid format"
+                }
+                break
             case "number":
                 switch (code) {
                     case "min": return `Must be greater or equal to ${ constraint }`
@@ -115,6 +122,13 @@ export class MessageProvider_fr_FR implements MessageProvider {
                 switch (code) {
                     case "min": return `Minimum ${ constraint } caractère${ plural }`
                     case "max": return `Maximum ${ constraint } caractère${ plural }`
+                    case "match": return "Format incorrect"
+                }
+                break
+            case "time":
+                switch (code) {
+                    case "min": return `Doit être antérieur ou égal à ${ constraint }`
+                    case "max": return `Doit être postérieur ou égal à ${ constraint }`
                     case "match": return "Format incorrect"
                 }
                 break

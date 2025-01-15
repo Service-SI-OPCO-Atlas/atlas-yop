@@ -9,21 +9,26 @@ export type Constraint<Value, ConstraintType, Parent = unknown> =
     ConstraintValue<ConstraintType> |
     ConstraintFunction<Value, ConstraintType, Parent>
 
+export type Message<Value, Parent> = ConstraintMessage | ((context: ValidationContext<Value, Parent>) => ConstraintMessage)
+
 export function validateConstraint<Value, ConstraintType, Parent, Constraints = { [name: string]: Constraint<Value, ConstraintType, Parent> }>(
     context: InternalValidationContext<Value, Parent>,
     constraints: Constraints,
     name: keyof Constraints,
     isConstraintType: (value: any) => value is ConstraintType,
     validate: (value: Value, constraintValue: NonNullable<ConstraintType>) => boolean,
-    defaultConstraint?: ConstraintType
+    defaultConstraint?: ConstraintType,
+    defaultMessage?: Message<Value, Parent>
 ) {
-    if (context.groups == null)
-        return _validateConstraint(context, constraints[name] as Constraint<Value, ConstraintType, Parent> | undefined, isConstraintType, validate, name as string, defaultConstraint)
+    if (context.groups == null) {
+        const constraint = constraints[name] as Constraint<Value, ConstraintType, Parent> | undefined
+        return _validateConstraint(context, constraint, isConstraintType, validate, name as string, defaultConstraint, defaultMessage)
+    }
     
     const groups = Array.isArray(context.groups) ? context.groups : [context.groups]
     for (const group of groups) {
         const constraint = (group == null ? constraints[name] : (constraints as any).groups?.[group]?.[name]) as Constraint<Value, ConstraintType, Parent> | undefined
-        if (!_validateConstraint(context, constraint, isConstraintType, validate, name as string, defaultConstraint))
+        if (!_validateConstraint(context, constraint, isConstraintType, validate, name as string, defaultConstraint, defaultMessage))
             return false
     }
     return true
@@ -35,7 +40,8 @@ function _validateConstraint<Value, ConstraintType, Parent>(
     isConstraintType: (value: any) => value is ConstraintType,
     validate: (value: Value, constraintValue: NonNullable<ConstraintType>) => boolean,
     errorCode: string,
-    defaultConstraint?: ConstraintType
+    defaultConstraint?: ConstraintType,
+    defaultMessage?: Message<Value, Parent>
 ) {
     let message: ConstraintMessage | undefined = undefined
     let level: Level = "error"
@@ -60,6 +66,9 @@ function _validateConstraint<Value, ConstraintType, Parent>(
     
     if (constraint == null && defaultConstraint != null)
         constraint = defaultConstraint
+    
+    if (message == null && defaultMessage != null)
+        message = isFunction(defaultMessage) ? defaultMessage(context) : defaultMessage
 
     return (
         constraint == null ||

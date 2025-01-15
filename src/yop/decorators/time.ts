@@ -3,15 +3,17 @@ import { fieldValidationDecorator } from "../Metadata"
 import { StringValue } from "./string"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
-import { isString, isStringArray } from "../TypesUtil"
+import { isFunction, isString, isStringArray } from "../TypesUtil"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
+import { Message } from "../constraints/Constraint"
 
 export interface TimeConstraints<Value extends StringValue, Parent> extends
     CommonConstraints<Value, Parent>,
     MinMaxConstraints<Value, string, Parent>,
     OneOfConstraint<Value, Parent>,
     TestConstraint<Value, Parent> {
+    formatError?: Message<Value, Parent>
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Date_and_time_formats#time_strings
@@ -37,8 +39,12 @@ export function validateTime<Value extends StringValue, Parent>(context: Interna
         return false
     
     const millis = timeToMillis(context.value)
-    if (millis == null)
-        return context.setStatus("match", timeRegex) == null
+    if (millis == null) {
+        let message = constraints.formatError
+        if (isFunction(message))
+            message = message(context)
+        return context.setStatus("match", timeRegex, message) == null
+    }
 
     return (
         validateMinMaxConstraints(context, constraints, isString, (_, min) => millis >= (timeToMillis(min) ?? 0), (_, max) => millis <= (timeToMillis(max) ?? MAX_MILLIS)) &&

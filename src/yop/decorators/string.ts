@@ -1,5 +1,5 @@
 import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
-import { Constraint, validateConstraint } from "../constraints/Constraint"
+import { Constraint, Message, validateConstraint } from "../constraints/Constraint"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
@@ -21,6 +21,7 @@ export function validateString<Value extends StringValue, Parent>(
     context: InternalValidationContext<Value, Parent>,
     constraints: StringConstraints<Value, Parent>,
     defaultRegexp?: RegExp,
+    defaultMatchMessage?: Message<Value, Parent>,
     type?: string
 ) {
     if (!validateCommonConstraints(context, constraints))
@@ -30,7 +31,7 @@ export function validateString<Value extends StringValue, Parent>(
     return (
         validateTypeConstraint(context, isString, type ?? "string") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.length >= min, (value, max) => value.length <= max) &&
-        validateConstraint(context as ValuedContext<Value, Parent>, constraints, "match", isRegExp, (value, constraint) => constraint.test(value), defaultRegexp) &&
+        validateConstraint(context as ValuedContext<Value, Parent>, constraints, "match", isRegExp, (value, re) => re.test(value), defaultRegexp, defaultMatchMessage) &&
         validateOneOfConstraint(context, constraints, isStringArray) &&
         validateTestConstraint(context, constraints)
     )

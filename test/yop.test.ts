@@ -307,7 +307,7 @@ describe("yop", () => {
                 constraint: emailRegex,
                 message: "Invalid format"
             }])
-            expect(Yop.validate("abc", email({ match: context => [, `'${ context.value }' doesn't look like an email` ] }))).toEqual([{
+            expect(Yop.validate("abc", email({ formatError: context => `'${ context.value }' doesn't look like an email` }))).toEqual([{
                 level: "error",
                 path: "",
                 value: "abc",
@@ -355,14 +355,14 @@ describe("yop", () => {
                 constraint: timeRegex,
                 message: "Invalid format"
             }])
-            expect(Yop.validate("24:00", time())).toEqual([{
+            expect(Yop.validate("24:00", time({ formatError: "Invalid time format" }))).toEqual([{
                 level: "error",
                 path: "",
                 value: "24:00",
                 kind: "time",
                 code: "match",
                 constraint: timeRegex,
-                message: "Invalid format"
+                message: "Invalid time format"
             }])
             expect(Yop.validate("01:59", time({ min: "01:00", max: "02:00" }))).toEqual([])
             expect(Yop.validate("01:59", time({ min: "2", max: "02:00" }))).toEqual([])
@@ -1650,7 +1650,7 @@ describe("yop", () => {
             })
             lastName: string | null = null
             
-            @email({ match: [, "Invalid email"] })                
+            @email({ formatError: "Invalid email" })
             email: string | null = null
 
             @date({ required: true, min: new Date(1900, 0, 1), max: new Date })

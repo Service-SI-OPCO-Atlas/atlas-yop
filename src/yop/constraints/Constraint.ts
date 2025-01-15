@@ -9,7 +9,6 @@ export type Constraint<Value, ConstraintType, Parent = unknown> =
     ConstraintValue<ConstraintType> |
     ConstraintFunction<Value, ConstraintType, Parent>
 
-
 export function validateConstraint<Value, ConstraintType, Parent, Constraints = { [name: string]: Constraint<Value, ConstraintType, Parent> }>(
     context: InternalValidationContext<Value, Parent>,
     constraints: Constraints,

@@ -110,14 +110,6 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         })
     }
 
-    matchGroup(group: Group | undefined) {
-        if (group == null)
-            return this.groups == null || (Array.isArray(this.groups) && this.groups.includes(undefined))
-        if (Array.isArray(group))
-            return Array.isArray(this.groups) ? group.some(g => (this.groups as (string | undefined)[]).includes(g)) : group.includes(this.groups)
-        return (Array.isArray(this.groups) ? this.groups.includes(group) : this.groups === group)
-    }
-
     createStatus(code: string, constraint: any, message?: string, level: Level = "error"): ValidationStatus {
         return {
             level,

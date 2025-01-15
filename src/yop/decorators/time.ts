@@ -19,13 +19,10 @@ export const timeRegex = /^([01][0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9])(?:\.(
 
 export function timeToMillis(time: string) {
     const matches = timeRegex.exec(time)
-    if (matches == null)
-        return undefined
     return (
-        (+(matches[1]) * 3600 * 1000) +
-        (+(matches[2]) * 60 * 1000) +
-        (+(matches[3] ?? 0) * 1000) +
-        (+(matches[4] ?? 0))
+        matches != null ?
+        (+matches[1] * 3600 * 1000) + (+matches[2] * 60 * 1000) + (+(matches[3] ?? 0) * 1000) + (+(matches[4] ?? 0)) :
+        undefined
     )
 }
 

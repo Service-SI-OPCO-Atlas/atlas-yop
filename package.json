@@ -1,6 +1,6 @@
 {
   "name": "@dsid-opcoatlas/yop3",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "Yet another validation library",
   "private": false,
   "type": "module",
@@ -41,15 +41,15 @@
     "prepublishOnly": "NODE_ENV=release tsc && vite build"
   },
   "resolutions": {
-    "vite": "^6.0.3"
+    "vite": "^6.0.7"
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.25.9",
-    "@types/node": "^22.10.2",
+    "@types/node": "^22.10.7",
     "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.3",
-    "vite-plugin-dts": "^4.3.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vite-plugin-dts": "^4.5.0",
     "vitest": "^2.1.8"
   }
 }

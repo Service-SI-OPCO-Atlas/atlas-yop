@@ -1,4 +1,4 @@
-import { MessageProvider, MessageProvider_en_US, MessageProvider_fr_FR } from "./MessageProvider"
+import { MessageProvider, messageProvider_en_US, messageProvider_fr_FR } from "./MessageProvider"
 import { ClassFieldDecorator, InternalClassConstraints } from "./Metadata"
 import { Constructor } from "./TypesUtil"
 import { Group, InternalValidationContext, ValidationStatus } from "./ValidationContext"
@@ -21,8 +21,8 @@ export class Yop {
     
     private static messageProviders = new Map<string, MessageProvider>()
     static {
-        this.registerMessageProvider(new MessageProvider_en_US())
-        this.registerMessageProvider(new MessageProvider_fr_FR())
+        this.registerMessageProvider(messageProvider_en_US)
+        this.registerMessageProvider(messageProvider_fr_FR)
     }
 
     private locale = "en-US"

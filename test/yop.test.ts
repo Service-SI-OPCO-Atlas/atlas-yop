@@ -296,7 +296,7 @@ describe("yop", () => {
                 kind: "email",
                 code: "match",
                 constraint: emailRegex,
-                message: "Invalid format"
+                message: "Invalid email format"
             }])
             expect(Yop.validate("abc", email())).toEqual([{
                 level: "error",
@@ -305,7 +305,7 @@ describe("yop", () => {
                 kind: "email",
                 code: "match",
                 constraint: emailRegex,
-                message: "Invalid format"
+                message: "Invalid email format"
             }])
             expect(Yop.validate("abc", email({ formatError: context => `'${ context.value }' doesn't look like an email` }))).toEqual([{
                 level: "error",
@@ -353,16 +353,16 @@ describe("yop", () => {
                 kind: "time",
                 code: "match",
                 constraint: timeRegex,
-                message: "Invalid format"
+                message: "Invalid time format"
             }])
-            expect(Yop.validate("24:00", time({ formatError: "Invalid time format" }))).toEqual([{
+            expect(Yop.validate("24:00", time({ formatError: "Hour must be between 00 and 23" }))).toEqual([{
                 level: "error",
                 path: "",
                 value: "24:00",
                 kind: "time",
                 code: "match",
                 constraint: timeRegex,
-                message: "Invalid time format"
+                message: "Hour must be between 00 and 23"
             }])
             expect(Yop.validate("01:59", time({ min: "01:00", max: "02:00" }))).toEqual([])
             expect(Yop.validate("01:59", time({ min: "2", max: "02:00" }))).toEqual([])

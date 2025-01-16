@@ -40,9 +40,7 @@ export function validateTime<Value extends StringValue, Parent>(context: Interna
     
     const millis = timeToMillis(context.value)
     if (millis == null) {
-        let message = constraints.formatError
-        if (isFunction(message))
-            message = message(context)
+        const message = isFunction(constraints.formatError) ? constraints.formatError(context) : constraints.formatError
         return context.setStatus("match", timeRegex, message) == null
     }
 

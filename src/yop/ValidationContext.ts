@@ -1,3 +1,4 @@
+import { ConstraintMessage } from "./constraints/Constraint"
 import { Yop } from "./Yop"
 
 export type Group = string | ((string | undefined)[])
@@ -110,7 +111,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         })
     }
 
-    createStatus(code: string, constraint: any, message?: string, level: Level = "error"): ValidationStatus {
+    createStatus(code: string, constraint: any, message?: ConstraintMessage, level: Level = "error"): ValidationStatus {
         return {
             level,
             path: this.path,
@@ -122,7 +123,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         }
     }
 
-    setStatus(code: string, constraint: any, message?: string, level: Level = "error"): ValidationStatus {
+    setStatus(code: string, constraint: any, message?: ConstraintMessage, level: Level = "error"): ValidationStatus {
         const status = this.createStatus(code, constraint, message, level)
         this.statuses.set(this.path, status)
         return status

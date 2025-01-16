@@ -1,10 +1,11 @@
+import { ConstraintMessage } from "./constraints/Constraint";
 import { InternalValidationContext, Level } from "./ValidationContext";
 
 export interface MessageProvider {
 
     readonly locale: string
 
-    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: string | undefined, level: Level): string
+    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: ConstraintMessage | undefined, level: Level): string
 }
 
 function format(value: any, numberFormat: Intl.NumberFormat, dateFormat: Intl.DateTimeFormat, listFormat: Intl.ListFormat): string {
@@ -47,7 +48,7 @@ export class BasicMessageProvider implements MessageProvider {
         this.messages = new Map<string, MessageFunction>(entries)
     }
     
-    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: string | undefined, level: Level): string {
+    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: ConstraintMessage | undefined, level: Level): string {
         if (message != null)
             return message
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { string } from "../src/yop/decorators/string"
+import { string, StringValue } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
-import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, extendedPromise } from "../src"
+import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, extendedPromise, CommonConstraints, Message, fieldValidationDecorator, InternalValidationContext, validateCommonConstraints, validateTypeConstraint, isString, isFunction, messageProvider_en_US } from "../src"
 import { test } from "../src/yop/decorators/test"
 import { time, timeRegex } from "../src/yop/decorators/time"
 
@@ -2283,6 +2283,136 @@ describe("yop", () => {
                 constraint: ["a", "b", "c"],
                 message: "Must be one of: a, b, or c"
             }])
+        })
+    })
+
+    describe("yop.custom", () => {
+
+        it("yop.custom.iban", () => {
+
+            interface IbanFRConstraints<Value extends StringValue, Parent> extends
+                CommonConstraints<Value, Parent> {
+                formatError?: Message<Value, Parent>
+                checksumError?: Message<Value, Parent>
+            }
+
+            const ibanFRRegex = /^FR[0-9]{2}[A-Z0-9]{23}$/
+            function validateIbanFR<Value extends StringValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: IbanFRConstraints<Value, Parent>) {
+                if (!validateCommonConstraints(context, constraints))
+                    return false
+                if (context.value == null)
+                    return true
+                if (!validateTypeConstraint(context, isString, "iban"))
+                    return false
+                
+                const value = context.value.replace(/[-\s]/g, "").toUpperCase()
+                if (!ibanFRRegex.test(value)) {
+                    const message = isFunction(constraints.formatError) ? constraints.formatError(context) : constraints.formatError
+                    context.setStatus("match", ibanFRRegex, message)
+                    return false
+                }
+
+                let code = value.substring(4) + value.substring(0, 4)
+                code = code.split("").map(c => c >= "A" && c <= "Z" ? (c.charCodeAt(0) - "A".charCodeAt(0) + 10).toFixed() : c).join("")
+                if (BigInt(code) % BigInt(97) !== 1n) {
+                    const message = isFunction(constraints.checksumError) ? constraints.checksumError(context) : constraints.checksumError
+                    context.setStatus("checksum", 1, message)
+                    return false
+                }
+
+                return true
+            }
+            
+            function ibanFR<Value extends StringValue, Parent>(constraints?: IbanFRConstraints<Value, Parent>, groups?: Record<string, IbanFRConstraints<Value, Parent>>) {
+                return fieldValidationDecorator("iban", constraints ?? {}, groups, validateIbanFR)
+            }
+            
+            expect(Yop.validate(null, ibanFR())).toEqual([])
+            expect(Yop.validate(null, ibanFR({ required: true }))).toEqual([{
+                level: "error",
+                path: "",
+                value: null,
+                kind: "iban",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            
+            expect(Yop.validate("", ibanFR({ required: true }))).toEqual([{
+                level: "error",
+                path: "",
+                value: "",
+                kind: "iban",
+                code: "match",
+                constraint: ibanFRRegex,
+                message: "Unexpected error: iban.match"
+            }])
+            expect(Yop.validate("", ibanFR({ required: true, formatError: "Wrong French IBAN format" }))).toEqual([{
+                level: "error",
+                path: "",
+                value: "",
+                kind: "iban",
+                code: "match",
+                constraint: ibanFRRegex,
+                message: "Wrong French IBAN format"
+            }])
+            messageProvider_en_US.messages.set("iban.match", () => "Invalid French IBAN format")
+            expect(Yop.validate("", ibanFR({ required: true }))).toEqual([{
+                level: "error",
+                path: "",
+                value: "",
+                kind: "iban",
+                code: "match",
+                constraint: ibanFRRegex,
+                message: "Invalid French IBAN format"
+            }])
+            
+            expect(Yop.validate("FR0012345678901234567890123", ibanFR({ required: true }))).toEqual([{
+                level: "error",
+                path: "",
+                value: "FR0012345678901234567890123",
+                kind: "iban",
+                code: "checksum",
+                constraint: 1,
+                message: "Unexpected error: iban.checksum"
+            }])
+            expect(Yop.validate("FR0012345678901234567890123", ibanFR({ required: true, checksumError: "Wrong French IBAN checksum" }))).toEqual([{
+                level: "error",
+                path: "",
+                value: "FR0012345678901234567890123",
+                kind: "iban",
+                code: "checksum",
+                constraint: 1,
+                message: "Wrong French IBAN checksum"
+            }])
+            messageProvider_en_US.messages.set("iban.checksum", () => "Invalid French IBAN checksum")
+            expect(Yop.validate("FR0012345678901234567890123", ibanFR({ required: true }))).toEqual([{
+                level: "error",
+                path: "",
+                value: "FR0012345678901234567890123",
+                kind: "iban",
+                code: "checksum",
+                constraint: 1,
+                message: "Invalid French IBAN checksum"
+            }])
+            
+            expect(Yop.validate("FR 76-3000-1000-6464-8800-0000-026", ibanFR({ required: true }))).toEqual([])
+
+            class Test {
+                @ibanFR({ required: true })
+                iban: string | null = null
+            }
+
+            expect(Yop.validate({}, instance({ of: Test }))).toEqual([{
+                level: "error",
+                path: "iban",
+                value: undefined,
+                kind: "iban",
+                code: "required",
+                constraint: true,
+                message: "Required field"
+            }])
+            expect(Yop.validate({ iban: "FR 76-3000-1000-6464-8800-0000-026" }, instance({ of: Test }))).toEqual([])
         })
     })
 })

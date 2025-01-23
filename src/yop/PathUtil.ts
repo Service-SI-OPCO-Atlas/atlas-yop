@@ -2,29 +2,26 @@
 export function splitPath(path: string) {
     const segments: (string | number)[] = []
 
-    
-    let state: string | undefined = undefined
-    let escape = false
-    let segment = ""
+    let state: '.' | '[' | '["' | ']' | '\'' | '"' | undefined = undefined,
+        escape = false,
+        segment = ""
+
     for (let i = 0; i < path.length; i++) {
         let c = path.charAt(i)
 
         switch (c) {
 
             case '\\':
-                if (state !== '\'' && state !== '"') {
+                if (state !== '\'' && state !== '"')
                     return undefined
-                }
-                if (escape) {
+                if (escape)
                     segment += '\\'
-                }
                 escape = !escape
                 continue
         
             case ' ': case '\t': case '\r': case '\n':
-                if (state === '\'' || state === '"') {
+                if (state === '\'' || state === '"')
                     segment += c
-                }
                 else {
                     while (++i < path.length && ((c = path.charAt(i)) === ' ' || c === '\t' || c === '\r' || c === '\n'))
                         ;
@@ -33,27 +30,30 @@ export function splitPath(path: string) {
                 break
 
             case '.':
-                if (escape || state === '\'' || state === '"') {
+                if (escape || state === '\'' || state === '"')
                     segment += c
+                else if (state === ']') {
+                    if (segment)
+                        return undefined
+                    state = '.'
                 }
-                else if ((state === undefined || state === '.') && segment) {
+                else if (state === undefined || state === '.') {
+                    if (!segment)
+                        return undefined
                     segments.push(segment)
                     segment = ""
                     state = '.'
                 }
-                else if (state === ']' && segment === "") {
-                    state = '.'
-                }
-                else {
+                else
                     return undefined
-                }
                 break
             
             case '[':
-                if (escape || state === '\'' || state === '"') {
+                if (escape || state === '\'' || state === '"')
                     segment += c
-                }
-                else if (state === '.' && segment) {
+                else if (state === '.') {
+                    if (!segment)
+                        return undefined
                     segments.push(segment)
                     segment = ""
                     state = c
@@ -65,16 +65,16 @@ export function splitPath(path: string) {
                     }
                     state = c
                 }
-                else {
+                else
                     return undefined
-                }
                 break
             
             case ']':
-                if (escape || state === '\'' || state === '"') {
+                if (escape || state === '\'' || state === '"')
                     segment += c
-                }
-                else if (state === '[' && segment) {
+                else if (state === '[') {
+                    if (!segment)
+                        return undefined
                     segments.push(parseInt(segment))
                     segment = ""
                     state = ']'
@@ -84,32 +84,25 @@ export function splitPath(path: string) {
                     segment = ""
                     state = ']'
                 }
-                else {
+                else
                     return undefined
-                }
                 break
             case '\'': case '"':
-                if (escape) {
+                if (escape)
                     segment += c
-                }
-                else if (state === '[' && segment === "") {
-                    state = c
-                }
-                else if (state === c) {
+                else if (state === c)
                     state = '["'
-                }
-                else if (state === '\'' || state === '"') {
+                else if (state === '\'' || state === '"')
                     segment += c
-                }
-                else {
+                else if (state === '[' && segment === "")
+                    state = c
+                else
                     return undefined
-                }
                 break
 
             default:
-                if (state === '["' || (state === '[' && (c < '0' || c > '9'))) {
+                if (state === '["' || (state === '[' && (c < '0' || c > '9')))
                     return undefined
-                }
                 segment += c
                 break
         }    

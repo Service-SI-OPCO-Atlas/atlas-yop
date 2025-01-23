@@ -1,7 +1,8 @@
 import { isFunction } from "../TypesUtil"
 import { InternalValidationContext, Level, ValidationContext } from "../ValidationContext"
+import { JSX } from "react"
 
-export type ConstraintMessage = string
+export type ConstraintMessage = string | JSX.Element
 export type ConstraintValue<ConstraintType> = ConstraintType | readonly [ConstraintType, ConstraintMessage, Level?]
 export type ConstraintFunction<Value, ConstraintType, Parent = unknown> = ((context: ValidationContext<Value, Parent>) => ConstraintValue<ConstraintType>)
 

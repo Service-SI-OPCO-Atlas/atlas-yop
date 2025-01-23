@@ -5,7 +5,7 @@ export interface MessageProvider {
 
     readonly locale: string
 
-    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: ConstraintMessage | undefined, level: Level): string
+    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: ConstraintMessage | undefined, level: Level): ConstraintMessage
 }
 
 function format(value: any, numberFormat: Intl.NumberFormat, dateFormat: Intl.DateTimeFormat, listFormat: Intl.ListFormat): string {
@@ -48,7 +48,7 @@ export class BasicMessageProvider implements MessageProvider {
         this.messages = new Map<string, MessageFunction>(entries)
     }
     
-    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: ConstraintMessage | undefined, level: Level): string {
+    getMessage(context: InternalValidationContext<unknown>, code: string, constraint: any, message: ConstraintMessage | undefined, level: Level): ConstraintMessage {
         if (message != null)
             return message
 

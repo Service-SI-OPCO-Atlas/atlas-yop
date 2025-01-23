@@ -11,7 +11,7 @@ export type ValidationStatus = {
     kind: string
     code: string
     constraint: any
-    message: string
+    message: ConstraintMessage
 }
 
 export interface ValidationContext<Value, Parent = unknown> {

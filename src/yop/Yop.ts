@@ -1,5 +1,6 @@
 import { MessageProvider, messageProvider_en_US, messageProvider_fr_FR } from "./MessageProvider"
 import { ClassFieldDecorator, InternalClassConstraints } from "./Metadata"
+import { splitPath } from "./PathUtil"
 import { Constructor } from "./TypesUtil"
 import { Group, InternalValidationContext, ValidationStatus } from "./ValidationContext"
 
@@ -25,7 +26,7 @@ export class Yop {
         this.registerMessageProvider(messageProvider_fr_FR)
     }
 
-    private locale = "en-US"
+    private locale: string = Yop.defaultInstance?.locale ?? "en-US"
     
     readonly asyncStatuses = new Map<string, AsyncValidationStatus>()
 
@@ -52,6 +53,9 @@ export class Yop {
             return []
 
         const segments = splitPath(options?.path ?? "")
+        if (segments == null)
+            return []
+        
         let context = new InternalValidationContext<unknown>({
             yop: this,
             kind: constraints.kind,
@@ -74,8 +78,13 @@ export class Yop {
     }
 
     static registerMessageProvider(provider: MessageProvider) {
-        const locale = Intl.getCanonicalLocales(provider.locale)[0]
-        Yop.messageProviders.set(locale, provider)
+        try {
+            const locale = Intl.getCanonicalLocales(provider.locale)[0]
+            Yop.messageProviders.set(locale, provider)
+        }
+        catch (e) {
+            console.error(`Invalid locale "${ provider.locale }" in message provider. Ignoring.`, e)
+        }
     }
 
     getLocale() {
@@ -86,10 +95,16 @@ export class Yop {
     }
     
     setLocale(locale: string) {
-        locale = Intl.getCanonicalLocales(locale)[0]
-        if (!Yop.messageProviders.has(locale))
-            throw new Error(`No message provider for locale "${ locale }"`)
-        this.locale = locale
+        try {
+            locale = Intl.getCanonicalLocales(locale)[0]
+            if (Yop.messageProviders.has(locale))
+                this.locale = locale
+            else
+                console.error(`No message provider for locale "${ locale }". Ignoring`)
+        }
+        catch (e) {
+            console.error(`Invalid locale "${ locale }". Ignoring.`, e)
+        }
     }
     static setLocale(locale: string) {
         Yop.init().setLocale(locale)
@@ -104,17 +119,4 @@ export class Yop {
             Yop.defaultInstance = new Yop()
         return Yop.defaultInstance
     }
-}
-
-function splitPath(path: string) {
-    const segments: (string | number)[] = []
-    for (const pathElement of path.split('.')) {
-        const bracketIndex = pathElement.indexOf('[')
-        const property = bracketIndex !== -1 ? pathElement.slice(0, bracketIndex) : pathElement
-        if (property !== "")
-            segments.push(property)
-        if (bracketIndex !== -1)
-            segments.push(parseInt(pathElement.slice(bracketIndex + 1, -1)))
-    }
-    return segments
 }

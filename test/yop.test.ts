@@ -4,8 +4,55 @@ import { Yop } from "../src/yop/Yop"
 import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, extendedPromise, CommonConstraints, Message, fieldValidationDecorator, InternalValidationContext, validateCommonConstraints, validateTypeConstraint, isString, isFunction, messageProvider_en_US } from "../src"
 import { test } from "../src/yop/decorators/test"
 import { time, timeRegex } from "../src/yop/decorators/time"
+import { splitPath } from "../src/yop/PathUtil"
 
 describe("yop", () => {
+
+    describe("utility", () => {
+        
+        it("utility.splitPath", () => {
+            expect(splitPath("")).toEqual([])
+            expect(splitPath("  ")).toEqual([])
+            expect(splitPath("a")).toEqual(["a"])
+            expect(splitPath("a.b.c")).toEqual(["a", "b", "c"])
+            expect(splitPath(" a  [ 89  ] .           b         . c ")).toEqual(["a", 89, "b", "c"])
+            expect(splitPath("a[0]")).toEqual(["a", 0])
+            expect(splitPath("a[0][1]")).toEqual(["a", 0, 1])
+            expect(splitPath("a['0']")).toEqual(["a", "0"])
+            expect(splitPath("[0][1]")).toEqual([0, 1])
+            expect(splitPath("[0].a")).toEqual([0, "a"])
+            expect(splitPath("[0][1].a")).toEqual([0, 1, "a"])
+            expect(splitPath("['abc']")).toEqual(["abc"])
+            expect(splitPath("['a\\'bc']")).toEqual(["a\'bc"])
+            expect(splitPath("['\\a\\'b  c']")).toEqual(["a\'b  c"])
+            expect(splitPath("['\\\\a\\'bc']")).toEqual(["\\a\'bc"])
+            expect(splitPath("['\\ \\a\\'bc']")).toEqual([" a'bc"])
+            expect(splitPath("['\\ \\a\\'\"bc']")).toEqual([" a'\"bc"])
+            expect(splitPath("[1].a.b[4].c")).toEqual([1, "a", "b", 4, "c"])
+            
+            expect(splitPath(".")).toBeUndefined()
+            expect(splitPath("a.")).toBeUndefined()
+            expect(splitPath("a. ")).toBeUndefined()
+            expect(splitPath(".b")).toBeUndefined()
+            expect(splitPath(" .b")).toBeUndefined()
+            expect(splitPath("a..b")).toBeUndefined()
+            expect(splitPath("a[b]")).toBeUndefined()
+            expect(splitPath("[a].c")).toBeUndefined()
+            expect(splitPath("a\\.b.c")).toBeUndefined()
+            expect(splitPath("a[0")).toBeUndefined()
+            expect(splitPath("a['0")).toBeUndefined()
+            expect(splitPath("a[\\'0']")).toBeUndefined()
+            expect(splitPath("a[\"0")).toBeUndefined()
+            expect(splitPath("a['0'")).toBeUndefined()
+            expect(splitPath("a[0'0']")).toBeUndefined()
+            expect(splitPath("a['0'0]")).toBeUndefined()
+            expect(splitPath("a[\"0']")).toBeUndefined()
+            expect(splitPath("a['0\"]")).toBeUndefined()
+            expect(splitPath("['a\\\\'bc']")).toBeUndefined()
+            expect(splitPath("['a\\'bc\\']")).toBeUndefined()
+            expect(splitPath("['\\\\a\\'bc\\\\\\']")).toBeUndefined()
+        })
+    })
 
     describe("yop.string", () => {
 

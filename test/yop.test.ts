@@ -5,6 +5,7 @@ import { array, boolean, id, date, email, emailRegex, file, instance, number, Va
 import { test } from "../src/yop/decorators/test"
 import { time, timeRegex } from "../src/yop/decorators/time"
 import { joinPath, splitPath } from "../src/yop/PathUtil"
+import { ignored } from "../src/yop/decorators/ignored"
 
 describe("yop", () => {
 
@@ -69,21 +70,33 @@ describe("yop", () => {
             expect(splitPath("['a\\'bc\\']")).toBeUndefined()
             expect(splitPath("['\\\\a\\'bc\\\\\\']")).toBeUndefined()
         })
-    })
         
-    it("utility.joinPath", () => {
-        expect(joinPath([])).toEqual("")
-        expect(joinPath([""])).toEqual("['']")
-        expect(joinPath(["a"])).toEqual("a")
-        expect(joinPath([0])).toEqual("[0]")
-        expect(joinPath(["a", 0])).toEqual("a[0]")
-        expect(joinPath(["a", "b", "c"])).toEqual("a.b.c")
-        expect(joinPath(["a", " b", "c"])).toEqual("a[' b'].c")
-        expect(joinPath(["a", "b ", "c"])).toEqual("a['b '].c")
-        expect(joinPath(["a", 0, "c"])).toEqual("a[0].c")
-        expect(joinPath(["a", "0", "c"])).toEqual("a['0'].c")
-        expect(joinPath(["a", "0b", "c"])).toEqual("a['0b'].c")
-        expect(joinPath(["a", "b\'x", "c"])).toEqual("a['b\\'x'].c")
+        it("utility.joinPath", () => {
+            expect(joinPath([])).toEqual("")
+            expect(joinPath([""])).toEqual("['']")
+            expect(joinPath(["a"])).toEqual("a")
+            expect(joinPath([0])).toEqual("[0]")
+            expect(joinPath(["a", 0])).toEqual("a[0]")
+            expect(joinPath(["a", "b", "c"])).toEqual("a.b.c")
+            expect(joinPath(["a", " b", "c"])).toEqual("a[' b'].c")
+            expect(joinPath(["a", "b ", "c"])).toEqual("a['b '].c")
+            expect(joinPath(["a", 0, "c"])).toEqual("a[0].c")
+            expect(joinPath(["a", "0", "c"])).toEqual("a['0'].c")
+            expect(joinPath(["a", "0b", "c"])).toEqual("a['0b'].c")
+            expect(joinPath(["a", "b\'x", "c"])).toEqual("a['b\\'x'].c")
+        })
+    })
+
+    describe("yop.ignored", () => {
+
+        it("yop.ignored", () => {
+            expect(Yop.validate(undefined, ignored())).toEqual([])
+            expect(Yop.validate(null, ignored())).toEqual([])
+            expect(Yop.validate({}, ignored())).toEqual([])
+            expect(Yop.validate([], ignored())).toEqual([])
+            expect(Yop.validate(1, ignored())).toEqual([])
+            expect(Yop.validate("abc", ignored())).toEqual([])
+        })
     })
 
     describe("yop.string", () => {
@@ -1766,7 +1779,10 @@ describe("yop", () => {
 
             @file({ exists: true, min: context => (context.parent.age ?? 0) >= 30 ? 1000 : 0 })
             diary: File | null = null
-        }
+
+            @ignored()
+            dummy: string | null = null
+    }
 
         it("yop.all.Person", () => {
             expect(Yop.validate(undefined, instance({ of: Person }))).toEqual([])

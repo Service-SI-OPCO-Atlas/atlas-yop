@@ -48,7 +48,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
     readonly userContext: unknown | undefined
 
     readonly groups: Group | undefined
-    readonly statuses: Map<string | undefined, ValidationStatus>
+    readonly statuses: Map<string, ValidationStatus>
 
     constructor(props: {
         yop: Yop
@@ -59,7 +59,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         rootContext?: InternalValidationContext<unknown> | undefined
         userContext?: unknown | undefined
         groups?: Group
-        statuses?: Map<string | undefined, ValidationStatus>
+        statuses?: Map<string, ValidationStatus>
     }) {
         this.yop = props.yop
         this.kind = props.kind

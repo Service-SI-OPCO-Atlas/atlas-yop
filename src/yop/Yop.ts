@@ -44,34 +44,51 @@ export class Yop {
         return id
     }
 
-    validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options: { path?: string | Path, groups?: Group } = { path: [] }) {
+    rawValidate<Value>(
+        value: any,
+        decorator: ClassFieldDecorator<Value>,
+        options: { path?: string | Path, groups?: Group } = { path: [] },
+        statuses?: Map<string, ValidationStatus>
+    ) {
         const metadata = { [validationSymbol]: {} as InternalClassConstraints }
         decorator(null, { metadata, name: "placeholder" } as any)        
         let constraints = metadata[validationSymbol]?.fields?.placeholder
         
         if (constraints == null)
-            return []
+            return undefined
 
         const segments = typeof options.path === "string" ? splitPath(options.path) : (options.path ?? [])
         if (segments == null)
-            return []
+            return undefined
         
         let context = new InternalValidationContext<unknown>({
             yop: this,
             kind: constraints.kind,
             groups: options.groups,
             value,
+            statuses
         })
 
         for (const segment of segments) {
             [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
             if (constraints == null)
-                return []
+                return undefined
             context = context.createChildContext({ kind: constraints.kind, value, key: segment })
         }
         
         constraints.validate(context, constraints)
-        return Array.from(context.statuses.values())
+        
+        return context
+    }
+
+    validate<Value>(
+        value: any,
+        decorator: ClassFieldDecorator<Value>,
+        options: { path?: string | Path, groups?: Group } = { path: [] },
+        statuses?: Map<string, ValidationStatus>
+    ) {
+        const context = this.rawValidate(value, decorator, options, statuses)
+        return context != null ? Array.from(context.statuses.values()) : []
     }
     static validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options?: { path?: string, groups?: Group }) {
         return Yop.init().validate(value, decorator, options)

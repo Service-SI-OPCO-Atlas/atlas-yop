@@ -1,6 +1,6 @@
 import { MessageProvider, messageProvider_en_US, messageProvider_fr_FR } from "./MessageProvider"
 import { ClassFieldDecorator, InternalClassConstraints } from "./Metadata"
-import { splitPath } from "./PathUtil"
+import { Path, splitPath } from "./PathUtil"
 import { Constructor } from "./TypesUtil"
 import { Group, InternalValidationContext, ValidationStatus } from "./ValidationContext"
 
@@ -44,7 +44,7 @@ export class Yop {
         return id
     }
 
-    validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options?: { path?: string, groups?: Group }) {
+    validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options: { path?: string | Path, groups?: Group } = { path: [] }) {
         const metadata = { [validationSymbol]: {} as InternalClassConstraints }
         decorator(null, { metadata, name: "placeholder" } as any)        
         let constraints = metadata[validationSymbol]?.fields?.placeholder
@@ -52,14 +52,14 @@ export class Yop {
         if (constraints == null)
             return []
 
-        const segments = splitPath(options?.path ?? "")
+        const segments = typeof options.path === "string" ? splitPath(options.path) : (options.path ?? [])
         if (segments == null)
             return []
         
         let context = new InternalValidationContext<unknown>({
             yop: this,
             kind: constraints.kind,
-            groups: options?.groups,
+            groups: options.groups,
             value,
         })
 

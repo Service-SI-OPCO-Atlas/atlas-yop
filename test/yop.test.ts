@@ -4,7 +4,7 @@ import { Yop } from "../src/yop/Yop"
 import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, extendedPromise, CommonConstraints, Message, fieldValidationDecorator, InternalValidationContext, validateCommonConstraints, validateTypeConstraint, isString, isFunction, messageProvider_en_US } from "../src"
 import { test } from "../src/yop/decorators/test"
 import { time, timeRegex } from "../src/yop/decorators/time"
-import { splitPath } from "../src/yop/PathUtil"
+import { joinPath, splitPath } from "../src/yop/PathUtil"
 
 describe("yop", () => {
 
@@ -21,26 +21,42 @@ describe("yop", () => {
             expect(splitPath("a['0']")).toEqual(["a", "0"])
             expect(splitPath("[0][1]")).toEqual([0, 1])
             expect(splitPath("[0].a")).toEqual([0, "a"])
+            expect(splitPath("[0].a[1]")).toEqual([0, "a", 1])
             expect(splitPath("[0][1].a")).toEqual([0, 1, "a"])
+            expect(splitPath("['0.1']")).toEqual(["0.1"])
+            expect(splitPath("['-0.1']")).toEqual(["-0.1"])
+            expect(splitPath("['.1']")).toEqual([".1"])
+            expect(splitPath("['1.']")).toEqual(["1."])
             expect(splitPath("['abc']")).toEqual(["abc"])
-            expect(splitPath("['a\\'bc']")).toEqual(["a\'bc"])
-            expect(splitPath("['\\a\\'b  c']")).toEqual(["a\'b  c"])
-            expect(splitPath("['\\\\a\\'bc']")).toEqual(["\\a\'bc"])
+            expect(splitPath("['a\\'bc']")).toEqual(["a'bc"])
+            expect(splitPath("['\\a\\'b  c']")).toEqual(["a'b  c"])
+            expect(splitPath("['\\\\a\\'bc']")).toEqual(["\\a'bc"])
             expect(splitPath("['\\ \\a\\'bc']")).toEqual([" a'bc"])
             expect(splitPath("['\\ \\a\\'\"bc']")).toEqual([" a'\"bc"])
             expect(splitPath("[1].a.b[4].c")).toEqual([1, "a", "b", 4, "c"])
             
+            expect(splitPath("0")).toBeUndefined()
+            expect(splitPath("0abc")).toBeUndefined()
             expect(splitPath(".")).toBeUndefined()
             expect(splitPath("a.")).toBeUndefined()
             expect(splitPath("a. ")).toBeUndefined()
+            expect(splitPath("a.1")).toBeUndefined()
             expect(splitPath(".b")).toBeUndefined()
             expect(splitPath(" .b")).toBeUndefined()
             expect(splitPath("a..b")).toBeUndefined()
+            expect(splitPath("[a]")).toBeUndefined()
             expect(splitPath("a[b]")).toBeUndefined()
+            expect(splitPath("[0]a[1]")).toBeUndefined()
             expect(splitPath("[a].c")).toBeUndefined()
             expect(splitPath("a\\.b.c")).toBeUndefined()
+            expect(splitPath("a[1 2]")).toBeUndefined()
+            expect(splitPath("a['1' '2']")).toBeUndefined()
+            expect(splitPath("a['1''2']")).toBeUndefined()
+            expect(splitPath("a['1'\"2\"]")).toBeUndefined()
             expect(splitPath("a[0")).toBeUndefined()
+            expect(splitPath("a[0   ")).toBeUndefined()
             expect(splitPath("a[0b]")).toBeUndefined()
+            expect(splitPath("a[b0]")).toBeUndefined()
             expect(splitPath("a['0")).toBeUndefined()
             expect(splitPath("a[\\'0']")).toBeUndefined()
             expect(splitPath("a[\"0")).toBeUndefined()
@@ -53,6 +69,21 @@ describe("yop", () => {
             expect(splitPath("['a\\'bc\\']")).toBeUndefined()
             expect(splitPath("['\\\\a\\'bc\\\\\\']")).toBeUndefined()
         })
+    })
+        
+    it("utility.joinPath", () => {
+        expect(joinPath([])).toEqual("")
+        expect(joinPath([""])).toEqual("['']")
+        expect(joinPath(["a"])).toEqual("a")
+        expect(joinPath([0])).toEqual("[0]")
+        expect(joinPath(["a", 0])).toEqual("a[0]")
+        expect(joinPath(["a", "b", "c"])).toEqual("a.b.c")
+        expect(joinPath(["a", " b", "c"])).toEqual("a[' b'].c")
+        expect(joinPath(["a", "b ", "c"])).toEqual("a['b '].c")
+        expect(joinPath(["a", 0, "c"])).toEqual("a[0].c")
+        expect(joinPath(["a", "0", "c"])).toEqual("a['0'].c")
+        expect(joinPath(["a", "0b", "c"])).toEqual("a['0b'].c")
+        expect(joinPath(["a", "b\'x", "c"])).toEqual("a['b\\'x'].c")
     })
 
     describe("yop.string", () => {

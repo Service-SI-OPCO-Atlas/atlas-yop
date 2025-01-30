@@ -107,7 +107,7 @@ export function splitPath(path: string, cache?: Map<string, Path>): Path | undef
                 else if (state === OPEN_BRACKET) {
                     if (!segment)
                         return undefined
-                    segments.push(parseInt(segment))
+                    segments.push(parseInt(segment, 10))
                     segment = ""
                     state = CLOSE_BRACKET
                 }

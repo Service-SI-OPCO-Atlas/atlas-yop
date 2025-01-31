@@ -39,7 +39,7 @@ export function validateTestConstraint<Value, Parent>(
     context: InternalValidationContext<Value, Parent>,
     constraints: TestConstraint<Value, Parent>
 ) {
-    if (constraints.test == null)
+    if (constraints.test == null || context.options?.skipTests)
         return true
     
     if (context.groups == null)

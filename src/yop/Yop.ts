@@ -18,7 +18,7 @@ export type AsyncValidationStatus = {
 export type ValidateOptions = {
     path?: string | Path
     groups?: Group
-    skipAsync?: boolean
+    skipTests?: boolean
     ignore?: (path: Path) => boolean
 }
 

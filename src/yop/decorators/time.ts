@@ -31,6 +31,8 @@ export function timeToMillis(time: string) {
 const MAX_MILLIS = (24 * 3600 * 1000) - 1
 
 export function validateTime<Value extends StringValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: TimeConstraints<Value, Parent>) {
+    if (context.skipValidation())
+        return true
     if (!validateCommonConstraints(context, constraints))
         return false
     if (context.value == null)

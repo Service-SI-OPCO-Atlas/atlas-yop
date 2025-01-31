@@ -2,6 +2,7 @@ import { InternalValidationContext, Level, ValidationStatus } from "../Validatio
 import { ConstraintFunction, ConstraintMessage } from "./Constraint"
 import { isFunction, isPromise } from "../TypesUtil"
 import { AsyncValidationStatus } from "../Yop"
+import { joinPath } from "../PathUtil"
 
 export type TestConstraintMessage = ConstraintMessage | readonly [ConstraintMessage, Level] | boolean | undefined
 
@@ -57,13 +58,14 @@ function _validateTestConstraint<Value, Parent>(
     context: InternalValidationContext<Value, Parent>,
     constraints: TestConstraint<Value, Parent>
 ) {
-    const asyncStatus = context.yop.asyncStatuses.get(context.path)
+    const path = joinPath(context.path)
+    const asyncStatus = context.yop.asyncStatuses.get(path)
     if (asyncStatus != null) {
         const previous = asyncStatus.dependencies
         asyncStatus.dependencies = asyncStatus.getDependencies(context)
         if (!asyncStatus.shouldRevalidate(previous, asyncStatus.dependencies, asyncStatus.status)) {
             if (asyncStatus.status != null) {
-                context.statuses.set(context.path, asyncStatus.status)
+                context.statuses.set(path, asyncStatus.status)
                 return false
             }
             return true
@@ -115,7 +117,7 @@ function _validateTestConstraint<Value, Parent>(
             })
         
         asyncStatus.status = context.setStatus("test", promise, message, level ?? "pending")
-        context.yop.asyncStatuses.set(context.path, asyncStatus)
+        context.yop.asyncStatuses.set(path, asyncStatus)
         return false
     }
 

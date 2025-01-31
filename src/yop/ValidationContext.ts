@@ -1,5 +1,6 @@
 import { ConstraintMessage } from "./constraints/Constraint"
-import { Yop } from "./Yop"
+import { joinPath } from "./PathUtil"
+import { ValidateOptions, Yop } from "./Yop"
 
 export type Group = string | ((string | undefined)[])
 export type Level = "info" | "warning" | "error" | "pending" | "unavailable"
@@ -19,8 +20,7 @@ export interface ValidationContext<Value, Parent = unknown> {
     readonly kind: string
 
     readonly value: Value
-    readonly key: string | number | undefined
-    readonly path: string
+    readonly path: (string | number)[]
 
     readonly parent: Parent
     readonly parentContext: ValidationContext<Parent> | undefined
@@ -40,14 +40,14 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
     readonly kind: string
 
     readonly value: Value
-    readonly key: string | number | undefined
-    readonly path: string
+    readonly path: (string | number)[]
 
     readonly parentContext: InternalValidationContext<Parent> | undefined
     readonly rootContext: InternalValidationContext<unknown> | undefined
     readonly userContext: unknown | undefined
 
-    readonly groups: Group | undefined
+    readonly options: ValidateOptions | undefined
+
     readonly statuses: Map<string, ValidationStatus>
 
     constructor(props: {
@@ -58,31 +58,38 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         parentContext?: InternalValidationContext<Parent> | undefined
         rootContext?: InternalValidationContext<unknown> | undefined
         userContext?: unknown | undefined
-        groups?: Group
         statuses?: Map<string, ValidationStatus>
+        options?: ValidateOptions
     }) {
+        if (props.parentContext != null && props.key == null)
+            throw new Error("key must be provided when parentContext is provided")
+
         this.yop = props.yop
         this.kind = props.kind
         this.value = props.value
         this.parentContext = props.parentContext
-        this.key = props.key
         this.rootContext = props.rootContext
         this.userContext = props.userContext
-        this.groups = props.groups
+        this.options = props.options
         this.statuses = props.statuses ?? new Map()
 
-        if (props.parentContext != null && props.key == null)
-            throw new Error("propertyOrIndex must be provided when parentContext is provided")
+        this.path = props.key == null ? [] : (props.parentContext?.path.concat(props.key) ?? [props.key])
+    }
 
-        this.path = (
-            props.parentContext == null && props.key == null ? "" :
-            typeof props.key === "number" ? `${ props.parentContext?.path ?? "" }[${ props.key }]` :
-            props.parentContext?.path ? `${ props.parentContext.path }.${ props.key! }` : props.key!
-        )
+    skipValidation() {
+        return this.options?.ignore?.(this.path) ?? false
     }
 
     get parent() {
         return this.parentContext?.value || UndefinedParent as Parent
+    }
+
+    get groups() {
+        return this.options?.groups
+    }
+
+    get ignore() {
+        return this.options?.ignore
     }
 
     getRoot<T>() {
@@ -106,15 +113,15 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
             parentContext: this,
             rootContext: this.rootContext ?? this,
             userContext: this.userContext,
-            groups: this.groups,
-            statuses: this.statuses,
+            options: this.options,
+            statuses: this.statuses
         })
     }
 
     createStatus(code: string, constraint: any, message?: ConstraintMessage, level: Level = "error"): ValidationStatus {
         return {
             level,
-            path: this.path,
+            path: joinPath(this.path),
             value: this.value,
             kind: this.kind,
             code,
@@ -125,7 +132,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
 
     setStatus(code: string, constraint: any, message?: ConstraintMessage, level: Level = "error"): ValidationStatus {
         const status = this.createStatus(code, constraint, message, level)
-        this.statuses.set(this.path, status)
+        this.statuses.set(status.path, status)
         return status
     }
 }

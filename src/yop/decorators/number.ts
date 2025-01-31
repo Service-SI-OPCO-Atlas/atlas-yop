@@ -16,6 +16,8 @@ export interface NumberConstraints<Value extends NumberValue, Parent> extends
 }
 
 function validateNumber<Value extends NumberValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: NumberConstraints<Value, Parent>) {
+    if (context.skipValidation())
+        return true
     if (!validateCommonConstraints(context, constraints))
         return false
     if (context.value == null)

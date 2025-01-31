@@ -16,6 +16,8 @@ export interface DateConstraints<Value extends DateValue, Parent> extends
 }
 
 function validateDate<Value extends DateValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: DateConstraints<Value, Parent>) {
+    if (context.skipValidation())
+        return true
     if (!validateCommonConstraints(context, constraints))
         return false
     if (context.value == null)

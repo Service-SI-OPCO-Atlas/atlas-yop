@@ -24,6 +24,8 @@ export function validateString<Value extends StringValue, Parent>(
     defaultMatchMessage?: Message<Value, Parent>,
     type?: string
 ) {
+    if (context.skipValidation())
+        return true
     if (!validateCommonConstraints(context, constraints))
         return false
     if (context.value == null)

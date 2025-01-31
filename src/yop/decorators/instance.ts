@@ -47,6 +47,8 @@ function traverseInstance<Value extends InstanceValue, Parent>(context: Internal
 }
 
 function validateInstance<Value extends InstanceValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>) {
+    if (context.skipValidation())
+        return true
     if (!validateCommonConstraints(context, constraints))
         return false
     if (context.value == null)

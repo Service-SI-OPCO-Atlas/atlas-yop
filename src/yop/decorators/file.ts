@@ -14,6 +14,8 @@ export interface FileConstraints<Value extends FileValue, Parent> extends
 }
 
 function validateFile<Value extends FileValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: FileConstraints<Value, Parent>) {
+    if (context.skipValidation())
+        return true
     if (!validateCommonConstraints(context, constraints))
         return false
     if (context.value == null)

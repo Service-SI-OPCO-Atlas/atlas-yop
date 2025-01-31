@@ -14,6 +14,8 @@ export interface BooleanConstraints<Value extends BooleanValue, Parent> extends
 }
 
 function validateBoolean<Value extends BooleanValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: BooleanConstraints<Value, Parent>) {
+    if (context.skipValidation())
+        return true
     if (!validateCommonConstraints(context, constraints))
         return false
     if (context.value == null)

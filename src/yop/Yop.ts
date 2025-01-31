@@ -15,6 +15,13 @@ export type AsyncValidationStatus = {
     shouldRevalidate: (previous: unknown, current: unknown, status: ValidationStatus | undefined) => boolean
 }
 
+export type ValidateOptions = {
+    path?: string | Path
+    groups?: Group
+    skipAsync?: boolean
+    ignore?: (path: Path) => boolean
+}
+
 export class Yop {
 
     private static defaultInstance?: Yop
@@ -47,8 +54,7 @@ export class Yop {
     rawValidate<Value>(
         value: any,
         decorator: ClassFieldDecorator<Value>,
-        options: { path?: string | Path, groups?: Group } = { path: [] },
-        statuses?: Map<string, ValidationStatus>
+        options: ValidateOptions = { path: [] }
     ) {
         const metadata = { [validationSymbol]: {} as InternalClassConstraints }
         decorator(null, { metadata, name: "placeholder" } as any)        
@@ -64,9 +70,8 @@ export class Yop {
         let context = new InternalValidationContext<unknown>({
             yop: this,
             kind: constraints.kind,
-            groups: options.groups,
             value,
-            statuses
+            options,
         })
 
         for (const segment of segments) {
@@ -84,10 +89,9 @@ export class Yop {
     validate<Value>(
         value: any,
         decorator: ClassFieldDecorator<Value>,
-        options: { path?: string | Path, groups?: Group } = { path: [] },
-        statuses?: Map<string, ValidationStatus>
+        options: ValidateOptions = { path: [] }
     ) {
-        const context = this.rawValidate(value, decorator, options, statuses)
+        const context = this.rawValidate(value, decorator, options)
         return context != null ? Array.from(context.statuses.values()) : []
     }
     static validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options?: { path?: string, groups?: Group }) {

@@ -28,7 +28,7 @@ export interface ValidationContext<Value, Parent = unknown> {
     getRoot<T>(): T | undefined
     readonly rootContext: ValidationContext<unknown> | undefined
 
-    getUserContext<T>(): T | undefined
+    readonly options: ValidateOptions | undefined
 }
 
 export const UndefinedParent = Object.freeze(Object.create(null))
@@ -44,7 +44,6 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
 
     readonly parentContext: InternalValidationContext<Parent> | undefined
     readonly rootContext: InternalValidationContext<unknown> | undefined
-    readonly userContext: unknown | undefined
 
     readonly options: ValidateOptions | undefined
 
@@ -69,7 +68,6 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         this.value = props.value
         this.parentContext = props.parentContext
         this.rootContext = props.rootContext
-        this.userContext = props.userContext
         this.options = props.options
         this.statuses = props.statuses ?? new Map()
 
@@ -96,10 +94,6 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         return this.rootContext?.value as T | undefined
     }
 
-    getUserContext<T>() {
-        return this.userContext as T | undefined
-    }
-
     createChildContext(props: {
         kind: string
         value: Value
@@ -112,7 +106,6 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
             key: props.key,
             parentContext: this,
             rootContext: this.rootContext ?? this,
-            userContext: this.userContext,
             options: this.options,
             statuses: this.statuses
         })

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { string, StringValue } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
-import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, extendedPromise, CommonConstraints, Message, fieldValidationDecorator, InternalValidationContext, validateCommonConstraints, validateTypeConstraint, isString, isFunction, messageProvider_en_US } from "../src"
+import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, CommonConstraints, Message, fieldValidationDecorator, InternalValidationContext, validateCommonConstraints, validateTypeConstraint, isString, isFunction, messageProvider_en_US } from "../src"
 import { test } from "../src/yop/decorators/test"
 import { time, timeRegex } from "../src/yop/decorators/time"
 import { joinPath, splitPath } from "../src/yop/PathUtil"
@@ -1992,16 +1992,16 @@ describe("yop", () => {
     describe("yop.async", () => {
 
         it("yop.async.simple", async () => {
-            const constraint = string({ test: context => [
-                fetch("https://www.purgomalum.com/service/containsprofanity?add=cde&text=" + context.value)
-                .then(response => {
+            const constraint = string({ test: {
+                promise: async context => {
+                    const response = await fetch("https://www.purgomalum.com/service/containsprofanity?add=cde&text=" + context.value)
                     if (!response.ok)
                         throw `Error ${ response.status }: ${ response.statusText }`
-                    return response.text()
-                })
-                .then(response => response !== "true" || "Contains inappropriate content"),
-                "Checking for inappropriate content..."
-            ]})
+                    const status = await response.text()
+                    return status === "false" || "Contains inappropriate content"
+                },
+                pendingMessage: "Checking for inappropriate content..."
+            }})
             const yop = new Yop()
             let statuses = yop.validate("abc", constraint)
             
@@ -2070,15 +2070,15 @@ describe("yop", () => {
         })
 
         it("yop.async.unavailable1", async () => {
-            const constraint = string({ test: context =>
-                fetch("https://www.purgomalum.com/service/cont****fanity?add=cde&text=" + context.value)
-                .then(response => {
+            const constraint = string({ test: {
+                promise: async context => {
+                    const response = await fetch("https://www.purgomalum.com/service/cont****fanity?add=cde&text=" + context.value)
                     if (!response.ok)
                         throw `Error ${ response.status }: ${ response.statusText }`
-                    return response.text()
-                })
-                .then(response => response !== "true" || "Contains inappropriate content"),
-            })
+                    const status = await response.text()
+                    return status === "false" || "Contains inappropriate content"
+                }
+            }})
             const yop = new Yop()
             let statuses = yop.validate("abc", constraint)
             
@@ -2115,15 +2115,15 @@ describe("yop", () => {
         })
 
         it("yop.async.unavailable2", async () => {
-            const constraint = string({ test: context =>
-                fetch("https://www.pur****lum.com/service/containsprofanity?add=cde&text=" + context.value)
-                .then(response => {
+            const constraint = string({ test: {
+                promise: async context => {
+                    const response = await fetch("https://www.pur****lum.com/service/containsprofanity?add=cde&text=" + context.value)
                     if (!response.ok)
                         throw `Error ${ response.status }: ${ response.statusText }`
-                    return response.text()
-                })
-                .then(response => response !== "true" || "Contains inappropriate content"),
-            })
+                    const status = await response.text()
+                    return status === "false" || "Contains inappropriate content"
+                }
+            }})
             const yop = new Yop()
             let statuses = yop.validate("abc", constraint)
             
@@ -2163,20 +2163,20 @@ describe("yop", () => {
 
             class Test {
                 
-                @string({ test: context => [
-                    extendedPromise({
-                        promise: fetch(`https://www.purgomalum.com/service/containsprofanity?add=cde&text=${ context.value }+${ context.parent.nickname ?? "" }`)
-                            .then(response => {
-                                if (!response.ok)
-                                    throw `Error ${ response.status }: ${ response.statusText }`
-                                return response.text()
-                            })
-                            .then(response => response !== "true" || "Contains inappropriate content"),
-                        getDependencies: context => [context.value, context.parent.nickname],
-                        shouldRevalidate: (previous, current, status) => status?.level !== "unavailable" && (previous[0] !== current[0] || previous[1] !== current[1]),
-                    }),
-                    "Checking for inappropriate content..."
-                ]})
+                @string({ test: {
+                    promise: context =>
+                        fetch(`https://www.purgomalum.com/service/containsprofanity?add=cde&text=${ context.value }+${ context.parent.nickname ?? "" }`)
+                        .then(response => {
+                            if (!response.ok)
+                                throw `Error ${ response.status }: ${ response.statusText }`
+                            return response.text()
+                        })
+                        .then(response => response !== "true" || "Contains inappropriate content"),
+                    getDependencies: context => [context.value, context.parent.nickname],
+                    shouldRevalidate: (previous, current, status) => status?.level !== "unavailable" && (previous[0] !== current[0] || previous[1] !== current[1]),
+                    pendingMessage: "Checking for inappropriate content...",
+                    debounce: 1000,
+                }})
                 name: string | null = null
 
                 nickname: string | null = null

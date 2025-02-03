@@ -11,15 +11,15 @@ export const validationSymbol = Symbol('YopValidation')
 export type AsyncValidationStatus = {
     status?: ValidationStatus | undefined
     dependencies: unknown
-    getDependencies: (context: InternalValidationContext<unknown>) => unknown
+    getDependencies: (context: InternalValidationContext<any, any>) => any
     shouldRevalidate: (previous: unknown, current: unknown, status: ValidationStatus | undefined) => boolean
 }
 
-export type ValidateOptions = {
+export interface ValidateOptions {
     path?: string | Path
     groups?: Group
-    skipTests?: boolean
     ignore?: (path: Path) => boolean
+    skipAsync?: boolean
 }
 
 export class Yop {

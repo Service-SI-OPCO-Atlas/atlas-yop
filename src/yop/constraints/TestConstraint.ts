@@ -1,22 +1,16 @@
 import { InternalValidationContext, Level, ValidationContext, ValidationStatus } from "../ValidationContext"
 import { ConstraintFunction, ConstraintMessage } from "./Constraint"
-import { isFunction, isPromise } from "../TypesUtil"
-import { AsyncValidationStatus } from "../Yop"
+import { isFunction } from "../TypesUtil"
 import { joinPath } from "../PathUtil"
 
 export type TestConstraintMessage = ConstraintMessage | readonly [ConstraintMessage, Level] | boolean | undefined
-
 export type TestConstraintFunction<Value, Parent = unknown> = ConstraintFunction<NonNullable<Value>, TestConstraintMessage, Parent>
 
-export type AsyncTestConstraint<Value, Parent = unknown, Dependencies = any> = {
-    promise: (context: ValidationContext<Value, Parent>) => Promise<TestConstraintMessage>
-    pendingMessage?: TestConstraintMessage
-    getDependencies?: (context: InternalValidationContext<Value, Parent>) => Dependencies,
-    shouldRevalidate?: (previous: Dependencies, current: Dependencies, status: ValidationStatus | undefined) => boolean
-    debounce?: number | {
-        wait: number
-        immediateFirst?: boolean
-    }
+export interface AsyncTestConstraint<Value, Parent = unknown> {
+    promise: (context: ValidationContext<NonNullable<Value>, Parent>) => Promise<TestConstraintMessage>
+    pendingMessage?: ConstraintMessage
+    getDependencies?: (context: InternalValidationContext<Value, Parent>) => any,
+    shouldRevalidate?: (previous: any, current: any, status: ValidationStatus | undefined) => boolean
 }
 
 export interface TestConstraint<Value, Parent = unknown> {
@@ -50,82 +44,80 @@ function _validateTestConstraint<Value, Parent>(
     testConstraint: TestConstraint<Value, Parent>
 ) {
     const test = testConstraint.test!
-    const path = joinPath(context.path)
+    if (isFunction(test))
+        return _validateTestConstraintFunction(context as InternalValidationContext<NonNullable<Value>, Parent>, test)
+    return _validateAsyncTestConstraint(context as InternalValidationContext<NonNullable<Value>, Parent>, test)
+}
 
-    if (!isFunction(test)) {
-        if (context.options?.skipAsync)
-            return true
-
-        const asyncStatus = context.yop.asyncStatuses.get(path)
-        if (asyncStatus != null) {
-            const previous = asyncStatus.dependencies
-            asyncStatus.dependencies = asyncStatus.getDependencies(context)
-            if (!asyncStatus.shouldRevalidate(previous, asyncStatus.dependencies, asyncStatus.status)) {
-                if (asyncStatus.status != null) {
-                    context.statuses.set(path, asyncStatus.status)
-                    return false
-                }
-                return true
-            }
-        }
-    }
-
+function _validateTestConstraintFunction<Value, Parent>(
+    context: InternalValidationContext<NonNullable<Value>, Parent>,
+    test: TestConstraintFunction<Value, Parent>
+) {
     let constraint: any = undefined
     let message: any = undefined
     let level: Level | undefined = undefined
 
-    if (isFunction(test)) {
-        constraint = test(context as InternalValidationContext<NonNullable<Value>, Parent>)
+    constraint = test(context)
 
-        if (Array.isArray(constraint)) {
-            const [maybeConstraint, maybeMessage, maybeLevel, _maybeGroup] = constraint
-            constraint = maybeConstraint
-            message = maybeMessage
-            level = maybeLevel ?? undefined
-        }
+    if (Array.isArray(constraint)) {
+        const [maybeConstraint, maybeMessage, maybeLevel] = constraint
+        constraint = maybeConstraint
+        message = maybeMessage
+        level = maybeLevel ?? undefined
     }
-    else {
-        constraint = test.promise(context as InternalValidationContext<NonNullable<Value>, Parent>)
-        message = test.pendingMessage
-    }
-    
+
     if (constraint == null || constraint === true)
         return true
+    return context.setStatus("test", false, typeof constraint === "string" ? constraint : message, level ?? "error") == null
+}
 
-    if (isPromise(constraint)) {
-        const [getDependencies, shouldRevalidate] = isFunction(test) ?
-            [defaultGetDependencies, defaultShouldRevalidate] :
-            [test.getDependencies ?? defaultGetDependencies, test.shouldRevalidate ?? defaultShouldRevalidate]
-        
-        const asyncStatus: AsyncValidationStatus = {
-            dependencies: getDependencies(context),
-            getDependencies,
-            shouldRevalidate
+function _validateAsyncTestConstraint<Value, Parent>(
+    context: InternalValidationContext<NonNullable<Value>, Parent>,
+    test: AsyncTestConstraint<Value, Parent>
+) {
+    if (context.options?.skipAsync)
+        return true
+
+    const path = joinPath(context.path)
+    let asyncStatus = context.yop.asyncStatuses.get(path)
+    if (asyncStatus != null) {
+        const previous = asyncStatus.dependencies
+        asyncStatus.dependencies = asyncStatus.getDependencies(context)
+        if (!asyncStatus.shouldRevalidate(previous, asyncStatus.dependencies, asyncStatus.status)) {
+            if (asyncStatus.status != null) {
+                context.statuses.set(path, asyncStatus.status)
+                return false
+            }
+            return true
         }
-        const promise = constraint
-            .then(message => {
-                if (message == null || message === true)
-                    asyncStatus.status = undefined
-                else {
-                    let level: Level | undefined = undefined
-                    if (Array.isArray(message)) {
-                        const [maybeMessage, maybeLevel] = message
-                        message = maybeMessage
-                        level = maybeLevel ?? undefined
-                    }
-                    asyncStatus.status = context.createStatus("test", false, typeof message === "string" ? message : undefined, level ?? "error")
-                }
-                return asyncStatus.status
-            })
-            .catch(error => {
-                asyncStatus.status = context.createStatus("test", false, error != null ? String(error) : undefined, "unavailable")
-                return Promise.resolve(asyncStatus.status)
-            })
-        
-        asyncStatus.status = context.setStatus("test", promise, message, level ?? "pending")
-        context.yop.asyncStatuses.set(path, asyncStatus)
-        return false
     }
 
-    return context.setStatus("test", false, typeof constraint === "string" ? constraint : message, level ?? "error") == null
+    const getDependencies = test.getDependencies ?? defaultGetDependencies
+    const shouldRevalidate = test.shouldRevalidate ?? defaultShouldRevalidate
+    asyncStatus = {
+        dependencies: getDependencies(context),
+        getDependencies,
+        shouldRevalidate
+    }
+    
+    const promise = test.promise(context).then(message => {
+        if (message == null || message === true)
+            asyncStatus.status = undefined
+        else if (message === false)
+            asyncStatus.status = context.createStatus("test", false)
+        else if (!Array.isArray(message))
+            asyncStatus.status = context.createStatus("test", false, message as ConstraintMessage)
+        else {
+            const [maybeMessage, maybeLevel] = message as readonly [ConstraintMessage, Level]
+            asyncStatus.status = context.createStatus("test", false, maybeMessage, maybeLevel ?? "error")
+        }
+        return asyncStatus.status
+    }).catch(error => {
+        asyncStatus.status = context.createStatus("test", false, error != null ? String(error) : undefined, "unavailable")
+        return Promise.resolve(asyncStatus.status)
+    })
+
+    asyncStatus.status = context.setStatus("test", promise, test.pendingMessage, "pending")
+    context.yop.asyncStatuses.set(path, asyncStatus)
+    return false
 }

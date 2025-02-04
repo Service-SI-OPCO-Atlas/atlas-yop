@@ -2174,8 +2174,7 @@ describe("yop", () => {
                         .then(response => response !== "true" || "Contains inappropriate content"),
                     getDependencies: context => [context.value, context.parent.nickname],
                     shouldRevalidate: (previous, current, status) => status?.level !== "unavailable" && (previous[0] !== current[0] || previous[1] !== current[1]),
-                    pendingMessage: "Checking for inappropriate content...",
-                    debounce: 1000,
+                    pendingMessage: "Checking for inappropriate content..."
                 }})
                 name: string | null = null
 

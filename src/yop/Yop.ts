@@ -1,6 +1,6 @@
 import { MessageProvider, messageProvider_en_US, messageProvider_fr_FR } from "./MessageProvider"
 import { ClassFieldDecorator, InternalClassConstraints } from "./Metadata"
-import { Path, splitPath } from "./PathUtil"
+import { joinPath, Path, splitPath } from "./PathUtil"
 import { Constructor } from "./TypesUtil"
 import { Group, InternalValidationContext, ValidationStatus } from "./ValidationContext"
 
@@ -84,6 +84,10 @@ export class Yop {
         constraints.validate(context, constraints)
         
         return context
+    }
+
+    getAsyncStatus(path: string | Path) {
+        return this.asyncStatuses.get(typeof path === "string" ? path : joinPath(path))?.status
     }
 
     validate<Value>(

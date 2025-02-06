@@ -99,7 +99,7 @@ export const messageProvider_en_US = new BasicMessageProvider("en-US", [
     ["array.max", ({ constraint }) => `At most ${ constraint.formatted } element${ s(constraint.plural) }`],
 
     ["type", ({ constraint }) => `Wrong value type (expected ${ constraint.raw })`],
-    ["test", ({ level }) => level === "pending" ? "Pending..." : level === "unavailable" ? "Service unavailable" : "Invalid value"],
+    ["test", ({ level }) => level === "pending" ? "Pending..." : level === "error" ? "Invalid value" : ""],
     ["oneOf", ({ constraint }) => `Must be one of: ${ constraint.formatted }`],
     ["exists", () => "Required field"],
     ["defined", () => "Required field"],
@@ -133,7 +133,7 @@ export const messageProvider_fr_FR = new BasicMessageProvider("fr-FR", [
     ["array.max", ({ constraint }) => `Au plus ${ constraint.formatted } élément${ s(constraint.plural) }`],
 
     ["type", ({ constraint }) => `Valeur du mauvais type (${ constraint.raw } attendu)`],
-    ["test", ({ level }) => level === "pending" ? "En cours..." : level === "unavailable" ? "Service indisponible" : "Valeur incorrecte"],
+    ["test", ({ level }) => level === "pending" ? "En cours..." : level === "error" ? "Valeur incorrecte" : ""],
     ["oneOf", ({ constraint }) => `Doit être parmi : ${ constraint.formatted }`],
     ["exists", () => "Champ obligatoire"],
     ["defined", () => "Champ obligatoire"],

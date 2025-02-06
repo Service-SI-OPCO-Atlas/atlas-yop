@@ -114,7 +114,7 @@ function _validateAsyncTestConstraint<Value, Parent>(
         }
         return asyncStatus.status
     }).catch(error => {
-        asyncStatus.status = context.createStatus("test", false, error != null ? String(error) : undefined, "unavailable")
+        asyncStatus.status = context.createStatus("test", false, error != null ? String(error) : test.unavailableMessage, "unavailable")
         return Promise.resolve(asyncStatus.status)
     })
 

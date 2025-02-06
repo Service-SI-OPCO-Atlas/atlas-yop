@@ -1,4 +1,4 @@
-import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { CommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { Constraint, Message, validateConstraint } from "../constraints/Constraint"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
@@ -24,12 +24,6 @@ export function validateString<Value extends StringValue, Parent>(
     defaultMatchMessage?: Message<Value, Parent>,
     type?: string
 ) {
-    if (context.skipValidation())
-        return true
-    if (!validateCommonConstraints(context, constraints))
-        return false
-    if (context.value == null)
-        return true
     return (
         validateTypeConstraint(context, isString, type ?? "string") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.length >= min, (value, max) => value.length <= max) &&
@@ -40,5 +34,5 @@ export function validateString<Value extends StringValue, Parent>(
 }
 
 export function string<Value extends StringValue, Parent>(constraints?: StringConstraints<Value, Parent>, groups?: Record<string, StringConstraints<Value, Parent>>) {
-    return fieldValidationDecorator("string", constraints ?? {}, groups, validateString)
+    return fieldValidationDecorator("string", constraints ?? {}, groups, validateString, isNumber)
 }

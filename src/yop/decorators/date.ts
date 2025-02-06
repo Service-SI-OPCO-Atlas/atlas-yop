@@ -1,4 +1,4 @@
-import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { CommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
@@ -16,12 +16,6 @@ export interface DateConstraints<Value extends DateValue, Parent> extends
 }
 
 function validateDate<Value extends DateValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: DateConstraints<Value, Parent>) {
-    if (context.skipValidation())
-        return true
-    if (!validateCommonConstraints(context, constraints))
-        return false
-    if (context.value == null)
-        return true
     return (
         validateTypeConstraint(context, isDate, "date") &&
         validateMinMaxConstraints(context, constraints, isDate, (value, min) => value >= min, (value, max) => value <= max) &&
@@ -31,5 +25,5 @@ function validateDate<Value extends DateValue, Parent>(context: InternalValidati
 }
 
 export function date<Value extends DateValue, Parent>(constraints?: DateConstraints<Value, Parent>, groups?: Record<string, DateConstraints<Value, Parent>>) {
-    return fieldValidationDecorator("date", constraints ?? {}, groups, validateDate)
+    return fieldValidationDecorator("date", constraints ?? {}, groups, validateDate, isDate)
 }

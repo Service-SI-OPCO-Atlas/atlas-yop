@@ -1,4 +1,4 @@
-import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { CommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { isFile, isNumber } from "../TypesUtil"
@@ -14,12 +14,6 @@ export interface FileConstraints<Value extends FileValue, Parent> extends
 }
 
 function validateFile<Value extends FileValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: FileConstraints<Value, Parent>) {
-    if (context.skipValidation())
-        return true
-    if (!validateCommonConstraints(context, constraints))
-        return false
-    if (context.value == null)
-        return true
     return (
         validateTypeConstraint(context, isFile, "file") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.size >= min, (value, max) => value.size <= max) &&
@@ -28,5 +22,5 @@ function validateFile<Value extends FileValue, Parent>(context: InternalValidati
 }
 
 export function file<Value extends FileValue, Parent>(constraints?: FileConstraints<Value, Parent>, groups?: Record<string, FileConstraints<Value, Parent>>) {
-    return fieldValidationDecorator("file", constraints ?? {}, groups, validateFile)
+    return fieldValidationDecorator("file", constraints ?? {}, groups, validateFile, isNumber)
 }

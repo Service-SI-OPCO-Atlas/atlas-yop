@@ -2,6 +2,7 @@ import { Message } from "../constraints/Constraint"
 import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Metadata"
 import { StringConstraints, StringValue, validateString } from "./string"
+import { isNumber } from "../TypesUtil"
 
 export interface EmailConstraints<Value extends StringValue, Parent> extends
     Omit<StringConstraints<Value, Parent>, "match"> {
@@ -15,5 +16,5 @@ export function validateEmail<Value extends StringValue, Parent>(context: Intern
 }
 
 export function email<Value extends StringValue, Parent>(constraints?: EmailConstraints<Value, Parent>, groups?: Record<string, EmailConstraints<Value, Parent>>) {
-    return fieldValidationDecorator("email", constraints ?? {}, groups, validateEmail)
+    return fieldValidationDecorator("email", constraints ?? {}, groups, validateEmail, isNumber)
 }

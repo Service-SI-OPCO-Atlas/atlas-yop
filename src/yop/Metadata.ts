@@ -1,4 +1,4 @@
-import { InternalConstraints, InternalCommonConstraints, validateTypeConstraint, ContraintsParent, ContraintsValue, Traverser, Validator } from "./constraints/CommonConstraints"
+import { InternalConstraints, InternalCommonConstraints, ContraintsParent, ContraintsValue, Traverser, Validator, validateCommonConstraints, validateTypeConstraint } from "./constraints/CommonConstraints"
 import { validateConstraint } from "./constraints/Constraint"
 import { TestConstraintFunction, validateTestConstraint } from "./constraints/TestConstraint"
 import { isBoolean, isObject } from "./TypesUtil"
@@ -10,20 +10,24 @@ export interface InternalClassConstraints<Class = any> extends InternalConstrain
     fields?: Record<string, InternalCommonConstraints>
 }
 
-export function traverseClass(context: InternalValidationContext<unknown>, constraints: InternalClassConstraints, key: string | number)
-    : readonly [InternalCommonConstraints | undefined, any] {
-    if (context.value == null || typeof context.value !== "object" || typeof key !== "string")
+export function traverseClass(
+    context: InternalValidationContext<unknown>,
+    constraints: InternalClassConstraints,
+    key: string | number,
+    traverseNullish?: boolean
+): readonly [InternalCommonConstraints | undefined, any] {
+    if (traverseNullish ? context.value != null && (typeof context.value !== "object" || typeof key !== "string") : context.value == null)
         return [undefined, undefined]
-    return [constraints.fields?.[key], (context.value as Record<string, any>)[key]]
+    return [constraints.fields?.[key], (context.value as Record<string, any>)?.[key]]
 }
 
-export function validateClass(context: InternalValidationContext<unknown>, constraints: InternalClassConstraints) {
+export function validateClass(context: InternalValidationContext<Record<string, any>>, constraints: InternalClassConstraints) {
     if (context.value == null || !validateTypeConstraint(context, isObject, "object"))
         return false
     
     let valid = true
 
-    const parent = context.value as Record<string, any>
+    const parent = context.value
     for (const [fieldName, fieldConstraints] of Object.entries(constraints.fields!)) {
         const fieldContext = context.createChildContext({
             kind: fieldConstraints.kind,
@@ -59,8 +63,9 @@ export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Co
     kind: string,
     constraints: Constraints,
     groups: Record<string, Constraints> | undefined,
-    validate: Validator<Constraints>,
-    traverse?: Traverser<Constraints>
+    validator: Validator<Constraints>,
+    isMinMaxType?: (value: any) => boolean,
+    traverse?: Traverser<Constraints>,
 ) {
     return function decorateClassField(_: unknown, context: ClassFieldDecoratorContext<Parent, Value>) {
         const classConstraints = initClassConstraints(context.metadata)
@@ -72,7 +77,17 @@ export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Co
         if (!Object.hasOwnProperty.bind(fields)(fieldName))
             fields[fieldName] = {} as InternalCommonConstraints
 
-        Object.assign(fields[fieldName], { ...constraints, groups, kind, validate, traverse })
+        const validate = (context: any, constraints: any) =>  {
+            if (context.skipValidation())
+                return true
+            if (!validateCommonConstraints(context, constraints))
+                return false
+            if (context.value == null)
+                return true
+            return validator(context, constraints)
+        }
+
+        Object.assign(fields[fieldName], { ...constraints, groups, kind, validate, traverse, isMinMaxType })
     }
 }
 

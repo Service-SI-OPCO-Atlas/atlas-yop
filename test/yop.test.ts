@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { string, StringValue } from "../src/yop/decorators/string"
 import { Yop } from "../src/yop/Yop"
-import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, CommonConstraints, Message, fieldValidationDecorator, InternalValidationContext, validateCommonConstraints, validateTypeConstraint, isString, isFunction, messageProvider_en_US } from "../src"
+import { array, boolean, id, date, email, emailRegex, file, instance, number, ValidationStatus, isPromise, CommonConstraints, Message, fieldValidationDecorator, InternalValidationContext, validateTypeConstraint, isString, isFunction, messageProvider_en_US } from "../src"
 import { test } from "../src/yop/decorators/test"
 import { time, timeRegex } from "../src/yop/decorators/time"
 import { joinPath, splitPath } from "../src/yop/PathUtil"
@@ -1714,6 +1714,9 @@ describe("yop", () => {
     })
 
     describe("yop.all", () => {
+
+        const today = new Date
+
         class Pet {
             @string({ required: true, min: 1 })
             name: string | null = null
@@ -1745,7 +1748,7 @@ describe("yop", () => {
             @email({ formatError: "Invalid email" })
             email: string | null = null
 
-            @date({ required: true, min: new Date(1900, 0, 1), max: new Date })
+            @date({ required: true, min: new Date(1900, 0, 1), max: today })
             birthDate: Date | null = null
             
             @number({ min: context => [0, `Should be inferred from birthDate but ${ context.value } doesn't look good`, "warning"], max: 150 })                
@@ -1781,10 +1784,20 @@ describe("yop", () => {
             diary: File | null = null
 
             @ignored()
-            dummy: string | null = null
+            ignored: string | null = null
+            
+            ignored2: string | null = null
     }
 
         it("yop.all.Person", () => {
+            expect(Yop.constraintsAt("firstName", instance({ of: Person }), null)).toEqual({ required: false, min: 2, max: 20 })
+            expect(Yop.constraintsAt("firstName", instance({ of: Person }), { lastName: "Doe" })).toEqual({ required: true, min: 2, max: 20 })
+            expect(Yop.constraintsAt("birthDate", instance({ of: Person }), null)).toEqual({ required: true, min: new Date(1900, 0, 1), max: today })
+            expect(Yop.constraintsAt("nicknames", instance({ of: Person }), null)).toEqual({ required: true, min: 2 })
+            expect(Yop.constraintsAt("nicknames[0]", instance({ of: Person }), null)).toEqual({ required: true, min: 2, max: 20 })
+            expect(Yop.constraintsAt("friends", instance({ of: Person }), null)).toEqual({ required: false, min: 0 })
+            expect(Yop.constraintsAt("friends[0].pets[0].name", instance({ of: Person }), null)).toEqual({ required: true, min: 1 })
+            
             expect(Yop.validate(undefined, instance({ of: Person }))).toEqual([])
             expect(Yop.validate(null, instance({ of: Person }))).toEqual([])
             expect(Yop.validate(1, instance({ of: Person }))).toEqual([{
@@ -2392,14 +2405,10 @@ describe("yop", () => {
 
             const ibanFRRegex = /^FR[0-9]{2}[A-Z0-9]{23}$/
             function validateIbanFR<Value extends StringValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: IbanFRConstraints<Value, Parent>) {
-                if (!validateCommonConstraints(context, constraints))
-                    return false
-                if (context.value == null)
-                    return true
                 if (!validateTypeConstraint(context, isString, "iban"))
                     return false
                 
-                const value = context.value.replace(/[-\s]/g, "").toUpperCase()
+                const value = context.value!.replace(/[-\s]/g, "").toUpperCase()
                 if (!ibanFRRegex.test(value)) {
                     const message = isFunction(constraints.formatError) ? constraints.formatError(context) : constraints.formatError
                     context.setStatus("match", ibanFRRegex, message)

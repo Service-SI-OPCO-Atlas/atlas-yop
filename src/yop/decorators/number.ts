@@ -1,4 +1,4 @@
-import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { CommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
@@ -16,12 +16,6 @@ export interface NumberConstraints<Value extends NumberValue, Parent> extends
 }
 
 function validateNumber<Value extends NumberValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: NumberConstraints<Value, Parent>) {
-    if (context.skipValidation())
-        return true
-    if (!validateCommonConstraints(context, constraints))
-        return false
-    if (context.value == null)
-        return true
     return (
         validateTypeConstraint(context, isNumber, "number") &&
         validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value >= min, (value, max) => value <= max) &&
@@ -31,5 +25,5 @@ function validateNumber<Value extends NumberValue, Parent>(context: InternalVali
 }
 
 export function number<Value extends NumberValue, Parent>(constraints?: NumberConstraints<Value, Parent>, groups?: Record<string, NumberConstraints<Value, Parent>>) {
-    return fieldValidationDecorator("number", constraints ?? {}, groups, validateNumber)
+    return fieldValidationDecorator("number", constraints ?? {}, groups, validateNumber, isNumber)
 }

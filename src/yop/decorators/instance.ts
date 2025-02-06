@@ -1,4 +1,4 @@
-import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { CommonConstraints, InternalCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { InternalClassConstraints, validateClass } from "../Metadata"
 import { Constructor, isObject } from "../TypesUtil"
@@ -36,32 +36,30 @@ export interface InstanceConstraints<Value extends InstanceValue, Parent> extend
     of: Constructor<Value> | string
 }
 
-function traverseInstance<Value extends InstanceValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>, key: string | number)
-    : readonly [InternalCommonConstraints | undefined, any] {
+function traverseInstance<Value extends InstanceValue, Parent>(
+    context: InternalValidationContext<Value, Parent>,
+    constraints: InstanceConstraints<Value, Parent>,
+    key: string | number,
+    traverseNullish?: boolean
+): readonly [InternalCommonConstraints | undefined, any] {
     if (((constraints.of as any) = Yop.resolveClass(constraints.of)) == null)
         return [undefined, undefined] as const
     const classConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol] as InternalClassConstraints | undefined
     if (classConstraints == null)
         return [undefined, undefined] as const
-    return classConstraints.traverse!(context as InternalValidationContext<never, never>, classConstraints, key)
+    return classConstraints.traverse!(context as InternalValidationContext<never, never>, classConstraints, key, traverseNullish)
 }
 
 function validateInstance<Value extends InstanceValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: InstanceConstraints<Value, Parent>) {
-    if (context.skipValidation())
-        return true
-    if (!validateCommonConstraints(context, constraints))
-        return false
-    if (context.value == null)
-        return true
     if (!validateTypeConstraint(context, isObject, "object") ||
         !validateTestConstraint(context, constraints) ||
         ((constraints.of as any) = Yop.resolveClass(constraints.of)) == null)
         return false
 
     const classConstraints = (constraints.of as any)[Symbol.metadata]?.[validationSymbol] as InternalClassConstraints | undefined
-    return classConstraints == null || validateClass(context, classConstraints)
+    return classConstraints == null || validateClass(context as InternalValidationContext<Record<string, any>>, classConstraints)
 }
 
 export function instance<Value extends CheckClass<Value>, Parent>(constraints?: InstanceConstraints<Value, Parent>, groups?: Record<string, InstanceConstraints<Value, Parent>>) {
-    return fieldValidationDecorator("instance", constraints ?? {} as InstanceConstraints<Value, Parent>, groups, validateInstance, traverseInstance)
+    return fieldValidationDecorator("instance", constraints ?? {} as InstanceConstraints<Value, Parent>, groups, validateInstance, undefined, traverseInstance)
 }

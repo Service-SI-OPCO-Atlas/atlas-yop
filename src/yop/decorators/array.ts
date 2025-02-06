@@ -1,4 +1,4 @@
-import { CommonConstraints, InternalCommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { CommonConstraints, InternalCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
 import { InternalClassConstraints } from "../Metadata"
@@ -33,22 +33,17 @@ function resolveOf<Value extends ArrayValue, Parent>(constraints: ArrayConstrain
 function traverseArray<Value extends ArrayValue, Parent>(
     context: InternalValidationContext<Value, Parent>,
     constraints: ArrayConstraints<Value, Parent>,
-    propertyOrIndex: string | number
+    propertyOrIndex: string | number,
+    traverseNullish?: boolean
 ): readonly [InternalCommonConstraints | undefined, any] {
-    if (!Array.isArray(context.value) || typeof propertyOrIndex !== "number")
+    if (traverseNullish ? context.value != null && (!Array.isArray(context.value) || typeof propertyOrIndex !== "number") : context.value == null)
         return [undefined, undefined]
     const of = resolveOf(constraints)
     const elementConstraints = of?.[Symbol.metadata]?.[validationSymbol]
-    return [elementConstraints, context.value?.[propertyOrIndex]]
+    return [elementConstraints, context.value?.[propertyOrIndex as number]]
 }
 
 function validateArray<Value extends ArrayValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: ArrayConstraints<Value, Parent>) {
-    if (context.skipValidation())
-        return true
-    if (!validateCommonConstraints(context, constraints))
-        return false
-    if (context.value == null)
-        return true
     if (!validateTypeConstraint(context, Array.isArray, "array") ||
         !validateMinMaxConstraints(context, constraints, isNumber, (value, min) => value.length >= min, (value, max) => value.length <= max) ||
         resolveOf(constraints) == null)
@@ -72,6 +67,6 @@ function validateArray<Value extends ArrayValue, Parent>(context: InternalValida
 }
 
 export function array<Value extends ArrayValue, Parent>(constraints?: ArrayConstraints<Value, Parent>, groups?: Record<string, ArrayConstraints<Value, Parent>>) {
-    return fieldValidationDecorator("array", constraints ?? ({} as ArrayConstraints<Value, Parent>), groups, validateArray, traverseArray)
+    return fieldValidationDecorator("array", constraints ?? ({} as ArrayConstraints<Value, Parent>), groups, validateArray, isNumber, traverseArray)
 }
 

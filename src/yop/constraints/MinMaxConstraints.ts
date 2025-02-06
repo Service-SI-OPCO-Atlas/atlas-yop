@@ -4,6 +4,7 @@ import { InternalValidationContext, ValuedContext } from "../ValidationContext"
 export interface MinMaxConstraints<Value, MinMax, Parent = unknown> {
     min?: Constraint<NonNullable<Value>, MinMax, Parent>
     max?: Constraint<NonNullable<Value>, MinMax, Parent>
+    isMinMaxType?: (value: any) => value is MinMax
 }
 
 export function validateMinMaxConstraints<Value, MinMax, Parent>(

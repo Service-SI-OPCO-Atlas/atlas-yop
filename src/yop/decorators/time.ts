@@ -2,7 +2,7 @@ import { InternalValidationContext } from "../ValidationContext"
 import { fieldValidationDecorator } from "../Metadata"
 import { StringValue } from "./string"
 import { MinMaxConstraints, validateMinMaxConstraints } from "../constraints/MinMaxConstraints"
-import { CommonConstraints, validateCommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
+import { CommonConstraints, validateTypeConstraint } from "../constraints/CommonConstraints"
 import { isFunction, isString, isStringArray } from "../TypesUtil"
 import { OneOfConstraint, validateOneOfConstraint } from "../constraints/OneOfConstraint"
 import { TestConstraint, validateTestConstraint } from "../constraints/TestConstraint"
@@ -31,16 +31,10 @@ export function timeToMillis(time: string) {
 const MAX_MILLIS = (24 * 3600 * 1000) - 1
 
 export function validateTime<Value extends StringValue, Parent>(context: InternalValidationContext<Value, Parent>, constraints: TimeConstraints<Value, Parent>) {
-    if (context.skipValidation())
-        return true
-    if (!validateCommonConstraints(context, constraints))
-        return false
-    if (context.value == null)
-        return true
     if (!validateTypeConstraint(context, isString, "time"))
         return false
     
-    const millis = timeToMillis(context.value)
+    const millis = timeToMillis(context.value!)
     if (millis == null) {
         const message = isFunction(constraints.formatError) ? constraints.formatError(context) : constraints.formatError
         return context.setStatus("match", timeRegex, message) == null
@@ -54,5 +48,5 @@ export function validateTime<Value extends StringValue, Parent>(context: Interna
 }
 
 export function time<Value extends StringValue, Parent>(constraints?: TimeConstraints<Value, Parent>, groups?: Record<string, TimeConstraints<Value, Parent>>) {
-    return fieldValidationDecorator("time", constraints ?? {}, groups, validateTime)
+    return fieldValidationDecorator("time", constraints ?? {}, groups, validateTime, isString)
 }

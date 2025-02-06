@@ -1,7 +1,9 @@
+import { validateConstraint } from "./constraints/Constraint"
+import { MinMaxConstraints, validateMinMaxConstraints } from "./constraints/MinMaxConstraints"
 import { MessageProvider, messageProvider_en_US, messageProvider_fr_FR } from "./MessageProvider"
 import { ClassFieldDecorator, InternalClassConstraints } from "./Metadata"
 import { joinPath, Path, splitPath } from "./PathUtil"
-import { Constructor } from "./TypesUtil"
+import { Constructor, isBoolean } from "./TypesUtil"
 import { Group, InternalValidationContext, ValidationStatus } from "./ValidationContext"
 
 (Symbol as any).metadata ??= Symbol.for("Symbol.metadata")
@@ -13,6 +15,12 @@ export type AsyncValidationStatus = {
     dependencies: unknown
     getDependencies: (context: InternalValidationContext<any, any>) => any
     shouldRevalidate: (previous: unknown, current: unknown, status: ValidationStatus | undefined) => boolean
+}
+
+export type ResolvedConstraints<MinMax = unknown> = {
+    required: boolean
+    min?: MinMax
+    max?: MinMax
 }
 
 export interface ValidateOptions {
@@ -51,11 +59,7 @@ export class Yop {
         return id
     }
 
-    rawValidate<Value>(
-        value: any,
-        decorator: ClassFieldDecorator<Value>,
-        options: ValidateOptions = { path: [] }
-    ) {
+    private contextAt(decorator: ClassFieldDecorator<any>, value: any, options: ValidateOptions, traverseNullish = false) {
         const metadata = { [validationSymbol]: {} as InternalClassConstraints }
         decorator(null, { metadata, name: "placeholder" } as any)        
         let constraints = metadata[validationSymbol]?.fields?.placeholder
@@ -67,7 +71,7 @@ export class Yop {
         if (segments == null)
             return undefined
         
-        let context = new InternalValidationContext<unknown>({
+        let context = new InternalValidationContext<any>({
             yop: this,
             kind: constraints.kind,
             value,
@@ -75,19 +79,50 @@ export class Yop {
         })
 
         for (const segment of segments) {
-            [constraints, value] = constraints.traverse?.(context, constraints, segment) ?? [,]
+            [constraints, value] = constraints.traverse?.(context, constraints, segment, traverseNullish) ?? [,]
             if (constraints == null)
                 return undefined
             context = context.createChildContext({ kind: constraints.kind, value, key: segment })
         }
         
-        constraints.validate(context, constraints)
-        
-        return context
+        return [context, constraints] as const
+    }
+
+    constraintsAt<MinMax = unknown>(path: string | Path, decorator: ClassFieldDecorator<any>, value: any) {
+        const [context, constraints] = this.contextAt(decorator, value, { path: path }, true) ?? []
+
+        if (context != null && constraints != null) {
+            const resolvedContraints: ResolvedConstraints<MinMax> = { required: false }
+            validateConstraint(context, constraints, "required", isBoolean, (_, constraint) => { resolvedContraints.required = constraint; return true })
+            const isMinMaxType = (constraints as MinMaxConstraints<any, any>).isMinMaxType
+            if (isMinMaxType != null) {
+                validateMinMaxConstraints(
+                    context,
+                    constraints as MinMaxConstraints<unknown, unknown>,
+                    isMinMaxType,
+                    (_, min) => { resolvedContraints.min = min; return true },
+                    (_, max) => { resolvedContraints.max = max; return true }
+                )
+            }
+            return resolvedContraints
+        }
+
+        return undefined
+    }
+    static constraintsAt<Value>(path: string | Path, decorator: ClassFieldDecorator<Value>, value: any) {
+        return Yop.init().constraintsAt(path, decorator, value)
     }
 
     getAsyncStatus(path: string | Path) {
         return this.asyncStatuses.get(typeof path === "string" ? path : joinPath(path))?.status
+    }
+
+    rawValidate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options: ValidateOptions = { path: [] }
+    ) {
+        const [context, constraints] = this.contextAt(decorator, value, options) ?? []
+        if (context != null && constraints != null)
+            constraints.validate(context, constraints)
+        return context
     }
 
     validate<Value>(

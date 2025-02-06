@@ -9,6 +9,7 @@ export type TestConstraintFunction<Value, Parent = unknown> = ConstraintFunction
 export interface AsyncTestConstraint<Value, Parent = unknown> {
     promise: (context: ValidationContext<NonNullable<Value>, Parent>) => Promise<TestConstraintMessage>
     pendingMessage?: ConstraintMessage
+    unavailableMessage?: ConstraintMessage
     getDependencies?: (context: InternalValidationContext<Value, Parent>) => any,
     shouldRevalidate?: (previous: any, current: any, status: ValidationStatus | undefined) => boolean
 }

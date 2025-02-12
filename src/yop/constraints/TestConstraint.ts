@@ -76,7 +76,7 @@ function _validateAsyncTestConstraint<Value, Parent>(
     context: InternalValidationContext<NonNullable<Value>, Parent>,
     test: AsyncTestConstraint<Value, Parent>
 ) {
-    if (context.options?.skipAsync)
+    if (context.settings?.skipAsync)
         return true
 
     const path = joinPath(context.path)

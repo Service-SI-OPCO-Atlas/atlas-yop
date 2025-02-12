@@ -1,4 +1,4 @@
-import { InternalConstraints, InternalCommonConstraints, ContraintsParent, ContraintsValue, Traverser, Validator, validateCommonConstraints, validateTypeConstraint } from "./constraints/CommonConstraints"
+import { InternalConstraints, InternalCommonConstraints, ContraintsParent, ContraintsValue, Traverser, Validator, validateCommonConstraints, validateTypeConstraint, CommonConstraints } from "./constraints/CommonConstraints"
 import { validateConstraint } from "./constraints/Constraint"
 import { TestConstraintFunction, validateTestConstraint } from "./constraints/TestConstraint"
 import { isBoolean, isObject } from "./TypesUtil"
@@ -59,7 +59,11 @@ export function initClassConstraints(decoratorMetadata: DecoratorMetadata) {
 
 export type ClassFieldDecorator<Value, Parent = unknown> = (_: unknown, context: ClassFieldDecoratorContext<Parent, Value>) => void
 
-export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Constraints>, Parent = ContraintsParent<Constraints>>(
+export function fieldValidationDecorator<
+    Constraints extends CommonConstraints<any, any>,
+    Value = ContraintsValue<Constraints>,
+    Parent = ContraintsParent<Constraints>
+>(
     kind: string,
     constraints: Constraints,
     groups: Record<string, Constraints> | undefined,
@@ -77,8 +81,8 @@ export function fieldValidationDecorator<Constraints, Value = ContraintsValue<Co
         if (!Object.hasOwnProperty.bind(fields)(fieldName))
             fields[fieldName] = {} as InternalCommonConstraints
 
-        const validate = (context: any, constraints: any) =>  {
-            if (context.skipValidation())
+        const validate = (context: InternalValidationContext<any, any>, constraints: Constraints) =>  {
+            if (context.ignored())
                 return true
             if (!validateCommonConstraints(context, constraints))
                 return false

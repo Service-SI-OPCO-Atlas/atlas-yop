@@ -23,11 +23,28 @@ export type ResolvedConstraints<MinMax = unknown> = {
     max?: MinMax
 }
 
-export interface ValidateOptions {
+export interface Form {
+
+    readonly submitted: boolean
+    readonly submitting: boolean
+    readonly statuses: Map<string, ValidationStatus>
+    readonly htmlForm?: HTMLFormElement
+
+    getValue<T = any>(path: string | Path): T
+
+    isTouched(path?: string | Path): boolean
+    touch(path?: string | Path): void
+    untouch(path?: string | Path): void
+
+    isDirty(path?: string | Path): boolean
+}
+
+export interface ValidationSettings {
     path?: string | Path
     groups?: Group
     ignore?: (path: Path) => boolean
     skipAsync?: boolean
+    form?: Form
 }
 
 export class Yop {
@@ -59,7 +76,7 @@ export class Yop {
         return id
     }
 
-    private contextAt(decorator: ClassFieldDecorator<any>, value: any, options: ValidateOptions, traverseNullish = false) {
+    private contextAt(decorator: ClassFieldDecorator<any>, value: any, settings: ValidationSettings, traverseNullish = false) {
         const metadata = { [validationSymbol]: {} as InternalClassConstraints }
         decorator(null, { metadata, name: "placeholder" } as any)        
         let constraints = metadata[validationSymbol]?.fields?.placeholder
@@ -67,7 +84,7 @@ export class Yop {
         if (constraints == null)
             return undefined
 
-        const segments = typeof options.path === "string" ? splitPath(options.path) : (options.path ?? [])
+        const segments = typeof settings.path === "string" ? splitPath(settings.path) : (settings.path ?? [])
         if (segments == null)
             return undefined
         
@@ -75,7 +92,7 @@ export class Yop {
             yop: this,
             kind: constraints.kind,
             value,
-            options,
+            settings: settings,
         })
 
         for (const segment of segments) {
@@ -88,8 +105,8 @@ export class Yop {
         return [context, constraints] as const
     }
 
-    constraintsAt<MinMax = unknown>(path: string | Path, decorator: ClassFieldDecorator<any>, value: any) {
-        const [context, constraints] = this.contextAt(decorator, value, { path: path }, true) ?? []
+    constraintsAt<MinMax = unknown>(decorator: ClassFieldDecorator<any>, value: any, settings?: ValidationSettings) {
+        const [context, constraints] = this.contextAt(decorator, value, settings ?? {}, true) ?? []
 
         if (context != null && constraints != null) {
             const resolvedContraints: ResolvedConstraints<MinMax> = { required: false }
@@ -109,32 +126,27 @@ export class Yop {
 
         return undefined
     }
-    static constraintsAt<Value>(path: string | Path, decorator: ClassFieldDecorator<Value>, value: any) {
-        return Yop.init().constraintsAt(path, decorator, value)
+    static constraintsAt<Value>(decorator: ClassFieldDecorator<Value>, value: any, settings?: ValidationSettings) {
+        return Yop.init().constraintsAt(decorator, value, settings)
     }
 
     getAsyncStatus(path: string | Path) {
         return this.asyncStatuses.get(typeof path === "string" ? path : joinPath(path))?.status
     }
 
-    rawValidate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options: ValidateOptions = { path: [] }
-    ) {
-        const [context, constraints] = this.contextAt(decorator, value, options) ?? []
+    rawValidate<Value>(value: any, decorator: ClassFieldDecorator<Value>, settings: ValidationSettings = { path: [] }) {
+        const [context, constraints] = this.contextAt(decorator, value, settings) ?? []
         if (context != null && constraints != null)
             constraints.validate(context, constraints)
         return context
     }
 
-    validate<Value>(
-        value: any,
-        decorator: ClassFieldDecorator<Value>,
-        options: ValidateOptions = { path: [] }
-    ) {
-        const context = this.rawValidate(value, decorator, options)
+    validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, settings: ValidationSettings = { path: [] }) {
+        const context = this.rawValidate(value, decorator, settings)
         return context != null ? Array.from(context.statuses.values()) : []
     }
-    static validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, options?: { path?: string, groups?: Group }) {
-        return Yop.init().validate(value, decorator, options)
+    static validate<Value>(value: any, decorator: ClassFieldDecorator<Value>, settings?: ValidationSettings) {
+        return Yop.init().validate(value, decorator, settings)
     }
 
     static registerMessageProvider(provider: MessageProvider) {

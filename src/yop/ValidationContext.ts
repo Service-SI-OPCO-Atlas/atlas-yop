@@ -1,6 +1,6 @@
 import { ConstraintMessage } from "./constraints/Constraint"
 import { joinPath } from "./PathUtil"
-import { ValidateOptions, Yop } from "./Yop"
+import { ValidationSettings, Yop } from "./Yop"
 
 export type Group = string | ((string | undefined)[])
 export type Level = "info" | "warning" | "error" | "pending" | "unavailable"
@@ -28,7 +28,7 @@ export interface ValidationContext<Value, Parent = unknown> {
     getRoot<T>(): T | undefined
     readonly rootContext: ValidationContext<unknown> | undefined
 
-    readonly options: ValidateOptions | undefined
+    readonly settings: ValidationSettings | undefined
 }
 
 export const UndefinedParent = Object.freeze(Object.create(null))
@@ -45,7 +45,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
     readonly parentContext: InternalValidationContext<Parent> | undefined
     readonly rootContext: InternalValidationContext<unknown> | undefined
 
-    readonly options: ValidateOptions | undefined
+    readonly settings: ValidationSettings | undefined
 
     readonly statuses: Map<string, ValidationStatus>
 
@@ -58,7 +58,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         rootContext?: InternalValidationContext<unknown> | undefined
         userContext?: unknown | undefined
         statuses?: Map<string, ValidationStatus>
-        options?: ValidateOptions
+        settings?: ValidationSettings
     }) {
         if (props.parentContext != null && props.key == null)
             throw new Error("key must be provided when parentContext is provided")
@@ -68,14 +68,14 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
         this.value = props.value
         this.parentContext = props.parentContext
         this.rootContext = props.rootContext
-        this.options = props.options
+        this.settings = props.settings
         this.statuses = props.statuses ?? new Map()
 
         this.path = props.key == null ? [] : (props.parentContext?.path.concat(props.key) ?? [props.key])
     }
 
-    skipValidation() {
-        return this.options?.ignore?.(this.path) ?? false
+    ignored() {
+        return this.settings?.ignore?.(this.path) ?? false
     }
 
     get parent() {
@@ -83,11 +83,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
     }
 
     get groups() {
-        return this.options?.groups
-    }
-
-    get ignore() {
-        return this.options?.ignore
+        return this.settings?.groups
     }
 
     getRoot<T>() {
@@ -106,7 +102,7 @@ export class InternalValidationContext<Value, Parent = unknown> implements Valid
             key: props.key,
             parentContext: this,
             rootContext: this.rootContext ?? this,
-            options: this.options,
+            settings: this.settings,
             statuses: this.statuses
         })
     }

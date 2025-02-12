@@ -1787,16 +1787,17 @@ describe("yop", () => {
             ignored: string | null = null
             
             ignored2: string | null = null
-    }
+        }
 
         it("yop.all.Person", () => {
-            expect(Yop.constraintsAt("firstName", instance({ of: Person }), null)).toEqual({ required: false, min: 2, max: 20 })
-            expect(Yop.constraintsAt("firstName", instance({ of: Person }), { lastName: "Doe" })).toEqual({ required: true, min: 2, max: 20 })
-            expect(Yop.constraintsAt("birthDate", instance({ of: Person }), null)).toEqual({ required: true, min: new Date(1900, 0, 1), max: today })
-            expect(Yop.constraintsAt("nicknames", instance({ of: Person }), null)).toEqual({ required: true, min: 2 })
-            expect(Yop.constraintsAt("nicknames[0]", instance({ of: Person }), null)).toEqual({ required: true, min: 2, max: 20 })
-            expect(Yop.constraintsAt("friends", instance({ of: Person }), null)).toEqual({ required: false, min: 0 })
-            expect(Yop.constraintsAt("friends[0].pets[0].name", instance({ of: Person }), null)).toEqual({ required: true, min: 1 })
+            expect(Yop.constraintsAt(instance({ of: Person }), null)).toEqual({ required: false })
+            expect(Yop.constraintsAt(instance({ of: Person }), null, { path: "firstName" })).toEqual({ required: false, min: 2, max: 20 })
+            expect(Yop.constraintsAt(instance({ of: Person }), { lastName: "Doe" }, { path: "firstName" })).toEqual({ required: true, min: 2, max: 20 })
+            expect(Yop.constraintsAt(instance({ of: Person }), null, { path: "birthDate" })).toEqual({ required: true, min: new Date(1900, 0, 1), max: today })
+            expect(Yop.constraintsAt(instance({ of: Person }), null, { path: "nicknames" })).toEqual({ required: true, min: 2 })
+            expect(Yop.constraintsAt(instance({ of: Person }), null, { path: "nicknames[0]" })).toEqual({ required: true, min: 2, max: 20 })
+            expect(Yop.constraintsAt(instance({ of: Person }), null, { path: "friends" })).toEqual({ required: false, min: 0 })
+            expect(Yop.constraintsAt(instance({ of: Person }), null, { path: "friends[0].pets[0].name" })).toEqual({ required: true, min: 1 })
             
             expect(Yop.validate(undefined, instance({ of: Person }))).toEqual([])
             expect(Yop.validate(null, instance({ of: Person }))).toEqual([])

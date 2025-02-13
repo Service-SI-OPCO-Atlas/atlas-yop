@@ -30,7 +30,7 @@ export interface Form {
     readonly statuses: Map<string, ValidationStatus>
     readonly htmlForm?: HTMLFormElement
 
-    getValue<T = any>(path: string | Path): T
+    getValue<T = any>(path: string | Path): T | undefined
 
     isTouched(path?: string | Path): boolean
     touch(path?: string | Path): void

@@ -71,7 +71,7 @@ export function fieldValidationDecorator<
     isMinMaxType?: (value: any) => boolean,
     traverse?: Traverser<Constraints>,
 ) {
-    return function decorateClassField(_: unknown, context: ClassFieldDecoratorContext<Parent, Value>) {
+    return function decorateClassField(_: unknown, context: ClassFieldDecoratorContext<Parent, Value | null | undefined>) {
         const classConstraints = initClassConstraints(context.metadata)
         if (!Object.hasOwnProperty.bind(classConstraints)("fields"))
             classConstraints.fields = { ...classConstraints.fields }

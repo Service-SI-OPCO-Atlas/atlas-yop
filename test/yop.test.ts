@@ -1787,6 +1787,9 @@ describe("yop", () => {
             ignored: string | null = null
             
             ignored2: string | null = null
+
+            @instance({ of: Pet })
+            favoritePet: Pet | null = null
         }
 
         it("yop.all.Person", () => {
